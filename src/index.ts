@@ -4,7 +4,7 @@
  * Functional-first, type-safe ORM built on @igorjs/pure-ts.
  * Pure query composition, PostgreSQL dialect, Lambda-ready connections.
  *
- * Phase 1-3 public API -- foundation, mutations, transactions, relations, joins.
+ * Phase 1-4 public API -- foundation, mutations, transactions, relations, joins, soft deletes, audit.
  */
 
 // ---- Errors ----
@@ -39,6 +39,7 @@ export type {
   RelationDef,
   RelationMap,
 } from "./model/relations.ts";
+export { injectSoftDeleteColumn } from "./model/soft-delete.ts";
 export { injectTimestampColumns } from "./model/timestamps.ts";
 export type { ColumnMetadata, FieldConfig, FieldDef, FieldsRecord, ModelOptions, ModelRef } from "./model/types.ts";
 
@@ -103,8 +104,11 @@ export type { HasConditions } from "./query/builders.ts";
 // ---- Join builder functions (Phase 3) ----
 export { fullJoin, join, leftJoin, on, rightJoin } from "./query/joins.ts";
 
-// ---- Mutation builder functions (Phase 2) ----
-export { hardRemove, insert, insertMany, onConflict, remove, returning, update } from "./query/mutations.ts";
+// ---- Soft delete query modifiers (Phase 4) ----
+export { onlyDeleted, withDeleted } from "./query/soft-delete.ts";
+
+// ---- Mutation builder functions (Phase 2 + Phase 4) ----
+export { hardRemove, insert, insertMany, onConflict, remove, restore, returning, update } from "./query/mutations.ts";
 
 // ---- Dialect implementations (WU-4) ----
 export { createPostgresDialect } from "./dialect/postgresql.ts";
@@ -129,3 +133,8 @@ export { createPool } from "./connection/pool.ts";
 // ---- Transaction support (Phase 2) ----
 export { createTransactionClient, isTransactionClient, transaction } from "./connection/transaction.ts";
 export type { IsolationLevel, TransactionClient, TransactionOptions } from "./connection/transaction.ts";
+
+// ---- Audit system (Phase 4) ----
+export { auditLog } from "./audit/logger.ts";
+export { AuditModel } from "./audit/table.ts";
+export type { AuditContext, AuditEntry, AuditOperation } from "./audit/types.ts";

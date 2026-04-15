@@ -16,6 +16,7 @@
  */
 
 import type { Model } from "../model/define.ts";
+import { makeIsNotNull } from "./ast.ts";
 import type { DeleteNode, InsertNode, OnConflictClause, ReturningClause, UpdateNode } from "./types.ts";
 
 // ---- Shared model-ref builder ----
@@ -130,6 +131,29 @@ const hardRemove = <T extends Record<string, unknown>>(model: Model<T>): DeleteN
     softDeleteFilter: false,
   });
 
+// ---- restore ----
+
+/**
+ * Creates an UpdateNode that clears deletedAt, restoring a soft-deleted row.
+ *
+ * Automatically scopes to rows where deleted_at IS NOT NULL so only
+ * genuinely soft-deleted rows are affected. Call where() to further narrow
+ * the target set (e.g. a specific primary key).
+ *
+ * Only meaningful for models with softDelete: true. For models without it,
+ * this produces a regular UPDATE (setting a deletedAt column that may not exist).
+ */
+const restore = <T extends Record<string, unknown>>(model: Model<T>): UpdateNode =>
+  Object.freeze({
+    tag: "Update",
+    model: modelRef(model),
+    values: Object.freeze({ deletedAt: null }),
+    conditions: Object.freeze([makeIsNotNull("deletedAt")]),
+    returning: null,
+    // Do NOT apply the IS NULL filter: we want to target deleted rows.
+    softDeleteFilter: false,
+  });
+
 // ---- returning ----
 
 /**
@@ -163,4 +187,4 @@ const onConflict =
     return Object.freeze({ ...node, onConflict: clause });
   };
 
-export { hardRemove, insert, insertMany, onConflict, remove, returning, update };
+export { hardRemove, insert, insertMany, onConflict, remove, restore, returning, update };

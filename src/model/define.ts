@@ -10,6 +10,7 @@
 import { Schema } from "@igorjs/pure-ts";
 import type { SchemaType } from "@igorjs/pure-ts";
 import type { RelationMap } from "./relations.ts";
+import { injectSoftDeleteColumn } from "./soft-delete.ts";
 import { injectTimestampColumns } from "./timestamps.ts";
 import type { ColumnMetadata, FieldDef, FieldsRecord, ModelOptions } from "./types.ts";
 
@@ -103,8 +104,13 @@ function Model<F extends FieldsRecord>(
     ),
   );
 
-  // Optionally append createdAt / updatedAt columns.
-  const columns = options.timestamps === true ? injectTimestampColumns(baseColumns) : baseColumns;
+  // Optionally append createdAt / updatedAt and deletedAt columns.
+  let columns: readonly ColumnMetadata[] = options.timestamps === true
+    ? injectTimestampColumns(baseColumns)
+    : baseColumns;
+  if (options.softDelete === true) {
+    columns = injectSoftDeleteColumn(columns);
+  }
 
   // Build a Schema.object whose shape mirrors the FieldsRecord for runtime validation.
   // We need a plain Record<string, SchemaType<unknown>> for Schema.object.
