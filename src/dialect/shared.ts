@@ -56,8 +56,8 @@ const resolveColumnName = (
 // ---- Select column compilation ----
 
 /**
- * Compiles a single SelectColumn (plain field name or aggregate) into its
- * SQL representation. Shared across dialects since both use the same syntax.
+ * Compiles a single SelectColumn (plain field, aggregate, or window function)
+ * into its SQL representation. Shared across dialects since both use the same syntax.
  */
 const compileSelectColumn = (
   col: SelectColumn,
@@ -67,11 +67,33 @@ const compileSelectColumn = (
   if (typeof col === "string") {
     return `${quote(tableName)}.${quote(resolveColumnName(col, columns))}`;
   }
-  // AggregateExpr
-  const inner = col.column === "*"
-    ? "*"
-    : `${quote(tableName)}.${quote(resolveColumnName(col.column, columns))}`;
-  const expr = `${col.fn}(${inner})`;
+
+  if (col.tag === "Aggregate") {
+    const inner = col.column === "*"
+      ? "*"
+      : `${quote(tableName)}.${quote(resolveColumnName(col.column, columns))}`;
+    const expr = `${col.fn}(${inner})`;
+    return col.alias !== null ? `${expr} AS ${quote(col.alias)}` : expr;
+  }
+
+  // WindowExpr
+  const overParts: string[] = [];
+  if (col.partitions.length > 0) {
+    const partCols = col.partitions
+      .map((c) => `${quote(tableName)}.${quote(resolveColumnName(c, columns))}`)
+      .join(", ");
+    overParts.push(`PARTITION BY ${partCols}`);
+  }
+  if (col.orders.length > 0) {
+    const ordCols = col.orders
+      .map((o) =>
+        `${quote(tableName)}.${quote(resolveColumnName(o.column, columns))} ${o.direction === "asc" ? "ASC" : "DESC"}`
+      )
+      .join(", ");
+    overParts.push(`ORDER BY ${ordCols}`);
+  }
+  const overClause = overParts.length > 0 ? overParts.join(" ") : "";
+  const expr = `${col.fn}() OVER (${overClause})`;
   return col.alias !== null ? `${expr} AS ${quote(col.alias)}` : expr;
 };
 

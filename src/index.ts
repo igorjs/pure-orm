@@ -4,7 +4,8 @@
  * Functional-first, type-safe ORM built on @igorjs/pure-ts.
  * Pure query composition, PostgreSQL dialect, Lambda-ready connections.
  *
- * Phase 1-6 public API -- full query pipeline with groupBy, having, raw SQL, migrations.
+ * Complete public API: models, queries, mutations, relations, joins, aggregates,
+ * window functions, CTEs, subqueries, soft deletes, audit, migrations.
  */
 
 // ---- Errors ----
@@ -66,6 +67,8 @@ export type {
   SelectNode,
   SortDirection,
   UpdateNode,
+  WindowExpr,
+  WindowFn,
 } from "./query/types.ts";
 
 // ---- Dialect types (implementations added in WU-4) ----
@@ -114,12 +117,17 @@ export { raw, sql } from "./query/raw.ts";
 // ---- Join builder functions (Phase 3) ----
 export { fullJoin, join, leftJoin, on, rightJoin } from "./query/joins.ts";
 
-// ---- Eager loading ----
+// ---- Eager and lazy loading ----
 export { include } from "./query/include.ts";
+export { lazy } from "./query/lazy.ts";
 
 // ---- Aggregate functions ----
 export { avg, count, max, min, sum } from "./query/aggregates.ts";
 export type { AggregateBuilder } from "./query/aggregates.ts";
+
+// ---- Window functions ----
+export { denseRank, rank, rowNumber } from "./query/window.ts";
+export type { WindowBuilder } from "./query/window.ts";
 
 // ---- CTE and subquery builders ----
 export { cte } from "./query/cte.ts";
@@ -156,6 +164,8 @@ export { createTransactionClient, isTransactionClient, transaction } from "./con
 export type { IsolationLevel, TransactionClient, TransactionOptions } from "./connection/transaction.ts";
 
 // ---- Audit system (Phase 4) ----
+export { createAuditHooks, withAuditContext } from "./audit/interceptor.ts";
+export type { AuditCallback, AuditEntryInput } from "./audit/interceptor.ts";
 export { auditLog } from "./audit/logger.ts";
 export { AuditModel } from "./audit/table.ts";
 export type { AuditContext, AuditEntry, AuditOperation } from "./audit/types.ts";
@@ -163,6 +173,8 @@ export type { AuditContext, AuditEntry, AuditOperation } from "./audit/types.ts"
 // ---- Migration system (Phase 5) ----
 export { columnsEqual, diffSnapshots, diffTable } from "./migration/differ.ts";
 export { generateDown, generateMigration, generateUp } from "./migration/generator.ts";
+export { applyMigration, ensureMigrationTable, getMigrationStatus, rollbackMigration } from "./migration/runner.ts";
+export type { MigrationInput, RollbackInput } from "./migration/runner.ts";
 export { createSnapshot, snapshotColumn, snapshotTable } from "./migration/snapshot.ts";
 export { MigrationModel } from "./migration/state.ts";
 export type {

@@ -96,8 +96,20 @@ type AggregateExpr = {
   readonly alias: string | null;
 };
 
-/** A select column is either a plain field name or an aggregate expression. */
-type SelectColumn = string | AggregateExpr;
+// ---- Window expressions ----
+
+type WindowFn = "ROW_NUMBER" | "RANK" | "DENSE_RANK" | "LAG" | "LEAD" | "FIRST_VALUE" | "LAST_VALUE";
+
+type WindowExpr = {
+  readonly tag: "Window";
+  readonly fn: WindowFn;
+  readonly partitions: readonly string[];
+  readonly orders: readonly OrderByClause[];
+  readonly alias: string | null;
+};
+
+/** A select column: plain field name, aggregate, or window expression. */
+type SelectColumn = string | AggregateExpr | WindowExpr;
 
 // ---- CTE (Common Table Expression) ----
 
@@ -219,4 +231,6 @@ export type {
   SelectNode,
   SortDirection,
   UpdateNode,
+  WindowExpr,
+  WindowFn,
 };
