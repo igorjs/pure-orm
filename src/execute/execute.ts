@@ -136,7 +136,7 @@ const findOne = <T>(
 
     // Apply LIMIT 1 only when the caller has not already set a limit,
     // so explicit pagination isn't silently overridden.
-    const selectNode: SelectNode = node.limit === undefined
+    const selectNode: SelectNode = node.limit === null
       ? Object.freeze({ ...node, limit: 1 })
       : node;
 

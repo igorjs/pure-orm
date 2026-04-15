@@ -69,8 +69,8 @@ type SelectNode = {
   readonly columns: readonly string[] | "*";
   readonly conditions: readonly ConditionNode[];
   readonly orderBy: readonly OrderByClause[];
-  readonly limit: number | undefined;
-  readonly offset: number | undefined;
+  readonly limit: number | null;
+  readonly offset: number | null;
   readonly softDeleteFilter: boolean;
 };
 

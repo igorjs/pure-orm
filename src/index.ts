@@ -85,6 +85,7 @@ export { from, limit, offset, orderBy, select, where } from "./query/builders.ts
 // ---- Dialect implementations (WU-4) ----
 export { createPostgresDialect } from "./dialect/postgresql.ts";
 export { registerDialect, resolveDialect } from "./dialect/registry.ts";
+export { createSqliteDialect } from "./dialect/sqlite.ts";
 
 // ---- Logging implementations (WU-5) ----
 export { dispatchHook } from "./logging/hooks.ts";

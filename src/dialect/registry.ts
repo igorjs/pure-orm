@@ -12,6 +12,7 @@ import type { DbError } from "../errors/errors.ts";
 import { validationError } from "../errors/errors.ts";
 import type { Dialect } from "./dialect.ts";
 import { createPostgresDialect } from "./postgresql.ts";
+import { createSqliteDialect } from "./sqlite.ts";
 
 // ---- Result type (local, lightweight) ----
 
@@ -38,8 +39,9 @@ const resolveDialect = (name: string): Result<Dialect, DbError> => {
   return ok(dialect);
 };
 
-// Auto-register PostgreSQL dialect so it is available without explicit setup.
+// Auto-register built-in dialects so they are available without explicit setup.
 registerDialect("postgresql", createPostgresDialect());
+registerDialect("sqlite", createSqliteDialect());
 
 export { registerDialect, resolveDialect };
 export type { Result };

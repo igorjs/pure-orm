@@ -1,12 +1,17 @@
 /**
- * PostgreSQL dialect implementation.
+ * SQLite dialect implementation.
  *
- * Compiles SelectNode ASTs into PostgreSQL-flavoured SQL with positional
- * parameters ($1, $2, ...). Identifiers are double-quoted and inner quotes
- * are escaped to prevent injection through schema/column names.
+ * Compiles SelectNode ASTs into SQLite-flavoured SQL with anonymous positional
+ * parameters (?). Identifiers are double-quoted following the SQL standard,
+ * identical to PostgreSQL.
  *
- * The dialect is stateless: all mutable state (parameter index) lives inside
- * each compileSelect call so concurrent compilations never interfere.
+ * Key differences from the PostgreSQL dialect:
+ *   - Parameters use ? (no index) rather than $1, $2, ...
+ *   - ILIKE is compiled as LIKE (SQLite LIKE is case-insensitive for ASCII by default)
+ *   - Type mapping: number -> REAL, boolean -> INTEGER (SQLite has no native BOOLEAN)
+ *
+ * The dialect is stateless: all mutable state (parameter accumulation) lives
+ * inside each compileSelect call so concurrent compilations never interfere.
  */
 
 import type { FieldConfig } from "../model/types.ts";
@@ -16,37 +21,39 @@ import { quote, resolveColumnName } from "./shared.ts";
 
 // ---- Parameter placeholder ----
 
-const param = (index: number): string => `$${index}`;
+// SQLite uses anonymous positional ? placeholders — the index is ignored.
+const param = (_index: number): string => "?";
 
 // ---- Field type mapping ----
 
 const mapFieldType = (schemaType: string, _config: Readonly<FieldConfig>): string => {
-  if (schemaType === "number") return "INTEGER";
-  if (schemaType === "boolean") return "BOOLEAN";
+  if (schemaType === "number") return "REAL";
+  // SQLite has no native BOOLEAN type; store as INTEGER (0/1).
+  if (schemaType === "boolean") return "INTEGER";
   return "TEXT";
 };
 
-// ---- Condition compilation ----
+// ---- Compile context ----
 
 type CompileCtx = {
   readonly tableName: string;
   readonly columns: SelectNode["model"]["columns"];
-  // Mutable parameter counter shared across recursive calls within one compileSelect.
-  readonly counter: { index: number };
+  // Mutable params array shared across recursive calls within one compileSelect.
   readonly params: unknown[];
 };
 
 const addParam = (ctx: CompileCtx, value: unknown): string => {
   ctx.params.push(value);
-  const placeholder = param(ctx.counter.index);
-  ctx.counter.index += 1;
-  return placeholder;
+  // Always return ? regardless of position.
+  return "?";
 };
 
 const quotedCol = (ctx: CompileCtx, field: string): string => {
   const colName = resolveColumnName(field, ctx.columns);
   return `${quote(ctx.tableName)}.${quote(colName)}`;
 };
+
+// ---- Condition compilation ----
 
 const compileCondition = (node: ConditionNode, ctx: CompileCtx): string => {
   switch (node.tag) {
@@ -72,7 +79,10 @@ const compileCondition = (node: ConditionNode, ctx: CompileCtx): string => {
       return `${quotedCol(ctx, node.column)} LIKE ${addParam(ctx, node.pattern)}`;
 
     case "ILike":
-      return `${quotedCol(ctx, node.column)} ILIKE ${addParam(ctx, node.pattern)}`;
+      // SQLite's LIKE is case-insensitive for ASCII letters by default, so
+      // ILIKE conditions are compiled as plain LIKE rather than failing with
+      // an unknown keyword error.
+      return `${quotedCol(ctx, node.column)} LIKE ${addParam(ctx, node.pattern)}`;
 
     case "IsNull":
       return `${quotedCol(ctx, node.column)} IS NULL`;
@@ -116,8 +126,6 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
   const ctx: CompileCtx = {
     tableName,
     columns: node.model.columns,
-    // Mutable counter intentionally scoped to this call only.
-    counter: { index: 1 },
     params: [],
   };
 
@@ -165,13 +173,13 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
 
 // ---- Dialect factory ----
 
-const createPostgresDialect = (): Dialect =>
+const createSqliteDialect = (): Dialect =>
   Object.freeze({
-    name: "postgresql",
+    name: "sqlite",
     compileSelect,
     param,
     quote,
     mapFieldType,
   });
 
-export { createPostgresDialect };
+export { createSqliteDialect };

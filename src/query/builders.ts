@@ -38,8 +38,8 @@ const from = <T extends Record<string, unknown>>(model: Model<T>): SelectNode =>
     columns: "*",
     conditions: Object.freeze([]),
     orderBy: Object.freeze([]),
-    limit: undefined,
-    offset: undefined,
+    limit: null,
+    offset: null,
     softDeleteFilter: model.$options.softDelete ?? false,
   });
 

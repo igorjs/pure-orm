@@ -28,6 +28,7 @@ import {
   createPool,
   // Dialect
   createPostgresDialect,
+  createSqliteDialect,
   Database,
   dispatchHook,
   // Condition functions
@@ -304,5 +305,91 @@ describe("integration: all public exports from src/index.ts are defined", () => 
     assert.ok(createPool !== undefined, "createPool");
     assert.ok(createLambdaPool !== undefined, "createLambdaPool");
     assert.ok(Database !== undefined, "Database");
+  });
+
+  it("createSqliteDialect export is defined", () => {
+    assert.ok(createSqliteDialect !== undefined, "createSqliteDialect");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 6. Cross-dialect comparison: PostgreSQL vs SQLite
+// ---------------------------------------------------------------------------
+
+describe("integration: cross-dialect query compilation", () => {
+  // Shared model for this test group.
+  const Product = Model("products", {
+    fields: {
+      id: Field(Schema.string, { primaryKey: true }),
+      name: Field(Schema.string),
+      category: Field(Schema.string),
+    },
+    options: {},
+  });
+
+  const toRef = (model: typeof Product) => ({
+    name: model.$name,
+    columns: model.$columns,
+    options: model.$options,
+  });
+
+  const makeProductSelect = (overrides: Partial<{
+    conditions: ReturnType<typeof eq>[];
+    limit: number | null;
+    offset: number | null;
+  }> = {}) =>
+    Object.freeze({
+      tag: "Select" as const,
+      model: toRef(Product),
+      columns: "*" as const,
+      conditions: overrides.conditions ?? [],
+      orderBy: [],
+      limit: overrides.limit ?? null,
+      offset: overrides.offset ?? null,
+      softDeleteFilter: false,
+    });
+
+  it("PostgreSQL uses $N placeholders while SQLite uses ?", () => {
+    const pgDialect = createPostgresDialect();
+    const sqliteDialect = createSqliteDialect();
+
+    const node = makeProductSelect({ conditions: [eq("name", "Widget"), eq("category", "Gadgets")] });
+
+    const pgResult = pgDialect.compileSelect(node);
+    const sqliteResult = sqliteDialect.compileSelect(node);
+
+    // PostgreSQL: positional numbered params
+    assert.ok(pgResult.sql.includes("$1"), `PG SQL should have $1: ${pgResult.sql}`);
+    assert.ok(pgResult.sql.includes("$2"), `PG SQL should have $2: ${pgResult.sql}`);
+    assert.ok(!pgResult.sql.includes("?"), `PG SQL should not have ?: ${pgResult.sql}`);
+
+    // SQLite: anonymous ? placeholders
+    assert.ok(sqliteResult.sql.includes("?"), `SQLite SQL should have ?: ${sqliteResult.sql}`);
+    assert.ok(!sqliteResult.sql.includes("$"), `SQLite SQL should not have $: ${sqliteResult.sql}`);
+
+    // Both produce the same params array (same values, same order).
+    assert.deepEqual(pgResult.params, ["Widget", "Gadgets"]);
+    assert.deepEqual(sqliteResult.params, ["Widget", "Gadgets"]);
+  });
+
+  it("PostgreSQL uses ILIKE while SQLite compiles the same ilike() call as LIKE", () => {
+    const pgDialect = createPostgresDialect();
+    const sqliteDialect = createSqliteDialect();
+
+    const node = makeProductSelect({ conditions: [ilike("name", "%widget%")] });
+
+    const pgResult = pgDialect.compileSelect(node);
+    const sqliteResult = sqliteDialect.compileSelect(node);
+
+    // PG preserves ILIKE.
+    assert.ok(pgResult.sql.includes("ILIKE"), `PG SQL should have ILIKE: ${pgResult.sql}`);
+
+    // SQLite downgrades to LIKE.
+    assert.ok(sqliteResult.sql.includes("LIKE"), `SQLite SQL should have LIKE: ${sqliteResult.sql}`);
+    assert.ok(!sqliteResult.sql.includes("ILIKE"), `SQLite SQL must not have ILIKE: ${sqliteResult.sql}`);
+
+    // Both carry the same pattern value.
+    assert.deepEqual(pgResult.params, ["%widget%"]);
+    assert.deepEqual(sqliteResult.params, ["%widget%"]);
   });
 });

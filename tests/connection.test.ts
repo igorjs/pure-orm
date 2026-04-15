@@ -292,6 +292,192 @@ describe("createLambdaPool", () => {
 });
 
 // ---------------------------------------------------------------------------
+// connect() helper
+// ---------------------------------------------------------------------------
+
+describe("connect()", () => {
+  it("returns Ok with the RawConnection when driver.connect() succeeds", async () => {
+    // Arrange
+    const { connect } = await import("../src/connection/connection.ts");
+    const driver = createMockDriver();
+
+    // Act
+    const result = await connect(driver, DUMMY_CONFIG).run();
+
+    // Assert
+    assert.equal(result.tag, "Ok");
+  });
+
+  it("wraps driver.connect() throws in ConnectionError", async () => {
+    // Arrange
+    const { connect } = await import("../src/connection/connection.ts");
+    const failingDriver: DatabaseDriver = {
+      connect: async () => {
+        throw new Error("network unreachable");
+      },
+    };
+
+    // Act
+    const result = await connect(failingDriver, DUMMY_CONFIG).run();
+
+    // Assert
+    assert.equal(result.tag, "Err");
+    assert.equal(result.tag === "Err" && result.error.tag, "ConnectionError");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// closeConnection() helper
+// ---------------------------------------------------------------------------
+
+describe("closeConnection()", () => {
+  it("returns Ok when conn.end() resolves", async () => {
+    // Arrange
+    const { closeConnection } = await import("../src/connection/connection.ts");
+    const conn: RawConnection = {
+      query: async () => ({ rows: [], rowCount: 0 }),
+      release: async () => {},
+      end: async () => {},
+    };
+
+    // Act
+    const result = await closeConnection(conn).run();
+
+    // Assert
+    assert.equal(result.tag, "Ok");
+  });
+
+  it("wraps conn.end() throws in ConnectionError", async () => {
+    // Arrange
+    const { closeConnection } = await import("../src/connection/connection.ts");
+    const conn: RawConnection = {
+      query: async () => ({ rows: [], rowCount: 0 }),
+      release: async () => {},
+      end: async () => {
+        throw new Error("socket hang up");
+      },
+    };
+
+    // Act
+    const result = await closeConnection(conn).run();
+
+    // Assert
+    assert.equal(result.tag, "Err");
+    assert.equal(result.tag === "Err" && result.error.tag, "ConnectionError");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createPool — error paths
+// ---------------------------------------------------------------------------
+
+describe("createPool — error paths", () => {
+  it("returns Err(ConnectionError) when driver.connect() throws", async () => {
+    // Arrange
+    const failingDriver: DatabaseDriver = {
+      connect: async () => {
+        throw new Error("ECONNREFUSED");
+      },
+    };
+    const pool = createPool(failingDriver, DUMMY_CONFIG, EMPTY_POOL_CONFIG, noop);
+
+    // Act
+    const result = await pool.acquire().run();
+
+    // Assert
+    assert.equal(result.tag, "Err");
+    assert.equal(result.tag === "Err" && result.error.tag, "ConnectionError");
+  });
+
+  it("returns ConnectionError when acquire is called after pool is shut down", async () => {
+    // Arrange — use a very short timeout so the pending waiter resolves quickly
+    const pool = createPool(createMockDriver(), DUMMY_CONFIG, { max: 1, acquireTimeoutMs: 50 }, noop);
+
+    // Consume the one allowed slot so the next acquire must wait
+    const r1 = await pool.acquire().run();
+    assert.equal(r1.tag, "Ok");
+
+    // Begin a second acquire that will queue as a waiter
+    const pendingAcquire = pool.acquire().run();
+
+    // Shut down the pool — this should reject all pending waiters
+    await pool.end().run();
+
+    // Act — wait for the pending acquire to resolve
+    const result = await pendingAcquire;
+
+    // Assert
+    assert.equal(result.tag, "Err");
+    assert.equal(result.tag === "Err" && result.error.tag, "ConnectionError");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// createLambdaPool — error paths
+// ---------------------------------------------------------------------------
+
+describe("createLambdaPool — error paths", () => {
+  beforeEach(() => {
+    resetLambdaConnection();
+  });
+
+  it("returns Err(ConnectionError) when driver.connect() throws", async () => {
+    // Arrange
+    const failingDriver: DatabaseDriver = {
+      connect: async () => {
+        throw new Error("timeout");
+      },
+    };
+    const pool = createLambdaPool(failingDriver, DUMMY_CONFIG, EMPTY_POOL_CONFIG, noop);
+
+    // Act
+    const result = await pool.acquire().run();
+
+    // Assert
+    assert.equal(result.tag, "Err");
+    assert.equal(result.tag === "Err" && result.error.tag, "ConnectionError");
+  });
+
+  it("end() on an uninitialised pool is a no-op and does not throw", async () => {
+    // Arrange — pool with no prior acquire(); singleton is null
+    const pool = createLambdaPool(createMockDriver(), DUMMY_CONFIG, EMPTY_POOL_CONFIG, noop);
+
+    // Act
+    const result = await pool.end().run();
+
+    // Assert
+    assert.equal(result.tag, "Ok");
+  });
+
+  it("acquire() after end() creates a fresh connection", async () => {
+    // Arrange
+    let connectCount = 0;
+    const countingDriver: DatabaseDriver = {
+      connect: async () => {
+        connectCount += 1;
+        return {
+          query: async () => ({ rows: [], rowCount: 0 }),
+          release: async () => {},
+          end: async () => {},
+        };
+      },
+    };
+    const pool = createLambdaPool(countingDriver, DUMMY_CONFIG, EMPTY_POOL_CONFIG, noop);
+
+    // Acquire once, then end (closes connection and nullifies singleton)
+    await pool.acquire().run();
+    await pool.end().run();
+
+    // Act — acquire again after end()
+    const result = await pool.acquire().run();
+
+    // Assert — a new connection was created (connect called twice total)
+    assert.equal(result.tag, "Ok");
+    assert.equal(connectCount, 2);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Database() factory
 // ---------------------------------------------------------------------------
 

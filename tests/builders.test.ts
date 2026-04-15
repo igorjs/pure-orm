@@ -6,7 +6,7 @@ import { pipe, Schema } from "@igorjs/pure-ts";
 import { Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";
 import { from, limit, offset, orderBy, select, where } from "../src/query/builders.ts";
-import { eq, gt } from "../src/query/conditions.ts";
+import { and, eq, gt, not, or } from "../src/query/conditions.ts";
 import type { SelectNode } from "../src/query/types.ts";
 
 // ---------------------------------------------------------------------------
@@ -91,20 +91,20 @@ describe("from()", () => {
     assert.equal(node.orderBy.length, 0);
   });
 
-  it("starts with limit undefined", () => {
+  it("starts with limit null", () => {
     // Act
     const node = from(TestUser);
 
     // Assert
-    assert.equal(node.limit, undefined);
+    assert.equal(node.limit, null);
   });
 
-  it("starts with offset undefined", () => {
+  it("starts with offset null", () => {
     // Act
     const node = from(TestUser);
 
     // Assert
-    assert.equal(node.offset, undefined);
+    assert.equal(node.offset, null);
   });
 
   it("sets softDeleteFilter to true when model has softDelete: true", () => {
@@ -436,7 +436,7 @@ describe("limit()", () => {
     limit(10)(initial);
 
     // Assert
-    assert.equal(initial.limit, undefined);
+    assert.equal(initial.limit, null);
   });
 });
 
@@ -492,7 +492,7 @@ describe("offset()", () => {
     offset(20)(initial);
 
     // Assert
-    assert.equal(initial.offset, undefined);
+    assert.equal(initial.offset, null);
   });
 });
 
@@ -591,6 +591,126 @@ describe("pipe() composition", () => {
 
     // Assert - intermediate node is unchanged
     assert.equal(afterWhere.orderBy.length, 0);
-    assert.equal(afterWhere.limit, undefined);
+    assert.equal(afterWhere.limit, null);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// from() — timestamps option
+// ---------------------------------------------------------------------------
+
+describe("from() — timestamps option", () => {
+  it("includes createdAt and updatedAt columns in the model ref when timestamps: true", () => {
+    // Arrange
+    const TimestampedModel = Model("events", {
+      fields: {
+        id: Field(Schema.string, { primaryKey: true }),
+        title: Field(Schema.string),
+      },
+      options: { timestamps: true },
+    });
+
+    // Act
+    const node = from(TimestampedModel);
+
+    // Assert — the two timestamp columns are appended
+    const columnNames = node.model.columns.map((c) => c.name);
+    assert.ok(columnNames.includes("createdAt"), "expected createdAt column");
+    assert.ok(columnNames.includes("updatedAt"), "expected updatedAt column");
+  });
+
+  it("does NOT include timestamp columns when timestamps option is omitted", () => {
+    // Arrange — TestPost has no timestamps option
+    // Act
+    const node = from(TestPost);
+
+    // Assert
+    const columnNames = node.model.columns.map((c) => c.name);
+    assert.ok(!columnNames.includes("createdAt"), "should not have createdAt");
+    assert.ok(!columnNames.includes("updatedAt"), "should not have updatedAt");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// select() — single column
+// ---------------------------------------------------------------------------
+
+describe("select() — single column", () => {
+  it("sets columns to an array with one entry when called with a single column", () => {
+    // Arrange
+    const initial = from(TestUser);
+
+    // Act
+    const node = select("id")(initial);
+
+    // Assert
+    assert.deepEqual(node.columns, ["id"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// where() — complex nested conditions
+// ---------------------------------------------------------------------------
+
+describe("where() — complex nested conditions", () => {
+  it("accepts and(or(...), not(...)) as a single condition", () => {
+    // Arrange
+    const initial = from(TestUser);
+    const condition = and(
+      or(eq("email", "alice@example.com"), eq("email", "bob@example.com")),
+      not(eq("id", "banned-id")),
+    );
+
+    // Act
+    const node = where(condition)(initial);
+
+    // Assert — one top-level condition composed of nested operators
+    assert.equal(node.conditions.length, 1);
+    assert.equal(node.conditions[0]?.tag, "And");
+  });
+
+  it("accumulates complex conditions alongside simple ones", () => {
+    // Arrange
+    const simple = eq("id", "x");
+    const complex = and(
+      or(eq("email", "a@b.com"), eq("email", "c@d.com")),
+      not(eq("name", "banned")),
+    );
+
+    // Act
+    const node = where(complex)(where(simple)(from(TestUser)));
+
+    // Assert
+    assert.equal(node.conditions.length, 2);
+    assert.equal(node.conditions[0]?.tag, "Eq");
+    assert.equal(node.conditions[1]?.tag, "And");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// limit() — overwrites previous value
+// ---------------------------------------------------------------------------
+
+describe("limit() — overwrites previous value", () => {
+  it("the last limit() call wins over earlier ones", () => {
+    // Arrange / Act
+    const node = limit(1)(limit(999)(from(TestUser)));
+
+    // Assert
+    assert.equal(node.limit, 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// offset() — overwrites previous value
+// ---------------------------------------------------------------------------
+
+describe("offset() — overwrites previous value", () => {
+  it("the last offset() call wins over earlier ones", () => {
+    // Arrange / Act
+    const node = offset(50)(offset(0)(from(TestUser)));
+
+    // Assert
+    assert.equal(node.offset, 50);
   });
 });

@@ -46,6 +46,8 @@ const makeSelect = (
     columns: "*",
     conditions: [],
     orderBy: [],
+    limit: null,
+    offset: null,
     softDeleteFilter: false,
     ...overrides,
   });
@@ -553,6 +555,97 @@ describe("compileSelect: column name resolution", () => {
       "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"email\" ILIKE $1",
     );
     assert.deepEqual(result.params, ["%@example.com"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// compileSelect: softDeleteFilter false
+// ---------------------------------------------------------------------------
+
+describe("compileSelect: softDeleteFilter false", () => {
+  it("does NOT inject deleted_at IS NULL when softDeleteFilter is false", () => {
+    // Arrange
+    const node = makeSelect({ softDeleteFilter: false });
+
+    // Act
+    const result = dialect.compileSelect(node);
+
+    // Assert
+    assert.ok(!result.sql.includes("deleted_at"), "should not contain deleted_at");
+    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\"");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// compileSelect: qualified column names
+// ---------------------------------------------------------------------------
+
+describe("compileSelect: qualified column names", () => {
+  it("strips table qualifier from 'table.column' and resolves to snake_case", () => {
+    // Arrange: "users.role" — qualifier matches table, field name is "role"
+    const node = makeSelect({ conditions: [eq("users.role", "admin")] });
+
+    // Act
+    const result = dialect.compileSelect(node);
+
+    // Assert — qualifier is stripped, column is resolved correctly
+    assert.ok(result.sql.includes("\"users\".\"role\""), `unexpected SQL: ${result.sql}`);
+    assert.deepEqual(result.params, ["admin"]);
+  });
+
+  it("strips non-matching qualifier and resolves camelCase field to snake_case", () => {
+    // Arrange: "u.createdAt" — arbitrary qualifier, field is "createdAt" -> "created_at"
+    const node = makeSelect({ conditions: [eq("u.createdAt", "2024-01-01")] });
+
+    // Act
+    const result = dialect.compileSelect(node);
+
+    // Assert
+    assert.ok(result.sql.includes("\"created_at\""), `unexpected SQL: ${result.sql}`);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// compileSelect: limit(0)
+// ---------------------------------------------------------------------------
+
+describe("compileSelect: limit(0)", () => {
+  it("compiles limit 0 as a parameterised LIMIT clause", () => {
+    // Arrange
+    const node = makeSelect({ limit: 0 });
+
+    // Act
+    const result = dialect.compileSelect(node);
+
+    // Assert
+    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" LIMIT $1");
+    assert.deepEqual(result.params, [0]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// compileSelect: multiple ORDER BY preserves insertion order
+// ---------------------------------------------------------------------------
+
+describe("compileSelect: multiple ORDER BY order", () => {
+  it("emits ORDER BY clauses in the order they were added", () => {
+    // Arrange
+    const node = makeSelect({
+      orderBy: [
+        { column: "name", direction: "asc" },
+        { column: "createdAt", direction: "desc" },
+        { column: "id", direction: "asc" },
+      ],
+    });
+
+    // Act
+    const result = dialect.compileSelect(node);
+
+    // Assert — three clauses in declaration order
+    assert.equal(
+      result.sql,
+      "SELECT \"users\".* FROM \"users\" ORDER BY \"users\".\"name\" ASC, \"users\".\"created_at\" DESC, \"users\".\"id\" ASC",
+    );
   });
 });
 
