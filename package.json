@@ -1,0 +1,71 @@
+{
+  "name": "@igorjs/pure-orm",
+  "version": "0.1.0",
+  "description": "Functional-first, type-safe ORM built on @igorjs/pure-ts. Pure query composition, PostgreSQL dialect, Lambda-ready connections. Zero dependencies.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "check": "tsgo --noEmit",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "format": "biome format --write",
+    "build": "rm -rf dist && tsgo",
+    "test": "node --experimental-strip-types --no-warnings --test 'tests/**/*.test.ts'",
+    "test:types": "tsgo -p tsconfig.test.json",
+    "prepublishOnly": "pnpm run lint && pnpm run check && pnpm run build && pnpm test && pnpm run test:types"
+  },
+  "keywords": [
+    "orm",
+    "functional",
+    "typescript",
+    "postgresql",
+    "query-builder",
+    "type-safe",
+    "immutable",
+    "lambda",
+    "serverless",
+    "zero-dependency",
+    "pipe",
+    "ast"
+  ],
+  "author": "igorjs <oss@mail.igorjs.io>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/igorjs/pure-orm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/igorjs/pure-orm/issues"
+  },
+  "homepage": "https://github.com/igorjs/pure-orm#readme",
+  "devDependencies": {
+    "@biomejs/biome": "2.4.7",
+    "@typescript/native-preview": "latest"
+  },
+  "peerDependencies": {
+    "@igorjs/pure-ts": "^0.2.5",
+    "typescript": ">=5.5.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  }
+}

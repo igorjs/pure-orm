@@ -1,0 +1,115 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.7/schema.json",
+  "files": {
+    "includes": ["src/**", "tests/**"]
+  },
+  "formatter": {
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "trailingCommas": "all",
+      "semicolons": "always",
+      "arrowParentheses": "asNeeded"
+    }
+  },
+  "linter": {
+    "rules": {
+      "recommended": true,
+      "complexity": {
+        "recommended": true,
+        "useLiteralKeys": "off",
+        "noExcessiveCognitiveComplexity": "error"
+      },
+      "correctness": {
+        "recommended": true,
+        "noUnusedVariables": "off",
+        "noNodejsModules": "off",
+        "noUndeclaredDependencies": "off"
+      },
+      "performance": { "recommended": true },
+      "security": { "recommended": true },
+      "style": {
+        "recommended": true,
+        "noNonNullAssertion": "error",
+        "noParameterAssign": "off",
+        "useNamingConvention": "off",
+        "noDefaultExport": "error",
+        "useFilenamingConvention": "off",
+        "useExplicitLengthCheck": "error",
+        "useForOf": "error",
+        "useShorthandAssign": "error",
+        "useConsistentBuiltinInstantiation": "error",
+        "useThrowOnlyError": "error",
+        "useCollapsedElseIf": "error",
+        "noRestrictedTypes": "error"
+      },
+      "suspicious": {
+        "recommended": true,
+        "noAssignInExpressions": "off",
+        "noExplicitAny": "error",
+        "noConsole": "error",
+        "noEmptyBlockStatements": "error",
+        "noThenProperty": "error",
+        "useAwait": "off"
+      },
+      "nursery": {
+        "recommended": true,
+        "noShadow": "off",
+        "noTernary": "off",
+        "noContinue": "off",
+        "noIncrementDecrement": "off",
+        "noTopLevelLiterals": "off",
+        "useExplicitType": "off",
+        "noEqualsToNull": "error",
+        "noForIn": "error",
+        "noMultiAssign": "error",
+        "noMultiStr": "error",
+        "noProto": "error",
+        "noReturnAssign": "error",
+        "noUselessReturn": "error",
+        "useArraySome": "error",
+        "useArraySortCompare": "error",
+        "useDestructuring": "off",
+        "useImportsFirst": "error",
+        "useNullishCoalescing": "off",
+        "useSpread": "error",
+        "noExcessiveClassesPerFile": "off",
+        "noExcessiveLinesPerFile": "off",
+        "noScriptUrl": "error",
+        "noFloatingPromises": "error",
+        "noMisusedPromises": "error",
+        "noNestedPromises": "off",
+        "noParametersOnlyUsedInRecursion": "error",
+        "noRootType": "off",
+        "useConsistentMethodSignatures": "off",
+        "useErrorCause": "off",
+        "useExhaustiveSwitchCases": "off",
+        "useFind": "error",
+        "useGlobalThis": "off",
+        "useRegexpExec": "error",
+        "noUndeclaredEnvVars": "off",
+        "noUnnecessaryConditions": "off",
+        "noDuplicatedSpreadProps": "error"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["tests/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          },
+          "nursery": {
+            "noShadow": "off"
+          }
+        }
+      }
+    }
+  ]
+}
