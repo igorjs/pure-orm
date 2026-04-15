@@ -48,6 +48,8 @@ type ModelRef = {
  * For each row:
  *   1. Build a lookup table: columnName (snake_case) -> name (camelCase)
  *      using the model's column metadata as the authoritative source.
+ *      When modelRef is null (e.g. RawNode), the lookup is empty and
+ *      snakeToCamel() is used for all keys.
  *   2. For every key in the raw row, resolve the camelCase name from the
  *      lookup; fall back to snakeToCamel() for columns not in the model.
  *   3. Wrap the remapped plain object in Record() for immutability.
@@ -58,16 +60,20 @@ type ModelRef = {
  */
 const mapRows = <T>(
   rows: readonly unknown[],
-  modelRef: ModelRef,
+  modelRef: ModelRef | null,
 ): ImmutableList<ImmutableRecord<T>> => {
   if (rows.length === 0) {
     return List<ImmutableRecord<T>>([]);
   }
 
   // Build the columnName -> fieldName lookup once per call (not per row).
+  // When modelRef is null (RawNode), the map is empty and all keys fall
+  // through to the snakeToCamel fallback.
   const columnToField = new Map<string, string>();
-  for (const col of modelRef.columns) {
-    columnToField.set(col.columnName, col.name);
+  if (modelRef !== null) {
+    for (const col of modelRef.columns) {
+      columnToField.set(col.columnName, col.name);
+    }
   }
 
   const mapped = rows.map((row) => {

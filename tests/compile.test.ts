@@ -1,7 +1,7 @@
 /**
  * Tests for src/execute/compile.ts
  *
- * Verifies that compile() correctly translates SelectNode ASTs into SQL
+ * Verifies that compile() correctly translates all QueryNode ASTs into SQL
  * using the registered PostgreSQL dialect, defaults the dialect name when
  * omitted, and throws for unknown dialects.
  */
@@ -16,6 +16,7 @@ import { Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";
 import { from, where } from "../src/query/builders.ts";
 import { eq } from "../src/query/conditions.ts";
+import { insert, remove, update } from "../src/query/mutations.ts";
 
 // ---------------------------------------------------------------------------
 // Test model
@@ -126,40 +127,75 @@ describe("compile(): throws for an unknown dialect", () => {
 });
 
 // ---------------------------------------------------------------------------
-// compile() — unsupported node types throw
+// compile() — mutation nodes
 // ---------------------------------------------------------------------------
 
-describe("compile(): throws for unsupported Phase 1 node types", () => {
-  it("throws for an InsertNode", () => {
+describe("compile(): InsertNode produces SQL", () => {
+  it("produces an INSERT SQL string from insert()", () => {
     // Arrange
-    const insertNode = Object.freeze({ tag: "Insert" as const });
+    const node = insert(UserModel, { name: "Alice", email: "alice@example.com" });
 
-    // Act + Assert
-    assert.throws(
-      () => compile(insertNode),
-      /not implemented in Phase 1/,
-    );
+    // Act
+    const result = compile(node);
+
+    // Assert
+    assert.ok(result.sql.startsWith("INSERT INTO"));
+    assert.ok(result.sql.includes("\"users\""));
+    assert.ok(result.params.length > 0);
+  });
+});
+
+describe("compile(): UpdateNode produces SQL", () => {
+  it("produces an UPDATE SQL string from update()", () => {
+    // Arrange
+    const node = update(UserModel, { name: "Bob" });
+
+    // Act
+    const result = compile(node);
+
+    // Assert
+    assert.ok(result.sql.startsWith("UPDATE"));
+    assert.ok(result.sql.includes("\"users\""));
+    assert.ok(result.params.length > 0);
+  });
+});
+
+describe("compile(): DeleteNode produces SQL", () => {
+  it("produces a DELETE (or soft-delete UPDATE) SQL string from remove()", () => {
+    // Arrange
+    const node = remove(UserModel);
+
+    // Act
+    const result = compile(node);
+
+    // Assert — UserModel has softDelete, so this emits an UPDATE
+    assert.ok(result.sql.length > 0);
+    assert.ok(result.sql.includes("\"users\""));
+  });
+});
+
+describe("compile(): RawNode passes through", () => {
+  it("returns the raw SQL and params unchanged", () => {
+    // Arrange
+    const rawNode = Object.freeze({ tag: "Raw" as const, sql: "SELECT 1 + $1", params: [1] });
+
+    // Act
+    const result = compile(rawNode);
+
+    // Assert
+    assert.equal(result.sql, "SELECT 1 + $1");
+    assert.deepEqual(result.params, [1]);
   });
 
-  it("throws for an UpdateNode", () => {
+  it("works with empty params", () => {
     // Arrange
-    const updateNode = Object.freeze({ tag: "Update" as const });
+    const rawNode = Object.freeze({ tag: "Raw" as const, sql: "SELECT NOW()", params: [] });
 
-    // Act + Assert
-    assert.throws(
-      () => compile(updateNode),
-      /not implemented in Phase 1/,
-    );
-  });
+    // Act
+    const result = compile(rawNode);
 
-  it("throws for a RawNode", () => {
-    // Arrange
-    const rawNode = Object.freeze({ tag: "Raw" as const, sql: "SELECT 1", params: [] });
-
-    // Act + Assert
-    assert.throws(
-      () => compile(rawNode),
-      /not implemented in Phase 1/,
-    );
+    // Assert
+    assert.equal(result.sql, "SELECT NOW()");
+    assert.deepEqual(result.params, []);
   });
 });

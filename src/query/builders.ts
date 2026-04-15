@@ -18,7 +18,7 @@
  */
 
 import type { Model } from "../model/define.ts";
-import type { ConditionNode, OrderByClause, SelectNode, SortDirection } from "./types.ts";
+import type { ConditionNode, DeleteNode, OrderByClause, SelectNode, SortDirection, UpdateNode } from "./types.ts";
 
 /**
  * Lifts a Model into the initial SelectNode with all defaults applied.
@@ -59,9 +59,14 @@ const select = (...columns: string[]) => (node: SelectNode): SelectNode =>
  * Multiple where() calls accumulate: each invocation adds to the existing
  * list rather than replacing it, so the dialect compiles them as
  * condition1 AND condition2 AND … .
+ *
+ * Accepts SelectNode, UpdateNode, and DeleteNode — any node that carries
+ * a conditions array. The generic preserves the exact input type so the
+ * caller never loses type information through a pipe.
  */
-const where = (condition: ConditionNode) => (node: SelectNode): SelectNode =>
-  Object.freeze({ ...node, conditions: Object.freeze([...node.conditions, condition]) });
+type HasConditions = SelectNode | UpdateNode | DeleteNode;
+const where = (condition: ConditionNode) => <N extends HasConditions>(node: N): N =>
+  Object.freeze({ ...node, conditions: Object.freeze([...node.conditions, condition]) }) as N;
 
 /**
  * Appends an ORDER BY clause, accumulating across multiple calls.
@@ -87,4 +92,5 @@ const limit = (n: number) => (node: SelectNode): SelectNode => Object.freeze({ .
  */
 const offset = (n: number) => (node: SelectNode): SelectNode => Object.freeze({ ...node, offset: n });
 
+export type { HasConditions };
 export { from, limit, offset, orderBy, select, where };

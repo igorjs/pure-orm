@@ -18,13 +18,61 @@ import type { DbError } from "../errors/errors.ts";
 import { queryError } from "../errors/errors.ts";
 import { dispatchHook } from "../logging/hooks.ts";
 import { startTimer } from "../logging/timing.ts";
+import type { ModelRef } from "../model/types.ts";
 import type { QueryNode, SelectNode } from "../query/types.ts";
 import { mapRows } from "./result-mapper.ts";
+
+// ---- Helpers ----
+
+/**
+ * Compile any QueryNode to SQL + params using the dialect on the DatabaseClient.
+ *
+ * Using db.dialect directly (rather than the compile() registry helper) lets
+ * test doubles swap the dialect without touching the global registry.
+ */
+const compileNode = (
+  db: DatabaseClient,
+  node: QueryNode,
+): { readonly sql: string; readonly params: readonly unknown[] } => {
+  switch (node.tag) {
+    case "Select":
+      return db.dialect.compileSelect(node);
+    case "Insert":
+      return db.dialect.compileInsert(node);
+    case "Update":
+      return db.dialect.compileUpdate(node);
+    case "Delete":
+      return db.dialect.compileDelete(node);
+    case "Raw":
+      return { sql: node.sql, params: node.params };
+  }
+};
+
+/**
+ * Extract the ModelRef from a QueryNode for result mapping.
+ *
+ * Returns null for RawNode — column name remapping is skipped and
+ * snakeToCamel() is used as the sole mapping strategy instead.
+ */
+const getModelRef = (node: QueryNode): ModelRef | null => {
+  switch (node.tag) {
+    case "Select":
+      return node.model;
+    case "Insert":
+      return node.model;
+    case "Update":
+      return node.model;
+    case "Delete":
+      return node.model;
+    case "Raw":
+      return null;
+  }
+};
 
 // ---- execute ----
 
 /**
- * Terminal pipe stage: executes a SelectNode and returns all matching rows.
+ * Terminal pipe stage: executes any QueryNode and returns all matching rows.
  *
  * The returned Task is lazy — nothing happens until .run() is called.
  * Lifecycle hooks (beforeCompile, afterCompile, beforeExecute, afterExecute)
@@ -32,30 +80,20 @@ import { mapRows } from "./result-mapper.ts";
  *
  * The connection is acquired from the pool and always released in a
  * try/finally block, even when the query throws.
+ *
+ * For InsertNode/UpdateNode/DeleteNode, returned rows (from RETURNING clauses)
+ * are mapped through the model's column metadata exactly as for SelectNode.
+ * When the node has no RETURNING clause the database returns an empty rows
+ * array; execute() wraps that in an empty List.
  */
 const execute = <T>(
   db: DatabaseClient,
 ) =>
 (node: QueryNode): Task<ImmutableList<ImmutableRecord<T>>, DbError> =>
   Task<ImmutableList<ImmutableRecord<T>>, DbError>(async () => {
-    // Phase 1: SelectNode only. The dialect lives on DatabaseClient so we
-    // use it directly rather than going through the compile() helper, which
-    // lets the test double swap the dialect without touching the registry.
-    if (node.tag !== "Select") {
-      return Err(
-        queryError(
-          `execute: node type "${node.tag}" is not supported in Phase 1`,
-          "",
-          [],
-        ),
-      );
-    }
+    dispatchHook(db.hooks, "beforeCompile", node as SelectNode);
 
-    const selectNode = node as SelectNode;
-
-    dispatchHook(db.hooks, "beforeCompile", selectNode);
-
-    const compiled = db.dialect.compileSelect(selectNode);
+    const compiled = compileNode(db, node);
 
     dispatchHook(db.hooks, "afterCompile", compiled);
     dispatchHook(db.hooks, "beforeExecute", compiled);
@@ -81,7 +119,8 @@ const execute = <T>(
         durationMs,
       });
 
-      const mappedResults = mapRows<T>(rows, selectNode.model);
+      const modelRef = getModelRef(node);
+      const mappedResults = mapRows<T>(rows, modelRef);
       return Ok(mappedResults);
     } catch (cause: unknown) {
       const durationMs = timer();
@@ -113,36 +152,32 @@ const execute = <T>(
 // ---- findOne ----
 
 /**
- * Terminal pipe stage: executes a SelectNode and returns the first row.
+ * Terminal pipe stage: executes a QueryNode and returns the first row.
  *
- * Injects LIMIT 1 if the node does not already have a limit set, to avoid
- * fetching more rows than necessary. Returns Some(record) for a non-empty
- * result, or None when the query matches nothing.
+ * For SelectNode: injects LIMIT 1 when the node does not already have a
+ * limit set, to avoid fetching more rows than necessary.
+ * For InsertNode with RETURNING: returns the first returned row, which is
+ * the canonical pattern for "insert and get back the created record".
+ * For UpdateNode/DeleteNode with RETURNING: returns the first affected row.
+ *
+ * Returns Some(record) for a non-empty result, or None when the query
+ * matches nothing or the mutation affected zero rows.
  */
 const findOne = <T>(
   db: DatabaseClient,
 ) =>
 (node: QueryNode): Task<Option<ImmutableRecord<T>>, DbError> =>
   Task<Option<ImmutableRecord<T>>, DbError>(async () => {
-    if (node.tag !== "Select") {
-      return Err(
-        queryError(
-          `findOne: node type "${node.tag}" is not supported in Phase 1`,
-          "",
-          [],
-        ),
-      );
-    }
-
-    // Apply LIMIT 1 only when the caller has not already set a limit,
-    // so explicit pagination isn't silently overridden.
-    const selectNode: SelectNode = node.limit === null
+    // Apply LIMIT 1 only for SelectNode when the caller has not already set a
+    // limit, so explicit pagination isn't silently overridden. Mutation nodes
+    // do not support LIMIT — the first row is chosen from the returned rows.
+    const effectiveNode: QueryNode = node.tag === "Select" && node.limit === null
       ? Object.freeze({ ...node, limit: 1 })
       : node;
 
-    dispatchHook(db.hooks, "beforeCompile", selectNode);
+    dispatchHook(db.hooks, "beforeCompile", effectiveNode as SelectNode);
 
-    const compiled = db.dialect.compileSelect(selectNode);
+    const compiled = compileNode(db, effectiveNode);
 
     dispatchHook(db.hooks, "afterCompile", compiled);
     dispatchHook(db.hooks, "beforeExecute", compiled);
@@ -171,7 +206,8 @@ const findOne = <T>(
         return Ok(None as Option<ImmutableRecord<T>>);
       }
 
-      const mapped = mapRows<T>(rows, selectNode.model);
+      const modelRef = getModelRef(effectiveNode);
+      const mapped = mapRows<T>(rows, modelRef);
       const first = mapped.first();
 
       // first() returns Option<ImmutableRecord<T>>; the list is non-empty so

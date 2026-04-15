@@ -74,10 +74,49 @@ type SelectNode = {
   readonly softDeleteFilter: boolean;
 };
 
-/** Placeholder for Phase 2 mutation nodes. */
-type InsertNode = { readonly tag: "Insert" };
-type UpdateNode = { readonly tag: "Update" };
-type DeleteNode = { readonly tag: "Delete" };
+// ---- Returning clause ----
+
+/**
+ * Columns to return after a mutation. null means no RETURNING clause,
+ * "*" returns all columns, string[] returns specific columns.
+ */
+type ReturningClause = readonly string[] | "*" | null;
+
+// ---- On conflict (upsert) ----
+
+type OnConflictClause = {
+  readonly columns: readonly string[];
+  readonly action: "nothing" | { readonly update: readonly string[] };
+};
+
+// ---- Mutation nodes ----
+
+type InsertNode = {
+  readonly tag: "Insert";
+  readonly model: ModelRef;
+  readonly rows: readonly Readonly<Record<string, unknown>>[];
+  readonly returning: ReturningClause;
+  readonly onConflict: OnConflictClause | null;
+};
+
+type UpdateNode = {
+  readonly tag: "Update";
+  readonly model: ModelRef;
+  readonly values: Readonly<Record<string, unknown>>;
+  readonly conditions: readonly ConditionNode[];
+  readonly returning: ReturningClause;
+  readonly softDeleteFilter: boolean;
+};
+
+type DeleteNode = {
+  readonly tag: "Delete";
+  readonly model: ModelRef;
+  readonly conditions: readonly ConditionNode[];
+  readonly returning: ReturningClause;
+  readonly isSoftDelete: boolean;
+  readonly softDeleteFilter: boolean;
+};
+
 type RawNode = { readonly tag: "Raw"; readonly sql: string; readonly params: readonly unknown[] };
 
 type QueryNode = SelectNode | InsertNode | UpdateNode | DeleteNode | RawNode;
@@ -108,10 +147,12 @@ export type {
   LtNode,
   NeNode,
   NotNode,
+  OnConflictClause,
   OrderByClause,
   OrNode,
   QueryNode,
   RawNode,
+  ReturningClause,
   SelectNode,
   SortDirection,
   UpdateNode,

@@ -9,15 +9,17 @@
  *   - Parameters use ? (no index) rather than $1, $2, ...
  *   - ILIKE is compiled as LIKE (SQLite LIKE is case-insensitive for ASCII by default)
  *   - Type mapping: number -> REAL, boolean -> INTEGER (SQLite has no native BOOLEAN)
+ *   - Current timestamp expression is datetime('now') instead of NOW()
  *
  * The dialect is stateless: all mutable state (parameter accumulation) lives
- * inside each compileSelect call so concurrent compilations never interfere.
+ * inside each compile* call so concurrent compilations never interfere.
  */
 
 import type { FieldConfig } from "../model/types.ts";
-import type { CompiledQuery, ConditionNode, SelectNode } from "../query/types.ts";
+import type { CompiledQuery, ConditionNode, DeleteNode, InsertNode, SelectNode, UpdateNode } from "../query/types.ts";
 import type { Dialect } from "./dialect.ts";
-import { quote, resolveColumnName } from "./shared.ts";
+import type { MutationCtx } from "./shared.ts";
+import { compileDeleteShared, compileInsertShared, compileUpdateShared, quote, resolveColumnName } from "./shared.ts";
 
 // ---- Parameter placeholder ----
 
@@ -33,12 +35,25 @@ const mapFieldType = (schemaType: string, _config: Readonly<FieldConfig>): strin
   return "TEXT";
 };
 
+// ---- Dialect config for shared mutation compiler ----
+
+// Anonymous ? placeholders — counter is unused but kept for interface compatibility.
+const sqliteAddParam = (params: unknown[], _counter: { index: number }, value: unknown): string => {
+  params.push(value);
+  return "?";
+};
+
+const sqliteDialectConfig = Object.freeze({
+  addParam: sqliteAddParam,
+  nowExpression: "datetime('now')",
+});
+
 // ---- Compile context ----
 
 type CompileCtx = {
   readonly tableName: string;
   readonly columns: SelectNode["model"]["columns"];
-  // Mutable params array shared across recursive calls within one compileSelect.
+  // Mutable params array shared across recursive calls within one compile call.
   readonly params: unknown[];
 };
 
@@ -55,7 +70,11 @@ const quotedCol = (ctx: CompileCtx, field: string): string => {
 
 // ---- Condition compilation ----
 
-const compileCondition = (node: ConditionNode, ctx: CompileCtx): string => {
+// compileCondition accepts MutationCtx so it can be passed to the shared
+// mutation compilers without a separate adapter. MutationCtx is structurally
+// compatible with CompileCtx — the extra counter field is simply not used
+// by SQLite (anonymous placeholders don't need an index).
+const compileCondition = (node: ConditionNode, ctx: MutationCtx): string => {
   switch (node.tag) {
     case "Eq":
       return `${quotedCol(ctx, node.column)} = ${addParam(ctx, node.value)}`;
@@ -123,10 +142,13 @@ const compileCondition = (node: ConditionNode, ctx: CompileCtx): string => {
 
 const compileSelect = (node: SelectNode): CompiledQuery => {
   const tableName = node.model.name;
-  const ctx: CompileCtx = {
+  // MutationCtx is used directly so compileCondition can be shared.
+  const ctx: MutationCtx = {
     tableName,
     columns: node.model.columns,
+    counter: { index: 1 },
     params: [],
+    dialectConfig: sqliteDialectConfig,
   };
 
   // SELECT clause
@@ -171,12 +193,49 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
   return Object.freeze({ sql, params: Object.freeze([...ctx.params]) });
 };
 
+// ---- Mutation helpers ----
+
+const makeMutationCtx = (node: { model: { name: string; columns: SelectNode["model"]["columns"] } }): MutationCtx => ({
+  tableName: node.model.name,
+  columns: node.model.columns,
+  counter: { index: 1 },
+  params: [],
+  dialectConfig: sqliteDialectConfig,
+});
+
+// ---- INSERT compilation ----
+
+const compileInsert = (node: InsertNode): CompiledQuery => {
+  const ctx = makeMutationCtx(node);
+  const sql = compileInsertShared(node, ctx);
+  return Object.freeze({ sql, params: Object.freeze([...ctx.params]) });
+};
+
+// ---- UPDATE compilation ----
+
+const compileUpdate = (node: UpdateNode): CompiledQuery => {
+  const ctx = makeMutationCtx(node);
+  const sql = compileUpdateShared(node, ctx, compileCondition);
+  return Object.freeze({ sql, params: Object.freeze([...ctx.params]) });
+};
+
+// ---- DELETE compilation ----
+
+const compileDelete = (node: DeleteNode): CompiledQuery => {
+  const ctx = makeMutationCtx(node);
+  const sql = compileDeleteShared(node, ctx, compileCondition);
+  return Object.freeze({ sql, params: Object.freeze([...ctx.params]) });
+};
+
 // ---- Dialect factory ----
 
 const createSqliteDialect = (): Dialect =>
   Object.freeze({
     name: "sqlite",
     compileSelect,
+    compileInsert,
+    compileUpdate,
+    compileDelete,
     param,
     quote,
     mapFieldType,

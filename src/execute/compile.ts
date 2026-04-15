@@ -6,8 +6,9 @@
  * SQL generation to the dialect layer, keeping the core free of database-
  * specific concerns.
  *
- * Unsupported node types (Insert, Update, Delete, Raw) throw immediately
- * because they represent programmer errors in Phase 1, not runtime failures.
+ * All QueryNode types are supported: Select, Insert, Update, Delete, and Raw.
+ * Raw nodes are passed through as-is — their sql and params fields are already
+ * concrete SQL.
  */
 
 import { resolveDialect } from "../dialect/registry.ts";
@@ -16,10 +17,9 @@ import type { CompiledQuery, QueryNode } from "../query/types.ts";
 /**
  * Compile a QueryNode into a SQL string and parameter list.
  *
- * Throws if the requested dialect is not registered, or if the node type
- * is not supported in the current phase. Both cases are programmer errors
- * (wrong config / calling mutation APIs too early) rather than runtime
- * failures, so throwing is the correct signal.
+ * Throws if the requested dialect is not registered — this is a programmer
+ * error (wrong config) rather than a runtime failure, so throwing is the
+ * correct signal.
  */
 const compile = (node: QueryNode, dialectName = "postgresql"): CompiledQuery => {
   const result = resolveDialect(dialectName);
@@ -33,13 +33,18 @@ const compile = (node: QueryNode, dialectName = "postgresql"): CompiledQuery => 
 
   const dialect = result.value;
 
-  if (node.tag === "Select") {
-    return dialect.compileSelect(node);
+  switch (node.tag) {
+    case "Select":
+      return dialect.compileSelect(node);
+    case "Insert":
+      return dialect.compileInsert(node);
+    case "Update":
+      return dialect.compileUpdate(node);
+    case "Delete":
+      return dialect.compileDelete(node);
+    case "Raw":
+      return { sql: node.sql, params: node.params };
   }
-
-  // Phase 1 only supports SELECT. Insert/Update/Delete/Raw will be added in
-  // Phase 2. Throwing here surfaces the error at call time, not at execution.
-  throw new Error(`compile: node type "${node.tag}" is not implemented in Phase 1`);
 };
 
 export { compile };

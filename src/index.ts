@@ -4,7 +4,7 @@
  * Functional-first, type-safe ORM built on @igorjs/pure-ts.
  * Pure query composition, PostgreSQL dialect, Lambda-ready connections.
  *
- * Phase 1 public API -- foundation layer.
+ * Phase 1 + Phase 2 public API -- foundation + mutation + transaction layer.
  */
 
 // ---- Errors ----
@@ -33,14 +33,19 @@ export { Field } from "./model/field.ts";
 export { injectTimestampColumns } from "./model/timestamps.ts";
 export type { ColumnMetadata, FieldConfig, FieldDef, FieldsRecord, ModelOptions, ModelRef } from "./model/types.ts";
 
-// ---- Query types (implementations added in WU-2, WU-3) ----
+// ---- Query types (implementations added in WU-2, WU-3, Phase 2) ----
 export type {
   CompiledQuery,
   ConditionNode,
+  DeleteNode,
+  InsertNode,
+  OnConflictClause,
   OrderByClause,
   QueryNode,
+  ReturningClause,
   SelectNode,
   SortDirection,
+  UpdateNode,
 } from "./query/types.ts";
 
 // ---- Dialect types (implementations added in WU-4) ----
@@ -81,6 +86,10 @@ export {
 
 // ---- Query builder functions (WU-3) ----
 export { from, limit, offset, orderBy, select, where } from "./query/builders.ts";
+export type { HasConditions } from "./query/builders.ts";
+
+// ---- Mutation builder functions (Phase 2) ----
+export { hardRemove, insert, insertMany, onConflict, remove, returning, update } from "./query/mutations.ts";
 
 // ---- Dialect implementations (WU-4) ----
 export { createPostgresDialect } from "./dialect/postgresql.ts";
@@ -101,3 +110,7 @@ export { mapRows, snakeToCamel } from "./execute/result-mapper.ts";
 export { Database } from "./connection/database.ts";
 export { createLambdaPool } from "./connection/lambda.ts";
 export { createPool } from "./connection/pool.ts";
+
+// ---- Transaction support (Phase 2) ----
+export { createTransactionClient, isTransactionClient, transaction } from "./connection/transaction.ts";
+export type { IsolationLevel, TransactionClient, TransactionOptions } from "./connection/transaction.ts";
