@@ -4,7 +4,7 @@
  * Functional-first, type-safe ORM built on @igorjs/pure-ts.
  * Pure query composition, PostgreSQL dialect, Lambda-ready connections.
  *
- * Phase 1-4 public API -- foundation, mutations, transactions, relations, joins, soft deletes, audit.
+ * Phase 1-5 public API -- foundation, mutations, transactions, relations, joins, soft deletes, audit, migrations.
  */
 
 // ---- Errors ----
@@ -138,3 +138,18 @@ export type { IsolationLevel, TransactionClient, TransactionOptions } from "./co
 export { auditLog } from "./audit/logger.ts";
 export { AuditModel } from "./audit/table.ts";
 export type { AuditContext, AuditEntry, AuditOperation } from "./audit/types.ts";
+
+// ---- Migration system (Phase 5) ----
+export { columnsEqual, diffSnapshots, diffTable } from "./migration/differ.ts";
+export { generateDown, generateMigration, generateUp } from "./migration/generator.ts";
+export { createSnapshot, snapshotColumn, snapshotTable } from "./migration/snapshot.ts";
+export { MigrationModel } from "./migration/state.ts";
+export type {
+  ChangeOperation,
+  ColumnSnapshot,
+  ForeignKeySnapshot,
+  IndexSnapshot,
+  MigrationRecord,
+  SchemaSnapshot,
+  TableSnapshot,
+} from "./migration/types.ts";
