@@ -130,7 +130,7 @@ export { denseRank, rank, rowNumber } from "./query/window.ts";
 export type { WindowBuilder } from "./query/window.ts";
 
 // ---- CTE and subquery builders ----
-export { cte } from "./query/cte.ts";
+export { with } from "./query/cte.ts";
 export { exists, notExists } from "./query/subquery.ts";
 
 // ---- Soft delete query modifiers (Phase 4) ----

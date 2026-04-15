@@ -12,7 +12,7 @@ import { Field } from "../src/model/field.ts";
 import { count } from "../src/query/aggregates.ts";
 import { from, groupBy, select, where } from "../src/query/builders.ts";
 import { eq } from "../src/query/conditions.ts";
-import { cte } from "../src/query/cte.ts";
+import { with as cte } from "../src/query/cte.ts";
 import { exists, notExists } from "../src/query/subquery.ts";
 
 // ---- Test models ----
