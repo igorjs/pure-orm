@@ -49,11 +49,14 @@ export type {
   AggregateFn,
   CompiledQuery,
   ConditionNode,
+  CteClause,
   DeleteNode,
+  ExistsNode,
   InsertNode,
   JoinClause,
   JoinCondition,
   JoinType,
+  NotExistsNode,
   OnConflictClause,
   OrderByClause,
   QueryNode,
@@ -117,6 +120,10 @@ export { include } from "./query/include.ts";
 // ---- Aggregate functions ----
 export { avg, count, max, min, sum } from "./query/aggregates.ts";
 export type { AggregateBuilder } from "./query/aggregates.ts";
+
+// ---- CTE and subquery builders ----
+export { cte } from "./query/cte.ts";
+export { exists, notExists } from "./query/subquery.ts";
 
 // ---- Soft delete query modifiers (Phase 4) ----
 export { onlyDeleted, withDeleted } from "./query/soft-delete.ts";

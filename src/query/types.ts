@@ -50,7 +50,9 @@ type ConditionNode =
   | BetweenNode
   | NotNode
   | AndNode
-  | OrNode;
+  | OrNode
+  | ExistsNode
+  | NotExistsNode;
 
 // ---- Order by ----
 
@@ -97,6 +99,18 @@ type AggregateExpr = {
 /** A select column is either a plain field name or an aggregate expression. */
 type SelectColumn = string | AggregateExpr;
 
+// ---- CTE (Common Table Expression) ----
+
+type CteClause = {
+  readonly name: string;
+  readonly query: SelectNode;
+};
+
+// ---- Subquery conditions ----
+
+type ExistsNode = { readonly tag: "Exists"; readonly query: SelectNode };
+type NotExistsNode = { readonly tag: "NotExists"; readonly query: SelectNode };
+
 // ---- Query nodes ----
 
 type SelectNode = {
@@ -105,6 +119,7 @@ type SelectNode = {
   readonly columns: readonly SelectColumn[] | "*";
   readonly conditions: readonly ConditionNode[];
   readonly joins: readonly JoinClause[];
+  readonly ctes: readonly CteClause[];
   readonly groupBy: readonly string[];
   readonly having: readonly ConditionNode[];
   readonly orderBy: readonly OrderByClause[];
@@ -174,8 +189,10 @@ export type {
   BetweenNode,
   CompiledQuery,
   ConditionNode,
+  CteClause,
   DeleteNode,
   EqNode,
+  ExistsNode,
   GteNode,
   GtNode,
   ILikeNode,
@@ -190,6 +207,7 @@ export type {
   LteNode,
   LtNode,
   NeNode,
+  NotExistsNode,
   NotNode,
   OnConflictClause,
   OrderByClause,

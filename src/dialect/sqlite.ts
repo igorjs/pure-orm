@@ -143,6 +143,18 @@ const compileCondition = (node: ConditionNode, ctx: MutationCtx): string => {
       const parts = node.conditions.map((c) => compileCondition(c, ctx));
       return `(${parts.join(" OR ")})`;
     }
+
+    case "Exists": {
+      const sub = compileSelect(node.query);
+      for (const p of sub.params) addParam(ctx, p);
+      return `EXISTS (${sub.sql})`;
+    }
+
+    case "NotExists": {
+      const sub = compileSelect(node.query);
+      for (const p of sub.params) addParam(ctx, p);
+      return `NOT EXISTS (${sub.sql})`;
+    }
   }
 };
 
@@ -169,6 +181,17 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
     selectClause = `SELECT ${
       node.columns.map((col) => compileSelectColumn(col, tableName, node.model.columns)).join(", ")
     }`;
+  }
+
+  // CTE (WITH) clause: compiled FIRST so CTE params precede main query params.
+  let ctePrefix = "";
+  if (node.ctes.length > 0) {
+    const cteParts = node.ctes.map((c) => {
+      const sub = compileSelect(c.query);
+      for (const p of sub.params) addParam(ctx, p);
+      return `${quote(c.name)} AS (${sub.sql})`;
+    });
+    ctePrefix = `WITH ${cteParts.join(", ")} `;
   }
 
   // FROM clause
@@ -216,7 +239,7 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
   const limitClause = node.limit !== null ? `LIMIT ${addParam(ctx, node.limit)}` : "";
   const offsetClause = node.offset !== null ? `OFFSET ${addParam(ctx, node.offset)}` : "";
 
-  const sql = [
+  const mainSql = [
     selectClause,
     fromClause,
     ...joinClauses,
@@ -229,7 +252,7 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
   ].filter((part) => part.length > 0)
     .join(" ");
 
-  return Object.freeze({ sql, params: Object.freeze([...ctx.params]) });
+  return Object.freeze({ sql: `${ctePrefix}${mainSql}`, params: Object.freeze([...ctx.params]) });
 };
 
 // ---- Mutation helpers ----

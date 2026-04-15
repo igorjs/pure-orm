@@ -140,6 +140,23 @@ const compileCondition = (node: ConditionNode, ctx: MutationCtx): string => {
       const parts = node.conditions.map((c) => compileCondition(c, ctx));
       return `(${parts.join(" OR ")})`;
     }
+
+    case "Exists": {
+      const sub = compileSelect(node.query);
+      // Rewrite $N placeholders to account for the outer query's param count.
+      const offset = ctx.counter.index - 1;
+      const rewritten = sub.sql.replace(/\$(\d+)/g, (_, n) => `$${Number(n) + offset}`);
+      for (const p of sub.params) addParam(ctx, p);
+      return `EXISTS (${rewritten})`;
+    }
+
+    case "NotExists": {
+      const sub = compileSelect(node.query);
+      const offset = ctx.counter.index - 1;
+      const rewritten = sub.sql.replace(/\$(\d+)/g, (_, n) => `$${Number(n) + offset}`);
+      for (const p of sub.params) addParam(ctx, p);
+      return `NOT EXISTS (${rewritten})`;
+    }
   }
 };
 
@@ -167,6 +184,19 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
     selectClause = `SELECT ${
       node.columns.map((col) => compileSelectColumn(col, tableName, node.model.columns)).join(", ")
     }`;
+  }
+
+  // CTE (WITH) clause: compiled FIRST so CTE params get the lowest $N indices.
+  let ctePrefix = "";
+  if (node.ctes.length > 0) {
+    const cteParts = node.ctes.map((c) => {
+      const sub = compileSelect(c.query);
+      const offset = ctx.counter.index - 1;
+      const rewritten = sub.sql.replace(/\$(\d+)/g, (_, n) => `$${Number(n) + offset}`);
+      for (const p of sub.params) addParam(ctx, p);
+      return `${quote(c.name)} AS (${rewritten})`;
+    });
+    ctePrefix = `WITH ${cteParts.join(", ")} `;
   }
 
   // FROM clause
@@ -214,7 +244,7 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
   const limitClause = node.limit !== null ? `LIMIT ${addParam(ctx, node.limit)}` : "";
   const offsetClause = node.offset !== null ? `OFFSET ${addParam(ctx, node.offset)}` : "";
 
-  const sql = [
+  const mainSql = [
     selectClause,
     fromClause,
     ...joinClauses,
@@ -227,7 +257,7 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
   ].filter((part) => part.length > 0)
     .join(" ");
 
-  return Object.freeze({ sql, params: Object.freeze([...ctx.params]) });
+  return Object.freeze({ sql: `${ctePrefix}${mainSql}`, params: Object.freeze([...ctx.params]) });
 };
 
 // ---- Mutation helpers ----

@@ -46,6 +46,7 @@ const makeSelect = (
     columns: "*",
     conditions: [],
     joins: [],
+    ctes: [],
     groupBy: [],
     having: [],
     orderBy: [],
