@@ -45,6 +45,7 @@ const makeSelect = (
     model: toModelRef(UserModel),
     columns: "*",
     conditions: [],
+    joins: [],
     orderBy: [],
     limit: null,
     offset: null,

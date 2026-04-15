@@ -353,6 +353,7 @@ describe("integration: cross-dialect query compilation", () => {
       model: toRef(Product),
       columns: "*" as const,
       conditions: overrides.conditions ?? [],
+      joins: [],
       orderBy: [],
       limit: overrides.limit ?? null,
       offset: overrides.offset ?? null,

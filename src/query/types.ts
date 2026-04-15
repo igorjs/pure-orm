@@ -61,6 +61,28 @@ type OrderByClause = {
   readonly direction: SortDirection;
 };
 
+// ---- Join ----
+
+type JoinType = "inner" | "left" | "right" | "full";
+
+/**
+ * A column-to-column equality condition for JOIN ... ON clauses.
+ *
+ * leftColumn is resolved from the source table (the one in `from()`) by
+ * default, or from a specific table when qualified as "TableName.field".
+ * rightColumn is always resolved from the joined table's model.
+ */
+type JoinCondition = {
+  readonly leftColumn: string;
+  readonly rightColumn: string;
+};
+
+type JoinClause = {
+  readonly model: ModelRef;
+  readonly joinType: JoinType;
+  readonly condition: JoinCondition;
+};
+
 // ---- Query nodes ----
 
 type SelectNode = {
@@ -68,6 +90,7 @@ type SelectNode = {
   readonly model: ModelRef;
   readonly columns: readonly string[] | "*";
   readonly conditions: readonly ConditionNode[];
+  readonly joins: readonly JoinClause[];
   readonly orderBy: readonly OrderByClause[];
   readonly limit: number | null;
   readonly offset: number | null;
@@ -142,6 +165,9 @@ export type {
   InsertNode,
   IsNotNullNode,
   IsNullNode,
+  JoinClause,
+  JoinCondition,
+  JoinType,
   LikeNode,
   LteNode,
   LtNode,

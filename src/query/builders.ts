@@ -37,6 +37,7 @@ const from = <T extends Record<string, unknown>>(model: Model<T>): SelectNode =>
     }),
     columns: "*",
     conditions: Object.freeze([]),
+    joins: Object.freeze([]),
     orderBy: Object.freeze([]),
     limit: null,
     offset: null,

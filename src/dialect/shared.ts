@@ -10,7 +10,16 @@
  */
 
 import type { ColumnMetadata } from "../model/types.ts";
-import type { ConditionNode, DeleteNode, InsertNode, ReturningClause, SelectNode, UpdateNode } from "../query/types.ts";
+import type {
+  ConditionNode,
+  DeleteNode,
+  InsertNode,
+  JoinClause,
+  JoinType,
+  ReturningClause,
+  SelectNode,
+  UpdateNode,
+} from "../query/types.ts";
 
 // ---- Identifier quoting ----
 
@@ -41,6 +50,78 @@ const resolveColumnName = (
   const meta = columns.find((col) => col.name === fieldName);
   return meta !== undefined ? meta.columnName : fieldName;
 };
+
+// ---- Join compilation ----
+
+const JOIN_TYPE_SQL: Readonly<Record<JoinType, string>> = Object.freeze({
+  inner: "INNER JOIN",
+  left: "LEFT JOIN",
+  right: "RIGHT JOIN",
+  full: "FULL JOIN",
+});
+
+/**
+ * Resolves the left side of a join condition to a quoted "table"."column"
+ * expression. If the field contains a dot qualifier (e.g. "User.roleId"),
+ * the qualifier names the source table; otherwise the main (from) table
+ * is used as the default.
+ */
+const resolveJoinLeft = (
+  field: string,
+  mainTable: string,
+  mainColumns: readonly ColumnMetadata[],
+  priorJoins: readonly JoinClause[],
+): string => {
+  if (field.includes(".")) {
+    const dotIndex = field.indexOf(".");
+    const tableName = field.slice(0, dotIndex);
+    const fieldName = field.slice(dotIndex + 1);
+
+    // Try main table first, then previously joined tables.
+    if (tableName === mainTable) {
+      return `${quote(mainTable)}.${quote(resolveColumnName(fieldName, mainColumns))}`;
+    }
+    const joined = priorJoins.find((j) => j.model.name === tableName);
+    if (joined !== undefined) {
+      return `${quote(tableName)}.${quote(resolveColumnName(fieldName, joined.model.columns))}`;
+    }
+    // Fallback: use the raw names.
+    return `${quote(tableName)}.${quote(fieldName)}`;
+  }
+  // Unqualified: resolve from main table.
+  return `${quote(mainTable)}.${quote(resolveColumnName(field, mainColumns))}`;
+};
+
+/**
+ * Compiles all JoinClause entries into their SQL fragments.
+ *
+ * Both PostgreSQL and SQLite use identical JOIN syntax so this is shared.
+ * Returns an array of strings like:
+ *   ["INNER JOIN \"users\" ON \"posts\".\"author_id\" = \"users\".\"id\""]
+ */
+const compileJoins = (
+  joins: readonly JoinClause[],
+  mainTable: string,
+  mainColumns: readonly ColumnMetadata[],
+): readonly string[] =>
+  joins.map((clause, index) => {
+    const keyword = JOIN_TYPE_SQL[clause.joinType];
+    const targetTable = clause.model.name;
+
+    // Left column: resolved from main table or a previously joined table.
+    const leftExpr = resolveJoinLeft(
+      clause.condition.leftColumn,
+      mainTable,
+      mainColumns,
+      joins.slice(0, index),
+    );
+
+    // Right column: always resolved from the target (joined) table.
+    const rightCol = resolveColumnName(clause.condition.rightColumn, clause.model.columns);
+    const rightExpr = `${quote(targetTable)}.${quote(rightCol)}`;
+
+    return `${keyword} ${quote(targetTable)} ON ${leftExpr} = ${rightExpr}`;
+  });
 
 // ---- Shared mutation compilation ----
 
@@ -228,6 +309,7 @@ export {
   buildWhereClause,
   compileDeleteShared,
   compileInsertShared,
+  compileJoins,
   compileUpdateShared,
   quote,
   resolveColumnName,

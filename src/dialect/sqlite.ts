@@ -19,7 +19,14 @@ import type { FieldConfig } from "../model/types.ts";
 import type { CompiledQuery, ConditionNode, DeleteNode, InsertNode, SelectNode, UpdateNode } from "../query/types.ts";
 import type { Dialect } from "./dialect.ts";
 import type { MutationCtx } from "./shared.ts";
-import { compileDeleteShared, compileInsertShared, compileUpdateShared, quote, resolveColumnName } from "./shared.ts";
+import {
+  compileDeleteShared,
+  compileInsertShared,
+  compileJoins,
+  compileUpdateShared,
+  quote,
+  resolveColumnName,
+} from "./shared.ts";
 
 // ---- Parameter placeholder ----
 
@@ -151,15 +158,23 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
     dialectConfig: sqliteDialectConfig,
   };
 
-  // SELECT clause
-  const selectClause = node.columns === "*"
-    ? `SELECT ${quote(tableName)}.*`
-    : `SELECT ${
+  // SELECT clause: when joins are present and select is "*", project from
+  // all tables to include columns from joined tables in the result.
+  let selectClause: string;
+  if (node.columns === "*") {
+    const tables = [quote(tableName), ...node.joins.map((j) => quote(j.model.name))];
+    selectClause = `SELECT ${tables.map((t) => `${t}.*`).join(", ")}`;
+  } else {
+    selectClause = `SELECT ${
       node.columns.map((col) => `${quote(tableName)}.${quote(resolveColumnName(col, node.model.columns))}`).join(", ")
     }`;
+  }
 
   // FROM clause
   const fromClause = `FROM ${quote(tableName)}`;
+
+  // JOIN clauses (between FROM and WHERE)
+  const joinClauses = compileJoins(node.joins, tableName, node.model.columns);
 
   // WHERE clause: user conditions + optional soft-delete filter
   const whereParts: string[] = node.conditions.map((c) => compileCondition(c, ctx));
@@ -186,7 +201,7 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
   const limitClause = node.limit !== null ? `LIMIT ${addParam(ctx, node.limit)}` : "";
   const offsetClause = node.offset !== null ? `OFFSET ${addParam(ctx, node.offset)}` : "";
 
-  const sql = [selectClause, fromClause, whereClause, orderByClause, limitClause, offsetClause]
+  const sql = [selectClause, fromClause, ...joinClauses, whereClause, orderByClause, limitClause, offsetClause]
     .filter((part) => part.length > 0)
     .join(" ");
 

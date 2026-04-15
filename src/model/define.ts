@@ -9,6 +9,7 @@
 
 import { Schema } from "@igorjs/pure-ts";
 import type { SchemaType } from "@igorjs/pure-ts";
+import type { RelationMap } from "./relations.ts";
 import { injectTimestampColumns } from "./timestamps.ts";
 import type { ColumnMetadata, FieldDef, FieldsRecord, ModelOptions } from "./types.ts";
 
@@ -26,6 +27,8 @@ interface Model<T extends Record<string, unknown> = Record<string, unknown>> {
   readonly $schema: SchemaType<T>;
   readonly $columns: readonly ColumnMetadata[];
   readonly $options: Readonly<ModelOptions>;
+  /** Lazily resolved relation map. Thunk avoids circular reference issues. */
+  readonly $relations: () => RelationMap;
   /** Phantom: full row type including timestamps and soft-delete fields. */
   readonly $type: T;
   /** Phantom: insert type (omits fields with defaults). */
@@ -81,9 +84,9 @@ type InferModelType<F extends FieldsRecord> = {
  */
 function Model<F extends FieldsRecord>(
   tableName: string,
-  config: { fields: F; options?: ModelOptions },
+  config: { fields: F; options?: ModelOptions; relations?: RelationMap | (() => RelationMap) },
 ): Model<InferModelType<F>> {
-  const { fields, options = {} } = config;
+  const { fields, options = {}, relations } = config;
 
   // Derive column metadata from each field definition.
   const fieldEntries = Object.entries(fields) as readonly [string, FieldDef][];
@@ -115,11 +118,21 @@ function Model<F extends FieldsRecord>(
   // The phantom type guarantee is upheld by the InferModelType mapped type above.
   const schema = Schema.object(schemaShape) as unknown as SchemaType<InferModelType<F>>;
 
+  // Normalise relations to a thunk. When the caller passes a plain object,
+  // wrap it in a function so $relations is always () => RelationMap.
+  const emptyRelations: RelationMap = Object.freeze({});
+  const relationsThunk: () => RelationMap = relations === undefined
+    ? () => emptyRelations
+    : typeof relations === "function"
+    ? relations
+    : () => relations;
+
   return Object.freeze<Model<InferModelType<F>>>({
     $name: tableName,
     $schema: schema,
     $columns: columns,
     $options: Object.freeze(options),
+    $relations: relationsThunk,
     // Phantom fields: present only at the type level for downstream inference.
     // The runtime value is undefined cast to the phantom type so no actual
     // memory is allocated beyond the undefined slot.
