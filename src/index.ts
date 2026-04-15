@@ -43,8 +43,10 @@ export { injectSoftDeleteColumn } from "./model/soft-delete.ts";
 export { injectTimestampColumns } from "./model/timestamps.ts";
 export type { ColumnMetadata, FieldConfig, FieldDef, FieldsRecord, ModelOptions, ModelRef } from "./model/types.ts";
 
-// ---- Query types (implementations added in WU-2, WU-3, Phase 2, Phase 3) ----
+// ---- Query types ----
 export type {
+  AggregateExpr,
+  AggregateFn,
   CompiledQuery,
   ConditionNode,
   DeleteNode,
@@ -55,7 +57,9 @@ export type {
   OnConflictClause,
   OrderByClause,
   QueryNode,
+  RawNode,
   ReturningClause,
+  SelectColumn,
   SelectNode,
   SortDirection,
   UpdateNode,
@@ -106,6 +110,13 @@ export { raw, sql } from "./query/raw.ts";
 
 // ---- Join builder functions (Phase 3) ----
 export { fullJoin, join, leftJoin, on, rightJoin } from "./query/joins.ts";
+
+// ---- Eager loading ----
+export { include } from "./query/include.ts";
+
+// ---- Aggregate functions ----
+export { avg, count, max, min, sum } from "./query/aggregates.ts";
+export type { AggregateBuilder } from "./query/aggregates.ts";
 
 // ---- Soft delete query modifiers (Phase 4) ----
 export { onlyDeleted, withDeleted } from "./query/soft-delete.ts";

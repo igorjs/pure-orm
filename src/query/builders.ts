@@ -18,7 +18,15 @@
  */
 
 import type { Model } from "../model/define.ts";
-import type { ConditionNode, DeleteNode, OrderByClause, SelectNode, SortDirection, UpdateNode } from "./types.ts";
+import type {
+  ConditionNode,
+  DeleteNode,
+  OrderByClause,
+  SelectColumn,
+  SelectNode,
+  SortDirection,
+  UpdateNode,
+} from "./types.ts";
 
 /**
  * Lifts a Model into the initial SelectNode with all defaults applied.
@@ -47,13 +55,16 @@ const from = <T extends Record<string, unknown>>(model: Model<T>): SelectNode =>
   });
 
 /**
- * Replaces the column projection with the provided set of column names.
+ * Replaces the column projection with the provided set of columns.
  *
- * Calling select() multiple times replaces the previous projection entirely.
- * To project all columns, simply omit select() from the pipeline (the default
- * produced by from() is already "*").
+ * Accepts plain field names (strings) and aggregate expressions (from
+ * count(), sum(), avg(), min(), max()). Calling select() multiple times
+ * replaces the previous projection entirely.
+ *
+ * To project all columns, simply omit select() from the pipeline (the
+ * default produced by from() is already "*").
  */
-const select = (...columns: string[]) => (node: SelectNode): SelectNode =>
+const select = (...columns: SelectColumn[]) => (node: SelectNode): SelectNode =>
   Object.freeze({ ...node, columns: Object.freeze([...columns]) });
 
 /**

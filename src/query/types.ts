@@ -83,12 +83,26 @@ type JoinClause = {
   readonly condition: JoinCondition;
 };
 
+// ---- Aggregate expressions ----
+
+type AggregateFn = "COUNT" | "SUM" | "AVG" | "MIN" | "MAX";
+
+type AggregateExpr = {
+  readonly tag: "Aggregate";
+  readonly fn: AggregateFn;
+  readonly column: string;
+  readonly alias: string | null;
+};
+
+/** A select column is either a plain field name or an aggregate expression. */
+type SelectColumn = string | AggregateExpr;
+
 // ---- Query nodes ----
 
 type SelectNode = {
   readonly tag: "Select";
   readonly model: ModelRef;
-  readonly columns: readonly string[] | "*";
+  readonly columns: readonly SelectColumn[] | "*";
   readonly conditions: readonly ConditionNode[];
   readonly joins: readonly JoinClause[];
   readonly groupBy: readonly string[];
@@ -154,6 +168,8 @@ type CompiledQuery = {
 };
 
 export type {
+  AggregateExpr,
+  AggregateFn,
   AndNode,
   BetweenNode,
   CompiledQuery,
@@ -181,6 +197,7 @@ export type {
   QueryNode,
   RawNode,
   ReturningClause,
+  SelectColumn,
   SelectNode,
   SortDirection,
   UpdateNode,

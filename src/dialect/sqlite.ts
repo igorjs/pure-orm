@@ -23,6 +23,7 @@ import {
   compileDeleteShared,
   compileInsertShared,
   compileJoins,
+  compileSelectColumn,
   compileUpdateShared,
   quote,
   resolveColumnName,
@@ -166,7 +167,7 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
     selectClause = `SELECT ${tables.map((t) => `${t}.*`).join(", ")}`;
   } else {
     selectClause = `SELECT ${
-      node.columns.map((col) => `${quote(tableName)}.${quote(resolveColumnName(col, node.model.columns))}`).join(", ")
+      node.columns.map((col) => compileSelectColumn(col, tableName, node.model.columns)).join(", ")
     }`;
   }
 

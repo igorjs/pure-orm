@@ -11,12 +11,14 @@
 
 import type { ColumnMetadata } from "../model/types.ts";
 import type {
+  AggregateExpr,
   ConditionNode,
   DeleteNode,
   InsertNode,
   JoinClause,
   JoinType,
   ReturningClause,
+  SelectColumn,
   SelectNode,
   UpdateNode,
 } from "../query/types.ts";
@@ -49,6 +51,28 @@ const resolveColumnName = (
 
   const meta = columns.find((col) => col.name === fieldName);
   return meta !== undefined ? meta.columnName : fieldName;
+};
+
+// ---- Select column compilation ----
+
+/**
+ * Compiles a single SelectColumn (plain field name or aggregate) into its
+ * SQL representation. Shared across dialects since both use the same syntax.
+ */
+const compileSelectColumn = (
+  col: SelectColumn,
+  tableName: string,
+  columns: readonly ColumnMetadata[],
+): string => {
+  if (typeof col === "string") {
+    return `${quote(tableName)}.${quote(resolveColumnName(col, columns))}`;
+  }
+  // AggregateExpr
+  const inner = col.column === "*"
+    ? "*"
+    : `${quote(tableName)}.${quote(resolveColumnName(col.column, columns))}`;
+  const expr = `${col.fn}(${inner})`;
+  return col.alias !== null ? `${expr} AS ${quote(col.alias)}` : expr;
 };
 
 // ---- Join compilation ----
@@ -310,6 +334,7 @@ export {
   compileDeleteShared,
   compileInsertShared,
   compileJoins,
+  compileSelectColumn,
   compileUpdateShared,
   quote,
   resolveColumnName,
