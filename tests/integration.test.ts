@@ -354,6 +354,8 @@ describe("integration: cross-dialect query compilation", () => {
       columns: "*" as const,
       conditions: overrides.conditions ?? [],
       joins: [],
+      groupBy: [],
+      having: [],
       orderBy: [],
       limit: overrides.limit ?? null,
       offset: overrides.offset ?? null,

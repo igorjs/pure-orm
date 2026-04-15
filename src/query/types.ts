@@ -91,6 +91,8 @@ type SelectNode = {
   readonly columns: readonly string[] | "*";
   readonly conditions: readonly ConditionNode[];
   readonly joins: readonly JoinClause[];
+  readonly groupBy: readonly string[];
+  readonly having: readonly ConditionNode[];
   readonly orderBy: readonly OrderByClause[];
   readonly limit: number | null;
   readonly offset: number | null;

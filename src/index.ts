@@ -4,7 +4,7 @@
  * Functional-first, type-safe ORM built on @igorjs/pure-ts.
  * Pure query composition, PostgreSQL dialect, Lambda-ready connections.
  *
- * Phase 1-5 public API -- foundation, mutations, transactions, relations, joins, soft deletes, audit, migrations.
+ * Phase 1-6 public API -- full query pipeline with groupBy, having, raw SQL, migrations.
  */
 
 // ---- Errors ----
@@ -97,9 +97,12 @@ export {
   or,
 } from "./query/conditions.ts";
 
-// ---- Query builder functions (WU-3) ----
-export { from, limit, offset, orderBy, select, where } from "./query/builders.ts";
+// ---- Query builder functions (WU-3 + Phase 6) ----
+export { from, groupBy, having, limit, offset, orderBy, select, where } from "./query/builders.ts";
 export type { HasConditions } from "./query/builders.ts";
+
+// ---- Raw SQL (Phase 6) ----
+export { raw, sql } from "./query/raw.ts";
 
 // ---- Join builder functions (Phase 3) ----
 export { fullJoin, join, leftJoin, on, rightJoin } from "./query/joins.ts";

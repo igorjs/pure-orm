@@ -183,6 +183,20 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
 
   const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(" AND ")}` : "";
 
+  // GROUP BY clause
+  const groupByClause = node.groupBy.length > 0
+    ? `GROUP BY ${
+      node.groupBy
+        .map((col) => `${quote(tableName)}.${quote(resolveColumnName(col, node.model.columns))}`)
+        .join(", ")
+    }`
+    : "";
+
+  // HAVING clause
+  const havingClause = node.having.length > 0
+    ? `HAVING ${node.having.map((c) => compileCondition(c, ctx)).join(" AND ")}`
+    : "";
+
   // ORDER BY clause
   const orderByClause = node.orderBy.length > 0
     ? `ORDER BY ${
@@ -199,8 +213,17 @@ const compileSelect = (node: SelectNode): CompiledQuery => {
   const limitClause = node.limit !== null ? `LIMIT ${addParam(ctx, node.limit)}` : "";
   const offsetClause = node.offset !== null ? `OFFSET ${addParam(ctx, node.offset)}` : "";
 
-  const sql = [selectClause, fromClause, ...joinClauses, whereClause, orderByClause, limitClause, offsetClause]
-    .filter((part) => part.length > 0)
+  const sql = [
+    selectClause,
+    fromClause,
+    ...joinClauses,
+    whereClause,
+    groupByClause,
+    havingClause,
+    orderByClause,
+    limitClause,
+    offsetClause,
+  ].filter((part) => part.length > 0)
     .join(" ");
 
   return Object.freeze({ sql, params: Object.freeze([...ctx.params]) });

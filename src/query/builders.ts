@@ -38,6 +38,8 @@ const from = <T extends Record<string, unknown>>(model: Model<T>): SelectNode =>
     columns: "*",
     conditions: Object.freeze([]),
     joins: Object.freeze([]),
+    groupBy: Object.freeze([]),
+    having: Object.freeze([]),
     orderBy: Object.freeze([]),
     limit: null,
     offset: null,
@@ -80,6 +82,25 @@ const orderBy = (column: string, direction: SortDirection) => (node: SelectNode)
 };
 
 /**
+ * Appends columns to the GROUP BY clause, accumulating across multiple calls.
+ *
+ * Column names are resolved through model metadata at compilation time,
+ * so camelCase field names are accepted.
+ */
+const groupBy = (...columns: string[]) => (node: SelectNode): SelectNode =>
+  Object.freeze({ ...node, groupBy: Object.freeze([...node.groupBy, ...columns]) });
+
+/**
+ * Appends a HAVING condition, accumulating across multiple calls (AND semantics).
+ *
+ * HAVING filters grouped rows, so it is only meaningful after groupBy().
+ * The dialect compiles conditions identically to WHERE but places them
+ * after the GROUP BY clause.
+ */
+const having = (condition: ConditionNode) => (node: SelectNode): SelectNode =>
+  Object.freeze({ ...node, having: Object.freeze([...node.having, condition]) });
+
+/**
  * Sets the maximum number of rows to return.
  *
  * Overwrites any previously set limit (last call wins).
@@ -94,4 +115,4 @@ const limit = (n: number) => (node: SelectNode): SelectNode => Object.freeze({ .
 const offset = (n: number) => (node: SelectNode): SelectNode => Object.freeze({ ...node, offset: n });
 
 export type { HasConditions };
-export { from, limit, offset, orderBy, select, where };
+export { from, groupBy, having, limit, offset, orderBy, select, where };
