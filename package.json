@@ -60,7 +60,7 @@
     "@typescript/native-preview": "latest"
   },
   "peerDependencies": {
-    "@igorjs/pure-ts": "^0.7.1",
+    "@igorjs/pure-ts": "^0.7.4",
     "typescript": ">=5.5.0"
   },
   "peerDependenciesMeta": {
