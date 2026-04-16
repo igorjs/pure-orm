@@ -9,7 +9,7 @@ import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";
-import { from, groupBy, having, limit, orderBy, select, where } from "../src/query/builders.ts";
+import { from, groupBy, having, limit, orderBy, where } from "../src/query/builders.ts";
 import { eq, gt } from "../src/query/conditions.ts";
 import { raw, sql } from "../src/query/raw.ts";
 

@@ -300,7 +300,8 @@ describe("condition functions", () => {
       source.push("z");
 
       // Assert
-      assert.equal(node.tag === "InArray" && node.values.length, 2);
+      assert.equal(node.tag, "InArray");
+      assert.equal(node.tag === "InArray" ? node.values.length : -1, 2);
     });
   });
 
@@ -364,10 +365,10 @@ describe("condition functions", () => {
 
       // Assert
       assert.equal(node.tag, "And");
-      assert.equal(node.tag === "And" && node.conditions.length, 3);
-      assert.deepEqual(node.tag === "And" && node.conditions[0], c1);
-      assert.deepEqual(node.tag === "And" && node.conditions[1], c2);
-      assert.deepEqual(node.tag === "And" && node.conditions[2], c3);
+      assert.equal(node.tag === "And" ? node.conditions.length : -1, 3);
+      assert.deepEqual(node.tag === "And" ? node.conditions[0] : null, c1);
+      assert.deepEqual(node.tag === "And" ? node.conditions[1] : null, c2);
+      assert.deepEqual(node.tag === "And" ? node.conditions[2] : null, c3);
     });
 
     it("accepts two conditions", () => {
@@ -380,7 +381,7 @@ describe("condition functions", () => {
 
       // Assert
       assert.equal(node.tag, "And");
-      assert.equal(node.tag === "And" && node.conditions.length, 2);
+      assert.equal(node.tag === "And" ? node.conditions.length : -1, 2);
     });
 
     it("is frozen", () => {
@@ -403,9 +404,9 @@ describe("condition functions", () => {
 
       // Assert
       assert.equal(node.tag, "Or");
-      assert.equal(node.tag === "Or" && node.conditions.length, 2);
-      assert.deepEqual(node.tag === "Or" && node.conditions[0], c1);
-      assert.deepEqual(node.tag === "Or" && node.conditions[1], c2);
+      assert.equal(node.tag === "Or" ? node.conditions.length : -1, 2);
+      assert.deepEqual(node.tag === "Or" ? node.conditions[0] : null, c1);
+      assert.deepEqual(node.tag === "Or" ? node.conditions[1] : null, c2);
     });
 
     it("accepts three or more conditions", () => {
@@ -419,7 +420,7 @@ describe("condition functions", () => {
 
       // Assert
       assert.equal(node.tag, "Or");
-      assert.equal(node.tag === "Or" && node.conditions.length, 3);
+      assert.equal(node.tag === "Or" ? node.conditions.length : -1, 3);
     });
 
     it("is frozen", () => {
@@ -442,9 +443,9 @@ describe("condition functions", () => {
 
       // Assert
       assert.equal(node.tag, "Or");
-      assert.equal(node.tag === "Or" && node.conditions.length, 2);
-      assert.equal(node.tag === "Or" && node.conditions[0].tag, "And");
-      assert.equal(node.tag === "Or" && node.conditions[1].tag, "Eq");
+      assert.equal(node.tag === "Or" ? node.conditions.length : -1, 2);
+      assert.equal(node.tag === "Or" ? node.conditions[0].tag : null, "And");
+      assert.equal(node.tag === "Or" ? node.conditions[1].tag : null, "Eq");
     });
 
     it("supports not wrapping a compound condition", () => {

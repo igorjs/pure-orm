@@ -29,18 +29,22 @@ const createConsoleLogger = (level: LogLevel): Logger => {
   return Object.freeze({
     debug: (message: string, context?: Readonly<Record<string, unknown>>): void => {
       if (LEVEL_RANK.debug < threshold) return;
+      // biome-ignore lint/suspicious/noConsole: logger wraps console by design
       console.info(formatMessage(message), ...(context !== undefined ? [context] : []));
     },
     info: (message: string, context?: Readonly<Record<string, unknown>>): void => {
       if (LEVEL_RANK.info < threshold) return;
+      // biome-ignore lint/suspicious/noConsole: logger wraps console by design
       console.info(formatMessage(message), ...(context !== undefined ? [context] : []));
     },
     warn: (message: string, context?: Readonly<Record<string, unknown>>): void => {
       if (LEVEL_RANK.warn < threshold) return;
+      // biome-ignore lint/suspicious/noConsole: logger wraps console by design
       console.warn(formatMessage(message), ...(context !== undefined ? [context] : []));
     },
     error: (message: string, context?: Readonly<Record<string, unknown>>): void => {
       if (LEVEL_RANK.error < threshold) return;
+      // biome-ignore lint/suspicious/noConsole: logger wraps console by design
       console.error(formatMessage(message), ...(context !== undefined ? [context] : []));
     },
   });

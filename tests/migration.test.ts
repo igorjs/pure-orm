@@ -168,7 +168,7 @@ describe("createSnapshot()", () => {
     const snap = createSnapshot([User]);
 
     assert.ok(snap.generatedAt.includes("T"));
-    assert.ok(!isNaN(Date.parse(snap.generatedAt)));
+    assert.ok(!Number.isNaN(Date.parse(snap.generatedAt)));
   });
 
   it("is frozen", () => {

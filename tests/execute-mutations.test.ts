@@ -78,7 +78,7 @@ const createMockConnection = (
     release: async () => {
       released.value = true;
     },
-    end: async () => {},
+    end: async () => undefined,
   };
   return { conn, released };
 };
@@ -90,8 +90,8 @@ const createMockDb = (conn: RawConnection): DatabaseClient => ({
   dialect: createPostgresDialect(),
   pool: {
     acquire: () => Task.of(conn),
-    release: () => Task.of(undefined as void),
-    end: () => Task.of(undefined as void),
+    release: () => Task.of<void>(undefined),
+    end: () => Task.of<void>(undefined),
     mode: "pool" as const,
   },
   logger: createNoopLogger(),

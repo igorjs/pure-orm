@@ -5,7 +5,6 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { Schema } from "@igorjs/pure-ts";
 import type { AuditEntryInput } from "../src/audit/interceptor.ts";
 import { createAuditHooks, withAuditContext } from "../src/audit/interceptor.ts";
 import type { DatabaseClient } from "../src/connection/types.ts";
@@ -33,13 +32,31 @@ const mockDb: DatabaseClient = Object.freeze({
   hooks: {},
 });
 
+// ---- Helper to call hooks safely ----
+
+const callBeforeExecute = (
+  hooks: Partial<Record<string, unknown>>,
+  compiled: { sql: string; params: readonly unknown[] },
+): void => {
+  const fn = hooks.beforeExecute;
+  if (typeof fn === "function") fn(compiled);
+};
+
+const callAfterExecute = (
+  hooks: Partial<Record<string, unknown>>,
+  result: { sql: string; params: readonly unknown[]; rows: readonly unknown[]; durationMs: number },
+): void => {
+  const fn = hooks.afterExecute;
+  if (typeof fn === "function") fn(result);
+};
+
 // ---------------------------------------------------------------------------
 // createAuditHooks()
 // ---------------------------------------------------------------------------
 
 describe("createAuditHooks()", () => {
   it("returns hooks with beforeExecute and afterExecute", () => {
-    const hooks = createAuditHooks({ callback: () => {} });
+    const hooks = createAuditHooks({ callback: () => undefined });
 
     assert.equal(typeof hooks.beforeExecute, "function");
     assert.equal(typeof hooks.afterExecute, "function");
@@ -49,8 +66,11 @@ describe("createAuditHooks()", () => {
     const entries: AuditEntryInput[] = [];
     const hooks = createAuditHooks({ callback: e => entries.push(e) });
 
-    hooks.beforeExecute!({ sql: 'INSERT INTO "users" ("name") VALUES ($1)', params: ["Alice"] });
-    hooks.afterExecute!({
+    callBeforeExecute(hooks, {
+      sql: 'INSERT INTO "users" ("name") VALUES ($1)',
+      params: ["Alice"],
+    });
+    callAfterExecute(hooks, {
       sql: 'INSERT INTO "users" ("name") VALUES ($1)',
       params: ["Alice"],
       rows: [{ id: "1" }],
@@ -66,8 +86,8 @@ describe("createAuditHooks()", () => {
     const entries: AuditEntryInput[] = [];
     const hooks = createAuditHooks({ callback: e => entries.push(e) });
 
-    hooks.beforeExecute!({ sql: 'UPDATE "posts" SET "title" = $1', params: ["New"] });
-    hooks.afterExecute!({
+    callBeforeExecute(hooks, { sql: 'UPDATE "posts" SET "title" = $1', params: ["New"] });
+    callAfterExecute(hooks, {
       sql: 'UPDATE "posts" SET "title" = $1',
       params: ["New"],
       rows: [],
@@ -83,8 +103,8 @@ describe("createAuditHooks()", () => {
     const entries: AuditEntryInput[] = [];
     const hooks = createAuditHooks({ callback: e => entries.push(e) });
 
-    hooks.beforeExecute!({ sql: 'DELETE FROM "users" WHERE "id" = $1', params: ["u-1"] });
-    hooks.afterExecute!({
+    callBeforeExecute(hooks, { sql: 'DELETE FROM "users" WHERE "id" = $1', params: ["u-1"] });
+    callAfterExecute(hooks, {
       sql: 'DELETE FROM "users" WHERE "id" = $1',
       params: ["u-1"],
       rows: [],
@@ -99,8 +119,8 @@ describe("createAuditHooks()", () => {
     const entries: AuditEntryInput[] = [];
     const hooks = createAuditHooks({ callback: e => entries.push(e) });
 
-    hooks.beforeExecute!({ sql: 'UPDATE "users" SET "deleted_at" = NOW()', params: [] });
-    hooks.afterExecute!({
+    callBeforeExecute(hooks, { sql: 'UPDATE "users" SET "deleted_at" = NOW()', params: [] });
+    callAfterExecute(hooks, {
       sql: 'UPDATE "users" SET "deleted_at" = NOW()',
       params: [],
       rows: [],
@@ -115,8 +135,8 @@ describe("createAuditHooks()", () => {
     const entries: AuditEntryInput[] = [];
     const hooks = createAuditHooks({ callback: e => entries.push(e) });
 
-    hooks.beforeExecute!({ sql: 'SELECT * FROM "users"', params: [] });
-    hooks.afterExecute!({
+    callBeforeExecute(hooks, { sql: 'SELECT * FROM "users"', params: [] });
+    callAfterExecute(hooks, {
       sql: 'SELECT * FROM "users"',
       params: [],
       rows: [{ id: "1" }],
@@ -133,8 +153,8 @@ describe("createAuditHooks()", () => {
       context: { actorId: "admin-1", actorIp: "127.0.0.1", metadata: { reason: "test" } },
     });
 
-    hooks.beforeExecute!({ sql: 'INSERT INTO "users" ("name") VALUES ($1)', params: ["Bob"] });
-    hooks.afterExecute!({
+    callBeforeExecute(hooks, { sql: 'INSERT INTO "users" ("name") VALUES ($1)', params: ["Bob"] });
+    callAfterExecute(hooks, {
       sql: 'INSERT INTO "users" ("name") VALUES ($1)',
       params: ["Bob"],
       rows: [],
@@ -150,8 +170,8 @@ describe("createAuditHooks()", () => {
     const entries: AuditEntryInput[] = [];
     const hooks = createAuditHooks({ callback: e => entries.push(e) });
 
-    hooks.beforeExecute!({ sql: 'INSERT INTO "x" ("a") VALUES ($1)', params: [1] });
-    hooks.afterExecute!({
+    callBeforeExecute(hooks, { sql: 'INSERT INTO "x" ("a") VALUES ($1)', params: [1] });
+    callAfterExecute(hooks, {
       sql: 'INSERT INTO "x" ("a") VALUES ($1)',
       params: [1],
       rows: [],

@@ -10,7 +10,6 @@
 
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-import type { pipe as PipeFn } from "@igorjs/pure-ts";
 import { Schema, Task } from "@igorjs/pure-ts";
 
 import type { DatabaseClient, RawConnection } from "../src/connection/types.ts";
@@ -95,15 +94,15 @@ const User = Model("users", {
 const createMockDb = (rows: readonly Record<string, unknown>[]): DatabaseClient => {
   const mockConn: RawConnection = {
     query: async () => ({ rows, rowCount: rows.length }),
-    release: async () => {},
-    end: async () => {},
+    release: async () => undefined,
+    end: async () => undefined,
   };
   return {
     dialect: createPostgresDialect(),
     pool: {
       acquire: () => Task.of(mockConn),
-      release: () => Task.of(undefined as void),
-      end: () => Task.of(undefined as void),
+      release: () => Task.of<void>(undefined),
+      end: () => Task.of<void>(undefined),
       mode: "pool" as const,
     },
     logger: createNoopLogger(),
@@ -583,16 +582,16 @@ describe("integration: transaction with mock driver", () => {
         executedSql.push(sql);
         return { rows: [], rowCount: 0 };
       },
-      release: async () => {},
-      end: async () => {},
+      release: async () => undefined,
+      end: async () => undefined,
     };
 
     const db: DatabaseClient = {
       dialect: createPostgresDialect(),
       pool: {
         acquire: () => Task.of(mockConn),
-        release: () => Task.of(undefined as void),
-        end: () => Task.of(undefined as void),
+        release: () => Task.of<void>(undefined),
+        end: () => Task.of<void>(undefined),
         mode: "pool" as const,
       },
       logger: createNoopLogger(),
@@ -622,16 +621,16 @@ describe("integration: transaction with mock driver", () => {
         executedSql.push(sql);
         return { rows: [], rowCount: 0 };
       },
-      release: async () => {},
-      end: async () => {},
+      release: async () => undefined,
+      end: async () => undefined,
     };
 
     const db: DatabaseClient = {
       dialect: createPostgresDialect(),
       pool: {
         acquire: () => Task.of(mockConn),
-        release: () => Task.of(undefined as void),
-        end: () => Task.of(undefined as void),
+        release: () => Task.of<void>(undefined),
+        end: () => Task.of<void>(undefined),
         mode: "pool" as const,
       },
       logger: createNoopLogger(),

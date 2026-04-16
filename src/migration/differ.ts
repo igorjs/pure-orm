@@ -36,16 +36,13 @@ const getCol = (cols: Readonly<Record<string, ColumnSnapshot>>, key: string): Co
 
 // ---- Table differ ----
 
-const diffTable = (
+const diffColumns = (
   table: string,
-  from: TableSnapshot,
-  to: TableSnapshot,
-): readonly ChangeOperation[] => {
+  fromCols: Readonly<Record<string, ColumnSnapshot>>,
+  toCols: Readonly<Record<string, ColumnSnapshot>>,
+): ChangeOperation[] => {
   const ops: ChangeOperation[] = [];
-  const fromCols = from.columns;
-  const toCols = to.columns;
 
-  // Dropped columns
   for (const col of Object.keys(fromCols)) {
     if (!(col in toCols)) {
       ops.push(
@@ -54,7 +51,6 @@ const diffTable = (
     }
   }
 
-  // Added columns
   for (const col of Object.keys(toCols)) {
     if (!(col in fromCols)) {
       ops.push(
@@ -63,7 +59,6 @@ const diffTable = (
     }
   }
 
-  // Altered columns
   for (const col of Object.keys(toCols)) {
     const fromCol = fromCols[col];
     const toCol = getCol(toCols, col);
@@ -72,24 +67,35 @@ const diffTable = (
     }
   }
 
-  // Index changes
-  const fromIndexNames = new Set(from.indexes.map(i => i.name));
-  const toIndexNames = new Set(to.indexes.map(i => i.name));
+  return ops;
+};
+
+const diffIndexes = (table: string, from: TableSnapshot, to: TableSnapshot): ChangeOperation[] => {
+  const ops: ChangeOperation[] = [];
+  const fromNames = new Set(from.indexes.map(i => i.name));
+  const toNames = new Set(to.indexes.map(i => i.name));
 
   for (const idx of from.indexes) {
-    if (!toIndexNames.has(idx.name)) {
+    if (!toNames.has(idx.name)) {
       ops.push(Object.freeze({ tag: "DropIndex", table, indexName: idx.name }));
     }
   }
 
   for (const idx of to.indexes) {
-    if (!fromIndexNames.has(idx.name)) {
+    if (!fromNames.has(idx.name)) {
       ops.push(Object.freeze({ tag: "AddIndex", table, index: idx }));
     }
   }
 
-  return Object.freeze(ops);
+  return ops;
 };
+
+const diffTable = (
+  table: string,
+  from: TableSnapshot,
+  to: TableSnapshot,
+): readonly ChangeOperation[] =>
+  Object.freeze([...diffColumns(table, from.columns, to.columns), ...diffIndexes(table, from, to)]);
 
 // ---- Schema differ ----
 

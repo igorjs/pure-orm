@@ -51,6 +51,38 @@ const dropTableSql = (table: string): string => `DROP TABLE ${q(table)};`;
 
 // ---- Generate up/down ----
 
+const compileAlterColumn = (
+  table: string,
+  column: string,
+  from: ColumnSnapshot,
+  to: ColumnSnapshot,
+  dialect: Dialect,
+): string => {
+  const lines: string[] = [];
+  const prefix = `ALTER TABLE ${q(table)} ALTER COLUMN ${q(column)}`;
+
+  if (from.type !== to.type) {
+    lines.push(`${prefix} TYPE ${dialect.mapFieldType(to.type, {})};`);
+  }
+  if (from.nullable !== to.nullable) {
+    lines.push(`${prefix} ${to.nullable ? "DROP NOT NULL" : "SET NOT NULL"};`);
+  }
+  if (from.default !== to.default) {
+    if (to.default === null) {
+      lines.push(`${prefix} DROP DEFAULT;`);
+    } else {
+      const defExpr =
+        to.default === "now"
+          ? dialect.name === "sqlite"
+            ? "datetime('now')"
+            : "NOW()"
+          : to.default;
+      lines.push(`${prefix} SET DEFAULT ${defExpr};`);
+    }
+  }
+  return lines.join("\n");
+};
+
 const generateUp = (op: ChangeOperation, dialect: Dialect): string => {
   switch (op.tag) {
     case "CreateTable":
@@ -59,43 +91,14 @@ const generateUp = (op: ChangeOperation, dialect: Dialect): string => {
     case "DropTable":
       return dropTableSql(op.table);
 
-    case "AddColumn": {
-      const def = columnDef(op.column, op.snapshot, dialect);
-      return `ALTER TABLE ${q(op.table)} ADD COLUMN ${def};`;
-    }
+    case "AddColumn":
+      return `ALTER TABLE ${q(op.table)} ADD COLUMN ${columnDef(op.column, op.snapshot, dialect)};`;
 
     case "DropColumn":
       return `ALTER TABLE ${q(op.table)} DROP COLUMN ${q(op.column)};`;
 
-    case "AlterColumn": {
-      // ALTER COLUMN is dialect-specific. PostgreSQL uses ALTER COLUMN,
-      // SQLite requires recreating the table. For now, emit PG-style.
-      const lines: string[] = [];
-      if (op.from.type !== op.to.type) {
-        const sqlType = dialect.mapFieldType(op.to.type, {});
-        lines.push(`ALTER TABLE ${q(op.table)} ALTER COLUMN ${q(op.column)} TYPE ${sqlType};`);
-      }
-      if (op.from.nullable !== op.to.nullable) {
-        const action = op.to.nullable ? "DROP NOT NULL" : "SET NOT NULL";
-        lines.push(`ALTER TABLE ${q(op.table)} ALTER COLUMN ${q(op.column)} ${action};`);
-      }
-      if (op.from.default !== op.to.default) {
-        if (op.to.default === null) {
-          lines.push(`ALTER TABLE ${q(op.table)} ALTER COLUMN ${q(op.column)} DROP DEFAULT;`);
-        } else {
-          const defExpr =
-            op.to.default === "now"
-              ? dialect.name === "sqlite"
-                ? "datetime('now')"
-                : "NOW()"
-              : op.to.default;
-          lines.push(
-            `ALTER TABLE ${q(op.table)} ALTER COLUMN ${q(op.column)} SET DEFAULT ${defExpr};`,
-          );
-        }
-      }
-      return lines.join("\n");
-    }
+    case "AlterColumn":
+      return compileAlterColumn(op.table, op.column, op.from, op.to, dialect);
 
     case "AddIndex": {
       const unique = op.index.unique ? "UNIQUE " : "";

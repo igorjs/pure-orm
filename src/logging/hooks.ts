@@ -23,6 +23,7 @@ const dispatchHook = <K extends keyof QueryHooks>(
     // cannot narrow the variadic spread across the union of hook signatures.
     (hook as (...params: Parameters<QueryHooks[K]>) => void)(...args);
   } catch (err) {
+    // biome-ignore lint/suspicious/noConsole: hook errors must reach stderr directly
     console.error("[pure-orm] hook error in", event, err);
   }
 };

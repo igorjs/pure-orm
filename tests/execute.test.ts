@@ -72,8 +72,8 @@ const createMockDb = (conn: RawConnection, hooks: Partial<QueryHooks> = {}): Dat
   dialect: createPostgresDialect(),
   pool: {
     acquire: () => Task.of(conn),
-    release: (_c: RawConnection) => Task.of(undefined as void),
-    end: () => Task.of(undefined as void),
+    release: (_c: RawConnection) => Task.of<void>(undefined),
+    end: () => Task.of<void>(undefined),
     mode: "pool",
   },
   logger: createNoopLogger(),

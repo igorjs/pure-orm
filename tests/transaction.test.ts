@@ -32,8 +32,8 @@ const createMockConnection = (): RawConnection & { readonly statements: string[]
       statements.push(sql);
       return { rows: [], rowCount: 0 };
     },
-    release: async () => {},
-    end: async () => {},
+    release: async () => undefined,
+    end: async () => undefined,
   };
 };
 
@@ -53,9 +53,9 @@ const createMockDb = (
       acquire: () => Task.of(conn),
       release: (_c: RawConnection) => {
         released.value = true;
-        return Task.of(undefined as void);
+        return Task.of<void, never>(undefined);
       },
-      end: () => Task.of(undefined as void),
+      end: () => Task.of<void, never>(undefined),
       mode: "pool",
     },
     logger: createNoopLogger(),
@@ -226,7 +226,7 @@ describe("transaction(): isolation level", () => {
     const conn = createMockConnection();
     const { db } = createMockDb(conn);
 
-    await transaction(db, async () => {}, { isolationLevel: "serializable" }).run();
+    await transaction(db, async () => undefined, { isolationLevel: "serializable" }).run();
 
     assert.equal(conn.statements[0], "BEGIN ISOLATION LEVEL SERIALIZABLE");
   });
@@ -235,7 +235,7 @@ describe("transaction(): isolation level", () => {
     const conn = createMockConnection();
     const { db } = createMockDb(conn);
 
-    await transaction(db, async () => {}, { isolationLevel: "repeatable read" }).run();
+    await transaction(db, async () => undefined, { isolationLevel: "repeatable read" }).run();
 
     assert.equal(conn.statements[0], "BEGIN ISOLATION LEVEL REPEATABLE READ");
   });
@@ -244,7 +244,7 @@ describe("transaction(): isolation level", () => {
     const conn = createMockConnection();
     const { db } = createMockDb(conn);
 
-    await transaction(db, async () => {}, { isolationLevel: "read committed" }).run();
+    await transaction(db, async () => undefined, { isolationLevel: "read committed" }).run();
 
     assert.equal(conn.statements[0], "BEGIN ISOLATION LEVEL READ COMMITTED");
   });
@@ -259,7 +259,7 @@ describe("transaction(): read only", () => {
     const conn = createMockConnection();
     const { db } = createMockDb(conn);
 
-    await transaction(db, async () => {}, { readOnly: true }).run();
+    await transaction(db, async () => undefined, { readOnly: true }).run();
 
     assert.equal(conn.statements[0], "BEGIN READ ONLY");
   });
@@ -274,7 +274,7 @@ describe("transaction(): combined isolation level + read only", () => {
     const conn = createMockConnection();
     const { db } = createMockDb(conn);
 
-    await transaction(db, async () => {}, {
+    await transaction(db, async () => undefined, {
       isolationLevel: "repeatable read",
       readOnly: true,
     }).run();

@@ -31,8 +31,8 @@ import { createNoopLogger } from "../src/logging/logger.ts";
 const createMockDriver = (overrides?: Partial<RawConnection>): DatabaseDriver => ({
   connect: async () => ({
     query: async () => ({ rows: [], rowCount: 0 }),
-    release: async () => {},
-    end: async () => {},
+    release: async () => undefined,
+    end: async () => undefined,
     ...overrides,
   }),
 });
@@ -341,8 +341,8 @@ describe("closeConnection()", () => {
     const { closeConnection } = await import("../src/connection/connection.ts");
     const conn: RawConnection = {
       query: async () => ({ rows: [], rowCount: 0 }),
-      release: async () => {},
-      end: async () => {},
+      release: async () => undefined,
+      end: async () => undefined,
     };
 
     // Act
@@ -357,7 +357,7 @@ describe("closeConnection()", () => {
     const { closeConnection } = await import("../src/connection/connection.ts");
     const conn: RawConnection = {
       query: async () => ({ rows: [], rowCount: 0 }),
-      release: async () => {},
+      release: async () => undefined,
       end: async () => {
         throw new Error("socket hang up");
       },
@@ -467,8 +467,8 @@ describe("createLambdaPool — error paths", () => {
         connectCount += 1;
         return {
           query: async () => ({ rows: [], rowCount: 0 }),
-          release: async () => {},
-          end: async () => {},
+          release: async () => undefined,
+          end: async () => undefined,
         };
       },
     };
@@ -608,9 +608,9 @@ describe("Database()", () => {
       debug: (msg: string) => {
         debugMessages.push(msg);
       },
-      info: () => {},
-      warn: () => {},
-      error: () => {},
+      info: () => undefined,
+      warn: () => undefined,
+      error: () => undefined,
     };
 
     // Act

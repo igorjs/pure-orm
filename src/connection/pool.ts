@@ -118,13 +118,14 @@ const createPool = (
       logger.debug("pool: shutting down — closing released connection");
       return closeConnection(conn).map(() => {
         active -= 1;
+        return undefined;
       });
     }
 
     // Pass to a waiting acquirer or park in idle list.
     logger.debug("pool: releasing connection", { active, idle: idle.length });
     drainWaiter(conn);
-    return Task.fromResult(Ok(undefined as void));
+    return Task.fromResult<void, DbError>(Ok(undefined));
   };
 
   const end = (): Task<void, DbError> => {

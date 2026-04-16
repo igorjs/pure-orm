@@ -52,13 +52,13 @@ const createLambdaPool = (
   // warm invocation.
   const release = (_conn: RawConnection): Task<void, DbError> => {
     logger.debug("lambda pool: release is a no-op");
-    return Task.fromResult(Ok(undefined as void));
+    return Task.fromResult<void, DbError>(Ok(undefined));
   };
 
   const end = (): Task<void, DbError> => {
     if (singletonConnection === null) {
       logger.debug("lambda pool: end() called but no connection to close");
-      return Task.fromResult(Ok(undefined as void));
+      return Task.fromResult<void, DbError>(Ok(undefined));
     }
 
     logger.debug("lambda pool: closing connection");
