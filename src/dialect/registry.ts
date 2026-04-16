@@ -1,11 +1,14 @@
 /**
  * Dialect registry.
  *
- * A simple name -> Dialect map. Dialects register themselves at module load
- * time so callers can resolve by name without importing each dialect directly.
+ * A lazy name -> Dialect resolver. Built-in dialects are instantiated on
+ * first use rather than at import time, so the module has no top-level
+ * side effects. Bundlers can tree-shake unused dialect implementations
+ * when consumers import createPostgresDialect or createSqliteDialect
+ * directly instead of using resolveDialect.
  *
- * resolveDialect returns a discriminated Result so callers handle the missing-
- * dialect case explicitly rather than receiving null/undefined.
+ * resolveDialect returns a discriminated Result so callers handle the
+ * missing-dialect case explicitly.
  */
 
 import type { DbError } from "../errors/errors.ts";
@@ -23,25 +26,42 @@ type Result<T, E> = Ok<T> | Err<E>;
 const ok = <T>(value: T): Ok<T> => Object.freeze({ tag: "Ok" as const, value });
 const err = <E>(error: E): Err<E> => Object.freeze({ tag: "Err" as const, error });
 
+// ---- Built-in dialect factories (deferred instantiation) ----
+
+const builtinFactories = new Map<string, () => Dialect>([
+  ["postgresql", createPostgresDialect],
+  ["sqlite", createSqliteDialect],
+]);
+
 // ---- Registry ----
 
-const dialects = new Map<string, Dialect>();
+const resolved = new Map<string, Dialect>();
 
+/**
+ * Registers a custom dialect under the given name. Overrides built-in
+ * dialects if the name collides.
+ */
 const registerDialect = (name: string, dialect: Dialect): void => {
-  dialects.set(name, dialect);
+  resolved.set(name, dialect);
 };
 
+/**
+ * Resolves a dialect by name. Custom registrations take precedence over
+ * built-ins. Instances are cached after first resolution.
+ */
 const resolveDialect = (name: string): Result<Dialect, DbError> => {
-  const dialect = dialects.get(name);
-  if (dialect === undefined) {
-    return err(validationError(`Unknown dialect: "${name}"`, "dialect", name));
-  }
-  return ok(dialect);
-};
+  const cached = resolved.get(name);
+  if (cached !== undefined) return ok(cached);
 
-// Auto-register built-in dialects so they are available without explicit setup.
-registerDialect("postgresql", createPostgresDialect());
-registerDialect("sqlite", createSqliteDialect());
+  const factory = builtinFactories.get(name);
+  if (factory !== undefined) {
+    const dialect = factory();
+    resolved.set(name, dialect);
+    return ok(dialect);
+  }
+
+  return err(validationError(`Unknown dialect: "${name}"`, "dialect", name));
+};
 
 export type { Result };
 export { registerDialect, resolveDialect };

@@ -24,7 +24,7 @@ const assert = (condition, message) => {
   }
 };
 
-const section = (name) => console.log(`\n--- ${name} ---`);
+const section = name => console.log(`\n--- ${name} ---`);
 
 // ---- Exports exist ----
 
