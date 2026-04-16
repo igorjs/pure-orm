@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-
+import type { DbError } from "../src/errors/errors.ts";
 import {
   connectionError,
   constraintError,
@@ -9,7 +9,6 @@ import {
   transactionError,
   validationError,
 } from "../src/errors/errors.ts";
-import type { DbError } from "../src/errors/errors.ts";
 
 describe("DbError constructors", () => {
   describe("connectionError", () => {

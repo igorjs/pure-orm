@@ -10,9 +10,8 @@
 
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-
-import { Schema, Task } from "@igorjs/pure-ts";
 import type { pipe as PipeFn } from "@igorjs/pure-ts";
+import { Schema, Task } from "@igorjs/pure-ts";
 
 import type { DatabaseClient, RawConnection } from "../src/connection/types.ts";
 import {
@@ -53,9 +52,9 @@ import {
   limit,
   lt,
   lte,
-  mapRows,
   // Model layer
   Model,
+  mapRows,
   ne,
   not,
   offset,
@@ -121,28 +120,24 @@ describe("integration: full compile pipeline", () => {
     // Build query using manual composition to avoid importing pipe from @igorjs/pure-ts
     // (the public API test below confirms it works with the barrel export).
     const query = limit(10)(
-      orderBy("name", "asc")(
-        where(and(eq("role", "admin"), gt("age", 25)))(
-          from(User),
-        ),
-      ),
+      orderBy("name", "asc")(where(and(eq("role", "admin"), gt("age", 25)))(from(User))),
     );
 
     const { sql, params } = compile(query);
 
     // SELECT and FROM clauses
     assert.ok(sql.includes("SELECT"), `Expected SELECT in SQL: ${sql}`);
-    assert.ok(sql.includes("FROM \"users\""), `Expected FROM "users" in SQL: ${sql}`);
+    assert.ok(sql.includes('FROM "users"'), `Expected FROM "users" in SQL: ${sql}`);
 
     // WHERE clause: soft-delete model always adds deleted_at IS NULL
     assert.ok(sql.includes("WHERE"), `Expected WHERE in SQL: ${sql}`);
-    assert.ok(sql.includes("\"role\""), `Expected role column in SQL: ${sql}`);
-    assert.ok(sql.includes("\"age\""), `Expected age column in SQL: ${sql}`);
-    assert.ok(sql.includes("\"deleted_at\" IS NULL"), `Expected soft-delete filter in SQL: ${sql}`);
+    assert.ok(sql.includes('"role"'), `Expected role column in SQL: ${sql}`);
+    assert.ok(sql.includes('"age"'), `Expected age column in SQL: ${sql}`);
+    assert.ok(sql.includes('"deleted_at" IS NULL'), `Expected soft-delete filter in SQL: ${sql}`);
 
     // ORDER BY clause
     assert.ok(sql.includes("ORDER BY"), `Expected ORDER BY in SQL: ${sql}`);
-    assert.ok(sql.includes("\"name\" ASC"), `Expected name ASC in SQL: ${sql}`);
+    assert.ok(sql.includes('"name" ASC'), `Expected name ASC in SQL: ${sql}`);
 
     // LIMIT clause
     assert.ok(sql.includes("LIMIT"), `Expected LIMIT in SQL: ${sql}`);
@@ -160,7 +155,7 @@ describe("integration: full compile pipeline", () => {
     // Soft-delete model always injects the deleted_at filter even with no
     // explicit where(), so the WHERE clause is still present.
     assert.ok(sql.startsWith("SELECT"), `Expected SELECT at start: ${sql}`);
-    assert.ok(sql.includes("FROM \"users\""), `Expected FROM "users": ${sql}`);
+    assert.ok(sql.includes('FROM "users"'), `Expected FROM "users": ${sql}`);
     // Soft-delete adds WHERE deleted_at IS NULL, so no user-supplied params.
     assert.equal(params.length, 0);
   });
@@ -237,18 +232,15 @@ describe("integration: findOne returns None for empty result", () => {
 describe("integration: soft-delete model injects deleted_at filter", () => {
   it("includes deleted_at IS NULL in WHERE for a soft-delete model", () => {
     const { sql } = compile(from(User));
-    assert.ok(
-      sql.includes("\"deleted_at\" IS NULL"),
-      `Expected soft-delete filter in SQL: ${sql}`,
-    );
+    assert.ok(sql.includes('"deleted_at" IS NULL'), `Expected soft-delete filter in SQL: ${sql}`);
   });
 
   it("places deleted_at IS NULL alongside user-supplied conditions", () => {
     const query = where(eq("role", "admin"))(from(User));
     const { sql, params } = compile(query);
 
-    assert.ok(sql.includes("\"role\" = $1"), `Expected role condition: ${sql}`);
-    assert.ok(sql.includes("\"deleted_at\" IS NULL"), `Expected soft-delete filter: ${sql}`);
+    assert.ok(sql.includes('"role" = $1'), `Expected role condition: ${sql}`);
+    assert.ok(sql.includes('"deleted_at" IS NULL'), `Expected soft-delete filter: ${sql}`);
     assert.equal(params[0], "admin");
   });
 });
@@ -343,11 +335,13 @@ describe("integration: cross-dialect query compilation", () => {
     options: model.$options,
   });
 
-  const makeProductSelect = (overrides: Partial<{
-    conditions: ReturnType<typeof eq>[];
-    limit: number | null;
-    offset: number | null;
-  }> = {}) =>
+  const makeProductSelect = (
+    overrides: Partial<{
+      conditions: ReturnType<typeof eq>[];
+      limit: number | null;
+      offset: number | null;
+    }> = {},
+  ) =>
     Object.freeze({
       tag: "Select" as const,
       model: toRef(Product),
@@ -367,7 +361,9 @@ describe("integration: cross-dialect query compilation", () => {
     const pgDialect = createPostgresDialect();
     const sqliteDialect = createSqliteDialect();
 
-    const node = makeProductSelect({ conditions: [eq("name", "Widget"), eq("category", "Gadgets")] });
+    const node = makeProductSelect({
+      conditions: [eq("name", "Widget"), eq("category", "Gadgets")],
+    });
 
     const pgResult = pgDialect.compileSelect(node);
     const sqliteResult = sqliteDialect.compileSelect(node);
@@ -399,8 +395,14 @@ describe("integration: cross-dialect query compilation", () => {
     assert.ok(pgResult.sql.includes("ILIKE"), `PG SQL should have ILIKE: ${pgResult.sql}`);
 
     // SQLite downgrades to LIKE.
-    assert.ok(sqliteResult.sql.includes("LIKE"), `SQLite SQL should have LIKE: ${sqliteResult.sql}`);
-    assert.ok(!sqliteResult.sql.includes("ILIKE"), `SQLite SQL must not have ILIKE: ${sqliteResult.sql}`);
+    assert.ok(
+      sqliteResult.sql.includes("LIKE"),
+      `SQLite SQL should have LIKE: ${sqliteResult.sql}`,
+    );
+    assert.ok(
+      !sqliteResult.sql.includes("ILIKE"),
+      `SQLite SQL must not have ILIKE: ${sqliteResult.sql}`,
+    );
 
     // Both carry the same pattern value.
     assert.deepEqual(pgResult.params, ["%widget%"]);
@@ -420,17 +422,18 @@ describe("integration: insert compile pipeline", () => {
   it("compiles an insert with RETURNING into correct SQL", () => {
     // Compose without pipe to avoid importing it — demonstrates the same
     // shape that pipe() would produce.
-    const query = returning("id", "email")(
-      insert(User, { email: "alice@test.com", name: "Alice" }),
-    );
+    const query = returning(
+      "id",
+      "email",
+    )(insert(User, { email: "alice@test.com", name: "Alice" }));
     const { sql, params } = compile(query);
 
     assert.ok(sql.includes("INSERT INTO"), `Expected INSERT INTO in SQL: ${sql}`);
-    assert.ok(sql.includes("\"users\""), `Expected "users" table in SQL: ${sql}`);
+    assert.ok(sql.includes('"users"'), `Expected "users" table in SQL: ${sql}`);
     assert.ok(sql.includes("VALUES"), `Expected VALUES in SQL: ${sql}`);
     assert.ok(sql.includes("RETURNING"), `Expected RETURNING in SQL: ${sql}`);
-    assert.ok(sql.includes("\"email\""), `Expected "email" in SQL: ${sql}`);
-    assert.ok(sql.includes("\"id\""), `Expected "id" in RETURNING: ${sql}`);
+    assert.ok(sql.includes('"email"'), `Expected "email" in SQL: ${sql}`);
+    assert.ok(sql.includes('"id"'), `Expected "id" in RETURNING: ${sql}`);
 
     // Two values: email and name.
     assert.equal(params.length, 2, `Expected 2 params, got: ${JSON.stringify(params)}`);
@@ -451,9 +454,10 @@ describe("integration: insert execute with mock driver", () => {
     const mockRows = [{ id: "u2", email: "alice@test.com" }];
     const db = createMockDb(mockRows);
 
-    const query = returning("id", "email")(
-      insert(User, { email: "alice@test.com", name: "Alice" }),
-    );
+    const query = returning(
+      "id",
+      "email",
+    )(insert(User, { email: "alice@test.com", name: "Alice" }));
     const result = await execute(db)(query).run();
 
     assert.equal(result.isOk, true, "Expected Ok result");
@@ -479,17 +483,15 @@ describe("integration: insert execute with mock driver", () => {
 describe("integration: update compile pipeline", () => {
   it("compiles an update with WHERE and RETURNING into correct SQL", () => {
     const query = returning("*")(
-      where(eq("email", "alice@test.com"))(
-        update(User, { role: "admin" }),
-      ),
+      where(eq("email", "alice@test.com"))(update(User, { role: "admin" })),
     );
     const { sql, params } = compile(query);
 
     assert.ok(sql.includes("UPDATE"), `Expected UPDATE in SQL: ${sql}`);
-    assert.ok(sql.includes("\"users\""), `Expected "users" table in SQL: ${sql}`);
+    assert.ok(sql.includes('"users"'), `Expected "users" table in SQL: ${sql}`);
     assert.ok(sql.includes("SET"), `Expected SET in SQL: ${sql}`);
     assert.ok(sql.includes("WHERE"), `Expected WHERE in SQL: ${sql}`);
-    assert.ok(sql.includes("\"email\""), `Expected "email" in WHERE: ${sql}`);
+    assert.ok(sql.includes('"email"'), `Expected "email" in WHERE: ${sql}`);
     assert.ok(sql.includes("RETURNING"), `Expected RETURNING in SQL: ${sql}`);
 
     // params: role value ("admin") + email value ("alice@test.com")
@@ -513,7 +515,7 @@ describe("integration: soft delete compile", () => {
     const { sql } = compile(query);
 
     assert.ok(sql.includes("UPDATE"), `Expected UPDATE (soft delete) in SQL: ${sql}`);
-    assert.ok(sql.includes("\"deleted_at\""), `Expected deleted_at column in SQL: ${sql}`);
+    assert.ok(sql.includes('"deleted_at"'), `Expected deleted_at column in SQL: ${sql}`);
     assert.ok(sql.includes("NOW()"), `Expected NOW() expression in SQL: ${sql}`);
     assert.ok(!sql.startsWith("DELETE"), `Expected no DELETE FROM for soft delete: ${sql}`);
   });
@@ -529,7 +531,7 @@ describe("integration: hard delete compile", () => {
     const { sql } = compile(query);
 
     assert.ok(sql.includes("DELETE FROM"), `Expected DELETE FROM in SQL: ${sql}`);
-    assert.ok(sql.includes("\"users\""), `Expected "users" table in SQL: ${sql}`);
+    assert.ok(sql.includes('"users"'), `Expected "users" table in SQL: ${sql}`);
     assert.ok(!sql.includes("UPDATE"), `Expected no UPDATE for hard delete: ${sql}`);
     assert.ok(!sql.includes("deleted_at"), `Expected no deleted_at for hard delete: ${sql}`);
   });
@@ -556,9 +558,10 @@ describe("integration: upsert compile pipeline", () => {
   });
 
   it("compiles insert + onConflict DO NOTHING", () => {
-    const query = onConflict("email", "nothing")(
-      insert(User, { email: "alice@test.com", name: "Alice" }),
-    );
+    const query = onConflict(
+      "email",
+      "nothing",
+    )(insert(User, { email: "alice@test.com", name: "Alice" }));
     const { sql } = compile(query);
 
     assert.ok(sql.includes("ON CONFLICT"), `Expected ON CONFLICT in SQL: ${sql}`);
@@ -596,7 +599,7 @@ describe("integration: transaction with mock driver", () => {
       hooks: {},
     };
 
-    const result = await transaction(db, async (_tx) => "done").run();
+    const result = await transaction(db, async _tx => "done").run();
 
     assert.equal(result.isOk, true, "Expected Ok result from transaction");
     if (result.isOk) {
@@ -604,7 +607,10 @@ describe("integration: transaction with mock driver", () => {
     }
 
     // BEGIN must be first and COMMIT must follow.
-    assert.ok(executedSql.some((s) => s.startsWith("BEGIN")), `Expected BEGIN: ${JSON.stringify(executedSql)}`);
+    assert.ok(
+      executedSql.some(s => s.startsWith("BEGIN")),
+      `Expected BEGIN: ${JSON.stringify(executedSql)}`,
+    );
     assert.ok(executedSql.includes("COMMIT"), `Expected COMMIT: ${JSON.stringify(executedSql)}`);
   });
 
@@ -632,13 +638,19 @@ describe("integration: transaction with mock driver", () => {
       hooks: {},
     };
 
-    const result = await transaction(db, async (_tx) => {
+    const result = await transaction(db, async _tx => {
       throw new Error("boom");
     }).run();
 
     assert.equal(result.isErr, true, "Expected Err result when callback throws");
-    assert.ok(executedSql.includes("ROLLBACK"), `Expected ROLLBACK: ${JSON.stringify(executedSql)}`);
-    assert.ok(!executedSql.includes("COMMIT"), `Expected no COMMIT on failure: ${JSON.stringify(executedSql)}`);
+    assert.ok(
+      executedSql.includes("ROLLBACK"),
+      `Expected ROLLBACK: ${JSON.stringify(executedSql)}`,
+    );
+    assert.ok(
+      !executedSql.includes("COMMIT"),
+      `Expected no COMMIT on failure: ${JSON.stringify(executedSql)}`,
+    );
   });
 
   it("isTransactionClient returns false for a plain DatabaseClient", () => {
@@ -688,7 +700,10 @@ describe("integration: cross-dialect mutation compilation", () => {
 
     // SQLite: anonymous ?
     assert.ok(sqliteResult.sql.includes("?"), `SQLite insert should have ?: ${sqliteResult.sql}`);
-    assert.ok(!sqliteResult.sql.includes("$"), `SQLite insert should not have $: ${sqliteResult.sql}`);
+    assert.ok(
+      !sqliteResult.sql.includes("$"),
+      `SQLite insert should not have $: ${sqliteResult.sql}`,
+    );
 
     // Both share the same param values.
     assert.deepEqual(

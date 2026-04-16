@@ -537,11 +537,7 @@ describe("pipe() composition", () => {
 
   it("accumulates multiple orderBy() clauses through pipe()", () => {
     // Act
-    const node = pipe(
-      from(TestUser),
-      orderBy("name", "asc"),
-      orderBy("email", "desc"),
-    );
+    const node = pipe(from(TestUser), orderBy("name", "asc"), orderBy("email", "desc"));
 
     // Assert
     assert.equal(node.orderBy.length, 2);
@@ -570,12 +566,7 @@ describe("pipe() composition", () => {
 
   it("final composed node is frozen", () => {
     // Act
-    const node = pipe(
-      from(TestUser),
-      where(eq("id", "x")),
-      orderBy("name", "asc"),
-      limit(10),
-    );
+    const node = pipe(from(TestUser), where(eq("id", "x")), orderBy("name", "asc"), limit(10));
 
     // Assert
     assert.ok(Object.isFrozen(node));
@@ -614,7 +605,7 @@ describe("from() — timestamps option", () => {
     const node = from(TimestampedModel);
 
     // Assert — the two timestamp columns are appended
-    const columnNames = node.model.columns.map((c) => c.name);
+    const columnNames = node.model.columns.map(c => c.name);
     assert.ok(columnNames.includes("createdAt"), "expected createdAt column");
     assert.ok(columnNames.includes("updatedAt"), "expected updatedAt column");
   });
@@ -625,7 +616,7 @@ describe("from() — timestamps option", () => {
     const node = from(TestPost);
 
     // Assert
-    const columnNames = node.model.columns.map((c) => c.name);
+    const columnNames = node.model.columns.map(c => c.name);
     assert.ok(!columnNames.includes("createdAt"), "should not have createdAt");
     assert.ok(!columnNames.includes("updatedAt"), "should not have updatedAt");
   });

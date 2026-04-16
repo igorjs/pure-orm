@@ -2,9 +2,9 @@
  * Tests for the audit system: AuditModel, auditLog(), and audit types.
  */
 
-import { Schema } from "@igorjs/pure-ts";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { Schema } from "@igorjs/pure-ts";
 import { auditLog } from "../src/audit/logger.ts";
 import { AuditModel } from "../src/audit/table.ts";
 import type { AuditContext, AuditEntry, AuditOperation } from "../src/audit/types.ts";
@@ -38,7 +38,7 @@ describe("AuditModel", () => {
   });
 
   it("has all expected columns", () => {
-    const names = AuditModel.$columns.map((c) => c.name);
+    const names = AuditModel.$columns.map(c => c.name);
 
     assert.ok(names.includes("id"));
     assert.ok(names.includes("tableName"));
@@ -54,19 +54,19 @@ describe("AuditModel", () => {
   });
 
   it("resolves camelCase column names to snake_case", () => {
-    const tableNameCol = AuditModel.$columns.find((c) => c.name === "tableName");
+    const tableNameCol = AuditModel.$columns.find(c => c.name === "tableName");
     assert.equal(tableNameCol?.columnName, "table_name");
 
-    const rowIdCol = AuditModel.$columns.find((c) => c.name === "rowId");
+    const rowIdCol = AuditModel.$columns.find(c => c.name === "rowId");
     assert.equal(rowIdCol?.columnName, "row_id");
 
-    const oldDataCol = AuditModel.$columns.find((c) => c.name === "oldData");
+    const oldDataCol = AuditModel.$columns.find(c => c.name === "oldData");
     assert.equal(oldDataCol?.columnName, "old_data");
 
-    const actorIdCol = AuditModel.$columns.find((c) => c.name === "actorId");
+    const actorIdCol = AuditModel.$columns.find(c => c.name === "actorId");
     assert.equal(actorIdCol?.columnName, "actor_id");
 
-    const changedFieldsCol = AuditModel.$columns.find((c) => c.name === "changedFields");
+    const changedFieldsCol = AuditModel.$columns.find(c => c.name === "changedFields");
     assert.equal(changedFieldsCol?.columnName, "changed_fields");
   });
 
@@ -116,16 +116,12 @@ describe("auditLog()", () => {
   });
 
   it("PostgreSQL: compiles to SELECT from _pure_orm_audit", () => {
-    const node = where(eq("rowId", "u-1"))(
-      orderBy("createdAt", "desc")(
-        limit(10)(auditLog(User)),
-      ),
-    );
+    const node = where(eq("rowId", "u-1"))(orderBy("createdAt", "desc")(limit(10)(auditLog(User))));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("\"_pure_orm_audit\""));
-    assert.ok(result.sql.includes("\"table_name\" = $1"));
-    assert.ok(result.sql.includes("\"row_id\" = $2"));
+    assert.ok(result.sql.includes('"_pure_orm_audit"'));
+    assert.ok(result.sql.includes('"table_name" = $1'));
+    assert.ok(result.sql.includes('"row_id" = $2'));
     assert.ok(result.sql.includes("ORDER BY"));
     assert.deepEqual(result.params, ["users", "u-1", 10]);
   });
@@ -134,7 +130,7 @@ describe("auditLog()", () => {
     const node = auditLog(User);
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("\"_pure_orm_audit\""));
+    assert.ok(result.sql.includes('"_pure_orm_audit"'));
     assert.ok(result.sql.includes("?"));
     assert.deepEqual(result.params, ["users"]);
   });

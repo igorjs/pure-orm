@@ -13,7 +13,6 @@ import type { DatabaseClient } from "../connection/types.ts";
 import type { DbError } from "../errors/errors.ts";
 import { queryError } from "../errors/errors.ts";
 import { startTimer } from "../logging/timing.ts";
-import { raw } from "../query/raw.ts";
 
 // ---- Helpers ----
 
@@ -121,7 +120,11 @@ const applyMigration = (db: DatabaseClient, migration: MigrationInput): Task<voi
     // Record in state table.
     const placeholder = db.dialect.name === "sqlite" ? "?, ?, ?" : "$1, $2, $3";
     const insertSql = `INSERT INTO "_pure_orm_migrations" ("name", "checksum", "execution_ms") VALUES (${placeholder})`;
-    const insertResult = await execQuery(db, insertSql, [migration.name, migration.checksum, durationMs]);
+    const insertResult = await execQuery(db, insertSql, [
+      migration.name,
+      migration.checksum,
+      durationMs,
+    ]);
     if (!insertResult.ok) return Err(insertResult.error);
 
     return Ok(undefined);
@@ -152,7 +155,7 @@ const getMigrationStatus = (
   db: DatabaseClient,
 ): Task<readonly Record<string, unknown>[], DbError> =>
   Task<readonly Record<string, unknown>[], DbError>(async () => {
-    const sql = "SELECT * FROM \"_pure_orm_migrations\" ORDER BY \"id\" ASC";
+    const sql = 'SELECT * FROM "_pure_orm_migrations" ORDER BY "id" ASC';
     const result = await execQuery(db, sql, []);
     if (!result.ok) return Err(result.error);
     return Ok(result.rows as Record<string, unknown>[]);

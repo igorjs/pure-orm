@@ -22,8 +22,7 @@ const deletedAtColumn: ColumnMetadata = Object.freeze({
  * Returns a new readonly array with deletedAt appended.
  * The original array is not mutated.
  */
-const injectSoftDeleteColumn = (
-  columns: readonly ColumnMetadata[],
-): readonly ColumnMetadata[] => Object.freeze([...columns, deletedAtColumn]);
+const injectSoftDeleteColumn = (columns: readonly ColumnMetadata[]): readonly ColumnMetadata[] =>
+  Object.freeze([...columns, deletedAtColumn]);
 
 export { injectSoftDeleteColumn };

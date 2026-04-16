@@ -12,16 +12,35 @@ import type { ChangeOperation, ColumnSnapshot, SchemaSnapshot, TableSnapshot } f
 // ---- Column comparison ----
 
 const columnsEqual = (a: ColumnSnapshot, b: ColumnSnapshot): boolean =>
-  a.type === b.type
-  && a.primaryKey === b.primaryKey
-  && a.nullable === b.nullable
-  && a.unique === b.unique
-  && a.default === b.default
-  && a.index === b.index;
+  a.type === b.type &&
+  a.primaryKey === b.primaryKey &&
+  a.nullable === b.nullable &&
+  a.unique === b.unique &&
+  a.default === b.default &&
+  a.index === b.index;
+
+// ---- Helpers ----
+
+/** Safe indexed access: returns the value or throws (used after `in` guard). */
+const getTable = (tables: Readonly<Record<string, TableSnapshot>>, key: string): TableSnapshot => {
+  const t = tables[key];
+  if (t === undefined) throw new Error(`Table "${key}" not found in snapshot`);
+  return t;
+};
+
+const getCol = (cols: Readonly<Record<string, ColumnSnapshot>>, key: string): ColumnSnapshot => {
+  const c = cols[key];
+  if (c === undefined) throw new Error(`Column "${key}" not found in snapshot`);
+  return c;
+};
 
 // ---- Table differ ----
 
-const diffTable = (table: string, from: TableSnapshot, to: TableSnapshot): readonly ChangeOperation[] => {
+const diffTable = (
+  table: string,
+  from: TableSnapshot,
+  to: TableSnapshot,
+): readonly ChangeOperation[] => {
   const ops: ChangeOperation[] = [];
   const fromCols = from.columns;
   const toCols = to.columns;
@@ -29,27 +48,33 @@ const diffTable = (table: string, from: TableSnapshot, to: TableSnapshot): reado
   // Dropped columns
   for (const col of Object.keys(fromCols)) {
     if (!(col in toCols)) {
-      ops.push(Object.freeze({ tag: "DropColumn", table, column: col, snapshot: fromCols[col] }));
+      ops.push(
+        Object.freeze({ tag: "DropColumn", table, column: col, snapshot: getCol(fromCols, col) }),
+      );
     }
   }
 
   // Added columns
   for (const col of Object.keys(toCols)) {
     if (!(col in fromCols)) {
-      ops.push(Object.freeze({ tag: "AddColumn", table, column: col, snapshot: toCols[col] }));
+      ops.push(
+        Object.freeze({ tag: "AddColumn", table, column: col, snapshot: getCol(toCols, col) }),
+      );
     }
   }
 
   // Altered columns
   for (const col of Object.keys(toCols)) {
-    if (col in fromCols && !columnsEqual(fromCols[col], toCols[col])) {
-      ops.push(Object.freeze({ tag: "AlterColumn", table, column: col, from: fromCols[col], to: toCols[col] }));
+    const fromCol = fromCols[col];
+    const toCol = getCol(toCols, col);
+    if (fromCol !== undefined && !columnsEqual(fromCol, toCol)) {
+      ops.push(Object.freeze({ tag: "AlterColumn", table, column: col, from: fromCol, to: toCol }));
     }
   }
 
   // Index changes
-  const fromIndexNames = new Set(from.indexes.map((i) => i.name));
-  const toIndexNames = new Set(to.indexes.map((i) => i.name));
+  const fromIndexNames = new Set(from.indexes.map(i => i.name));
+  const toIndexNames = new Set(to.indexes.map(i => i.name));
 
   for (const idx of from.indexes) {
     if (!toIndexNames.has(idx.name)) {
@@ -81,21 +106,22 @@ const diffSnapshots = (from: SchemaSnapshot, to: SchemaSnapshot): readonly Chang
   // Tables in `from` but not in `to` -> DropTable
   for (const table of Object.keys(from.tables)) {
     if (!(table in to.tables)) {
-      ops.push(Object.freeze({ tag: "DropTable", table, snapshot: from.tables[table] }));
+      ops.push(Object.freeze({ tag: "DropTable", table, snapshot: getTable(from.tables, table) }));
     }
   }
 
   // Tables in both -> diff columns/indexes
   for (const table of Object.keys(to.tables)) {
-    if (table in from.tables) {
-      ops.push(...diffTable(table, from.tables[table], to.tables[table]));
+    const fromTable = from.tables[table];
+    if (fromTable !== undefined) {
+      ops.push(...diffTable(table, fromTable, getTable(to.tables, table)));
     }
   }
 
   // Tables in `to` but not in `from` -> CreateTable
   for (const table of Object.keys(to.tables)) {
     if (!(table in from.tables)) {
-      ops.push(Object.freeze({ tag: "CreateTable", table, snapshot: to.tables[table] }));
+      ops.push(Object.freeze({ tag: "CreateTable", table, snapshot: getTable(to.tables, table) }));
     }
   }
 

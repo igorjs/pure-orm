@@ -26,7 +26,11 @@ type AggregateBuilder = AggregateExpr & {
   readonly as: (alias: string) => AggregateBuilder;
 };
 
-const makeAggregate = (fn: AggregateFn, column: string, alias: string | null = null): AggregateBuilder => {
+const makeAggregate = (
+  fn: AggregateFn,
+  column: string,
+  alias: string | null = null,
+): AggregateBuilder => {
   const expr: AggregateBuilder = Object.freeze({
     tag: "Aggregate" as const,
     fn,

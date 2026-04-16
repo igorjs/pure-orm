@@ -26,10 +26,19 @@ type QueryEvent = {
 
 type QueryHooks = {
   readonly beforeCompile: (ast: unknown) => void;
-  readonly afterCompile: (compiled: { readonly sql: string; readonly params: readonly unknown[] }) => void;
-  readonly beforeExecute: (compiled: { readonly sql: string; readonly params: readonly unknown[] }) => void;
+  readonly afterCompile: (compiled: {
+    readonly sql: string;
+    readonly params: readonly unknown[];
+  }) => void;
+  readonly beforeExecute: (compiled: {
+    readonly sql: string;
+    readonly params: readonly unknown[];
+  }) => void;
   readonly afterExecute: (result: QueryEvent) => void;
-  readonly onError: (error: DbError, context: { readonly sql?: string; readonly params?: readonly unknown[] }) => void;
+  readonly onError: (
+    error: DbError,
+    context: { readonly sql?: string; readonly params?: readonly unknown[] },
+  ) => void;
   readonly onConnectionAcquire: (durationMs: number) => void;
   readonly onConnectionRelease: () => void;
   readonly onTransactionBegin: (isolationLevel?: string) => void;

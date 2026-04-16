@@ -117,10 +117,7 @@ describe("PG compileInsert: single row", () => {
     const node = makeInsert();
     const result = pg.compileInsert(node);
 
-    assert.equal(
-      result.sql,
-      `INSERT INTO "users" ("email", "name") VALUES ($1, $2)`,
-    );
+    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES ($1, $2)`);
     assert.deepEqual(result.params, ["alice@example.com", "Alice"]);
   });
 });
@@ -135,10 +132,7 @@ describe("PG compileInsert: multiple rows", () => {
     });
     const result = pg.compileInsert(node);
 
-    assert.equal(
-      result.sql,
-      `INSERT INTO "users" ("email", "name") VALUES ($1, $2), ($3, $4)`,
-    );
+    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES ($1, $2), ($3, $4)`);
     assert.deepEqual(result.params, ["a@example.com", "Alice", "b@example.com", "Bob"]);
   });
 });
@@ -149,10 +143,7 @@ describe("PG compileInsert: RETURNING *", () => {
     const result = pg.compileInsert(node);
 
     assert.ok(result.sql.endsWith("RETURNING *"), `unexpected SQL: ${result.sql}`);
-    assert.equal(
-      result.sql,
-      `INSERT INTO "users" ("email", "name") VALUES ($1, $2) RETURNING *`,
-    );
+    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES ($1, $2) RETURNING *`);
   });
 });
 
@@ -210,10 +201,7 @@ describe("PG compileInsert: camelCase column resolution", () => {
     });
     const result = pg.compileInsert(node);
 
-    assert.equal(
-      result.sql,
-      `INSERT INTO "posts" ("author_id", "title") VALUES ($1, $2)`,
-    );
+    assert.equal(result.sql, `INSERT INTO "posts" ("author_id", "title") VALUES ($1, $2)`);
     assert.deepEqual(result.params, ["u1", "Hello"]);
   });
 });
@@ -245,10 +233,7 @@ describe("SQLite compileInsert: single row", () => {
     const node = makeInsert();
     const result = sqlite.compileInsert(node);
 
-    assert.equal(
-      result.sql,
-      `INSERT INTO "users" ("email", "name") VALUES (?, ?)`,
-    );
+    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES (?, ?)`);
     assert.deepEqual(result.params, ["alice@example.com", "Alice"]);
   });
 });
@@ -263,10 +248,7 @@ describe("SQLite compileInsert: multiple rows", () => {
     });
     const result = sqlite.compileInsert(node);
 
-    assert.equal(
-      result.sql,
-      `INSERT INTO "users" ("email", "name") VALUES (?, ?), (?, ?)`,
-    );
+    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES (?, ?), (?, ?)`);
     assert.deepEqual(result.params, ["a@example.com", "Alice", "b@example.com", "Bob"]);
   });
 });
@@ -276,10 +258,7 @@ describe("SQLite compileInsert: RETURNING *", () => {
     const node = makeInsert({ returning: "*" });
     const result = sqlite.compileInsert(node);
 
-    assert.equal(
-      result.sql,
-      `INSERT INTO "users" ("email", "name") VALUES (?, ?) RETURNING *`,
-    );
+    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES (?, ?) RETURNING *`);
   });
 });
 
@@ -364,10 +343,7 @@ describe("PG compileUpdate: softDeleteFilter only (no explicit conditions)", () 
     });
     const result = pg.compileUpdate(node);
 
-    assert.equal(
-      result.sql,
-      `UPDATE "users" SET "name" = $1 WHERE "users"."deleted_at" IS NULL`,
-    );
+    assert.equal(result.sql, `UPDATE "users" SET "name" = $1 WHERE "users"."deleted_at" IS NULL`);
   });
 });
 
@@ -495,10 +471,7 @@ describe("PG compileDelete (soft): basic", () => {
     });
     const result = pg.compileDelete(node);
 
-    assert.equal(
-      result.sql,
-      `UPDATE "users" SET "deleted_at" = NOW() WHERE "users"."id" = $1`,
-    );
+    assert.equal(result.sql, `UPDATE "users" SET "deleted_at" = NOW() WHERE "users"."id" = $1`);
     assert.deepEqual(result.params, ["u1"]);
   });
 });
@@ -681,7 +654,11 @@ describe("cross-dialect: UPDATE param style", () => {
     assert.deepEqual(pgResult.params, sqliteResult.params);
     assert.ok(pgResult.sql.includes("$1"));
     assert.ok(!sqliteResult.sql.includes("$"));
-    assert.equal(sqliteResult.sql.split("?").length - 1, 2, "SQLite SQL should have exactly 2 ? placeholders");
+    assert.equal(
+      sqliteResult.sql.split("?").length - 1,
+      2,
+      "SQLite SQL should have exactly 2 ? placeholders",
+    );
   });
 });
 

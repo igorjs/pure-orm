@@ -43,5 +43,5 @@ const resolveDialect = (name: string): Result<Dialect, DbError> => {
 registerDialect("postgresql", createPostgresDialect());
 registerDialect("sqlite", createSqliteDialect());
 
-export { registerDialect, resolveDialect };
 export type { Result };
+export { registerDialect, resolveDialect };

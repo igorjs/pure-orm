@@ -10,7 +10,10 @@ import type { FieldConfig, FieldDef } from "./types.ts";
 // Overload: no config -> HasDefault is false (insert requires this field)
 function Field<T>(schema: SchemaType<T>): FieldDef<T, false>;
 // Overload: config with default -> HasDefault is true (insert may omit this field)
-function Field<T>(schema: SchemaType<T>, config: FieldConfig & { default: unknown }): FieldDef<T, true>;
+function Field<T>(
+  schema: SchemaType<T>,
+  config: FieldConfig & { default: unknown },
+): FieldDef<T, true>;
 // Overload: primary key with default -> HasDefault is true
 function Field<T>(
   schema: SchemaType<T>,
@@ -28,6 +31,7 @@ function Field<T>(schema: SchemaType<T>, config?: FieldConfig): FieldDef<T, bool
     _tag: "FieldDef",
     schema,
     config: Object.freeze(config ?? {}),
+    _type: undefined as unknown as T,
     _hasDefault: hasDefault,
   });
 }

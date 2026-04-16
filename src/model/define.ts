@@ -7,8 +7,8 @@
  * derivation. If it is needed elsewhere later, extract to a shared utils file.
  */
 
-import { Schema } from "@igorjs/pure-ts";
 import type { SchemaType } from "@igorjs/pure-ts";
+import { Schema } from "@igorjs/pure-ts";
 import type { RelationMap } from "./relations.ts";
 import { injectSoftDeleteColumn } from "./soft-delete.ts";
 import { injectTimestampColumns } from "./timestamps.ts";
@@ -100,23 +100,23 @@ function Model<F extends FieldsRecord>(
         columnName: fieldDef.config.columnName ?? camelToSnake(name),
         schema: fieldDef.schema,
         config: fieldDef.config,
-      })
+      }),
     ),
   );
 
   // Optionally append createdAt / updatedAt and deletedAt columns.
-  let columns: readonly ColumnMetadata[] = options.timestamps === true
-    ? injectTimestampColumns(baseColumns)
-    : baseColumns;
+  let columns: readonly ColumnMetadata[] =
+    options.timestamps === true ? injectTimestampColumns(baseColumns) : baseColumns;
   if (options.softDelete === true) {
     columns = injectSoftDeleteColumn(columns);
   }
 
   // Build a Schema.object whose shape mirrors the FieldsRecord for runtime validation.
-  // We need a plain Record<string, SchemaType<unknown>> for Schema.object.
+  // FieldDef.schema is stored as `unknown` to avoid invariance. We recover it here
+  // via a single boundary cast: the schema was originally SchemaType<T> in Field().
   const schemaShape: Record<string, SchemaType<unknown>> = {};
   for (const [name, fieldDef] of fieldEntries) {
-    schemaShape[name] = fieldDef.schema;
+    schemaShape[name] = fieldDef.schema as SchemaType<unknown>;
   }
   // Schema.object returns SchemaType<{ [K in keys]: inferred }>.
   // We cast through unknown here because TypeScript cannot prove that the
@@ -127,11 +127,12 @@ function Model<F extends FieldsRecord>(
   // Normalise relations to a thunk. When the caller passes a plain object,
   // wrap it in a function so $relations is always () => RelationMap.
   const emptyRelations: RelationMap = Object.freeze({});
-  const relationsThunk: () => RelationMap = relations === undefined
-    ? () => emptyRelations
-    : typeof relations === "function"
-    ? relations
-    : () => relations;
+  const relationsThunk: () => RelationMap =
+    relations === undefined
+      ? () => emptyRelations
+      : typeof relations === "function"
+        ? relations
+        : () => relations;
 
   return Object.freeze<Model<InferModelType<F>>>({
     $name: tableName,
@@ -148,5 +149,5 @@ function Model<F extends FieldsRecord>(
   });
 }
 
-export { camelToSnake, Model };
 export type { InferModelType };
+export { camelToSnake, Model };

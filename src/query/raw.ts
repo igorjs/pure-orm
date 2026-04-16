@@ -39,7 +39,7 @@ const raw = (sql: string, params: readonly unknown[] = []): RawNode =>
 const sql = (strings: TemplateStringsArray, ...values: unknown[]): RawNode => {
   const parts: string[] = [];
   for (let i = 0; i < strings.length; i++) {
-    parts.push(strings[i]);
+    parts.push(strings[i] ?? "");
     if (i < values.length) {
       parts.push("?");
     }

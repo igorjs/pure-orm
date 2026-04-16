@@ -7,7 +7,15 @@ import { Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";
 import { where } from "../src/query/builders.ts";
 import { eq } from "../src/query/conditions.ts";
-import { hardRemove, insert, insertMany, onConflict, remove, returning, update } from "../src/query/mutations.ts";
+import {
+  hardRemove,
+  insert,
+  insertMany,
+  onConflict,
+  remove,
+  returning,
+  update,
+} from "../src/query/mutations.ts";
 import type { DeleteNode, InsertNode, UpdateNode } from "../src/query/types.ts";
 
 // ---------------------------------------------------------------------------
@@ -147,10 +155,7 @@ describe("insert()", () => {
 describe("insertMany()", () => {
   it("produces an InsertNode with tag 'Insert'", () => {
     // Act
-    const node = insertMany(UserModel, [
-      { email: "a@example.com" },
-      { email: "b@example.com" },
-    ]);
+    const node = insertMany(UserModel, [{ email: "a@example.com" }, { email: "b@example.com" }]);
 
     // Assert
     assert.equal(node.tag, "Insert");
@@ -176,10 +181,7 @@ describe("insertMany()", () => {
 
   it("freezes each row independently", () => {
     // Act
-    const node = insertMany(UserModel, [
-      { email: "a@example.com" },
-      { email: "b@example.com" },
-    ]);
+    const node = insertMany(UserModel, [{ email: "a@example.com" }, { email: "b@example.com" }]);
 
     // Assert
     for (const row of node.rows) {
@@ -614,9 +616,10 @@ describe("onConflict()", () => {
 
   it("sets the conflict clause with an array of columns and 'nothing' action", () => {
     // Act
-    const node = onConflict(["email", "name"], "nothing")(
-      insert(UserModel, { email: "a@example.com" }),
-    );
+    const node = onConflict(
+      ["email", "name"],
+      "nothing",
+    )(insert(UserModel, { email: "a@example.com" }));
 
     // Assert
     assert.ok(node.onConflict !== null);
@@ -878,7 +881,11 @@ describe("all returned nodes are frozen", () => {
   });
 
   it("onConflict() returns a frozen node", () => {
-    assert.ok(Object.isFrozen(onConflict("email", "nothing")(insert(UserModel, { email: "a@example.com" }))));
+    assert.ok(
+      Object.isFrozen(
+        onConflict("email", "nothing")(insert(UserModel, { email: "a@example.com" })),
+      ),
+    );
   });
 
   it("where() on UpdateNode returns a frozen node", () => {

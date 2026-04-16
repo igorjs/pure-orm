@@ -7,7 +7,13 @@
  */
 
 import type { FieldConfig } from "../model/types.ts";
-import type { CompiledQuery, DeleteNode, InsertNode, SelectNode, UpdateNode } from "../query/types.ts";
+import type {
+  CompiledQuery,
+  DeleteNode,
+  InsertNode,
+  SelectNode,
+  UpdateNode,
+} from "../query/types.ts";
 
 type Dialect = {
   readonly name: string;

@@ -11,20 +11,25 @@ import type { ChangeOperation, ColumnSnapshot, TableSnapshot } from "./types.ts"
 
 // ---- Helpers ----
 
-const q = (id: string): string => `"${id.replace(/"/g, "\"\"")}"`;
+const q = (id: string): string => `"${id.replace(/"/g, '""')}"`;
 
 const columnDef = (name: string, col: ColumnSnapshot, dialect: Dialect): string => {
-  const sqlType = dialect.mapFieldType(col.type, {
+  const config = {
     primaryKey: col.primaryKey,
     unique: col.unique,
     index: col.index,
-    default: col.default ?? undefined,
-  });
+  };
+  const sqlType = dialect.mapFieldType(col.type, config);
   const parts = [q(name), sqlType];
   if (col.primaryKey) parts.push("PRIMARY KEY");
   if (!col.nullable && !col.primaryKey) parts.push("NOT NULL");
   if (col.unique && !col.primaryKey) parts.push("UNIQUE");
-  if (col.default !== null && col.default !== "uuid" && col.default !== "cuid" && col.default !== "autoincrement") {
+  if (
+    col.default !== null &&
+    col.default !== "uuid" &&
+    col.default !== "cuid" &&
+    col.default !== "autoincrement"
+  ) {
     // Map known defaults to SQL expressions.
     if (col.default === "now") {
       parts.push(`DEFAULT ${dialect.name === "sqlite" ? "datetime('now')" : "NOW()"}`);
@@ -36,8 +41,9 @@ const columnDef = (name: string, col: ColumnSnapshot, dialect: Dialect): string 
 };
 
 const createTableSql = (table: string, snapshot: TableSnapshot, dialect: Dialect): string => {
-  const colDefs = Object.entries(snapshot.columns)
-    .map(([name, col]) => columnDef(name, col, dialect));
+  const colDefs = Object.entries(snapshot.columns).map(([name, col]) =>
+    columnDef(name, col, dialect),
+  );
   return `CREATE TABLE ${q(table)} (\n  ${colDefs.join(",\n  ")}\n);`;
 };
 
@@ -77,10 +83,15 @@ const generateUp = (op: ChangeOperation, dialect: Dialect): string => {
         if (op.to.default === null) {
           lines.push(`ALTER TABLE ${q(op.table)} ALTER COLUMN ${q(op.column)} DROP DEFAULT;`);
         } else {
-          const defExpr = op.to.default === "now"
-            ? (dialect.name === "sqlite" ? "datetime('now')" : "NOW()")
-            : op.to.default;
-          lines.push(`ALTER TABLE ${q(op.table)} ALTER COLUMN ${q(op.column)} SET DEFAULT ${defExpr};`);
+          const defExpr =
+            op.to.default === "now"
+              ? dialect.name === "sqlite"
+                ? "datetime('now')"
+                : "NOW()"
+              : op.to.default;
+          lines.push(
+            `ALTER TABLE ${q(op.table)} ALTER COLUMN ${q(op.column)} SET DEFAULT ${defExpr};`,
+          );
         }
       }
       return lines.join("\n");
@@ -143,9 +154,12 @@ const generateMigration = (
   ops: readonly ChangeOperation[],
   dialect: Dialect,
 ): { readonly up: string; readonly down: string } => {
-  const up = ops.map((op) => generateUp(op, dialect)).join("\n\n");
+  const up = ops.map(op => generateUp(op, dialect)).join("\n\n");
   // Down operations are reversed so rollback undoes changes in reverse order.
-  const down = [...ops].reverse().map((op) => generateDown(op, dialect)).join("\n\n");
+  const down = [...ops]
+    .reverse()
+    .map(op => generateDown(op, dialect))
+    .join("\n\n");
   return Object.freeze({ up, down });
 };
 

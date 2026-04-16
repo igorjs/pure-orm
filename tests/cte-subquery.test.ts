@@ -2,9 +2,9 @@
  * Tests for CTEs (cte()) and subquery conditions (exists, notExists).
  */
 
-import { Schema } from "@igorjs/pure-ts";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { Schema } from "@igorjs/pure-ts";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
@@ -52,9 +52,7 @@ describe("cte()", () => {
   });
 
   it("accumulates multiple CTEs", () => {
-    const node = cte("cte2", from(User))(
-      cte("cte1", from(Post))(from(User)),
-    );
+    const node = cte("cte2", from(User))(cte("cte1", from(Post))(from(User)));
 
     assert.equal(node.ctes.length, 2);
     assert.equal(node.ctes[0].name, "cte1");
@@ -94,15 +92,13 @@ describe("PostgreSQL CTE compilation", () => {
     const result = pgDialect.compileSelect(node);
 
     assert.ok(result.sql.startsWith("WITH"));
-    assert.ok(result.sql.includes("\"active_posts\" AS"));
-    assert.ok(result.sql.includes("SELECT \"users\".*"));
+    assert.ok(result.sql.includes('"active_posts" AS'));
+    assert.ok(result.sql.includes('SELECT "users".*'));
   });
 
   it("renumbers CTE params for PostgreSQL", () => {
     const subquery = where(eq("published", true))(from(Post));
-    const node = where(eq("name", "Alice"))(
-      cte("active_posts", subquery)(from(User)),
-    );
+    const node = where(eq("name", "Alice"))(cte("active_posts", subquery)(from(User)));
     const result = pgDialect.compileSelect(node);
 
     // CTE param is $1 (published=true), outer WHERE is $2 (name=Alice)
@@ -118,15 +114,15 @@ describe("PostgreSQL CTE compilation", () => {
     const result = pgDialect.compileSelect(node);
 
     assert.ok(result.sql.startsWith("WITH"));
-    assert.ok(result.sql.includes("\"a\" AS"));
-    assert.ok(result.sql.includes("\"b\" AS"));
+    assert.ok(result.sql.includes('"a" AS'));
+    assert.ok(result.sql.includes('"b" AS'));
   });
 
   it("no CTEs produces normal SQL (regression)", () => {
     const result = pgDialect.compileSelect(from(User));
 
     assert.ok(!result.sql.includes("WITH"));
-    assert.ok(result.sql.startsWith("SELECT \"users\".*"));
+    assert.ok(result.sql.startsWith('SELECT "users".*'));
   });
 });
 
@@ -186,14 +182,12 @@ describe("PostgreSQL EXISTS compilation", () => {
     const result = pgDialect.compileSelect(node);
 
     assert.ok(result.sql.includes("EXISTS (SELECT"));
-    assert.ok(result.sql.includes("\"posts\""));
+    assert.ok(result.sql.includes('"posts"'));
   });
 
   it("renumbers params in EXISTS subquery", () => {
     const subquery = where(eq("published", true))(from(Post));
-    const node = where(exists(subquery))(
-      where(eq("name", "Alice"))(from(User)),
-    );
+    const node = where(exists(subquery))(where(eq("name", "Alice"))(from(User)));
     const result = pgDialect.compileSelect(node);
 
     // Outer: name = $1, EXISTS subquery: published = $2
@@ -244,9 +238,7 @@ describe("CTE + EXISTS composition", () => {
     const activePosts = where(eq("published", true))(from(Post));
     const postExists = exists(where(eq("authorId", "u-1"))(from(Post)));
 
-    const node = where(postExists)(
-      cte("active", activePosts)(from(User)),
-    );
+    const node = where(postExists)(cte("active", activePosts)(from(User)));
     const result = pgDialect.compileSelect(node);
 
     assert.ok(result.sql.startsWith("WITH"));

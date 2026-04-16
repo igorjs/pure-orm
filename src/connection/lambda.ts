@@ -14,7 +14,13 @@ import { Ok, Task } from "@igorjs/pure-ts";
 import type { DbError } from "../errors/errors.ts";
 import type { Logger } from "../logging/types.ts";
 import { closeConnection, connect } from "./connection.ts";
-import type { ConnectionConfig, ConnectionPool, DatabaseDriver, PoolConfig, RawConnection } from "./types.ts";
+import type {
+  ConnectionConfig,
+  ConnectionPool,
+  DatabaseDriver,
+  PoolConfig,
+  RawConnection,
+} from "./types.ts";
 
 /**
  * Module-scoped singleton connection.  Intentionally mutable — it persists
@@ -37,7 +43,7 @@ const createLambdaPool = (
     }
 
     logger.debug("lambda pool: creating new connection");
-    return connect(driver, config).tap((conn) => {
+    return connect(driver, config).tap(conn => {
       singletonConnection = conn;
     });
   };

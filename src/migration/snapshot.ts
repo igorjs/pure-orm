@@ -10,8 +10,14 @@
  */
 
 import type { Model } from "../model/define.ts";
-import type { ColumnMetadata, FieldConfig } from "../model/types.ts";
-import type { ColumnSnapshot, ForeignKeySnapshot, IndexSnapshot, SchemaSnapshot, TableSnapshot } from "./types.ts";
+import type { ColumnMetadata } from "../model/types.ts";
+import type {
+  ColumnSnapshot,
+  ForeignKeySnapshot,
+  IndexSnapshot,
+  SchemaSnapshot,
+  TableSnapshot,
+} from "./types.ts";
 
 // ---- Column type inference ----
 
@@ -111,9 +117,7 @@ const createSnapshot = (models: readonly Model[]): SchemaSnapshot =>
   Object.freeze({
     version: 1 as const,
     generatedAt: new Date().toISOString(),
-    tables: Object.freeze(
-      Object.fromEntries(models.map((m) => [m.$name, snapshotTable(m)])),
-    ),
+    tables: Object.freeze(Object.fromEntries(models.map(m => [m.$name, snapshotTable(m)]))),
   });
 
 export { createSnapshot, snapshotColumn, snapshotTable };

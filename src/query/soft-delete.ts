@@ -19,7 +19,10 @@ import type { SelectNode } from "./types.ts";
  * Idempotent: calling withDeleted() on a node that already has the filter
  * disabled is a no-op (the filter stays disabled).
  */
-const withDeleted = () => (node: SelectNode): SelectNode => Object.freeze({ ...node, softDeleteFilter: false });
+const withDeleted =
+  () =>
+  (node: SelectNode): SelectNode =>
+    Object.freeze({ ...node, softDeleteFilter: false });
 
 /**
  * Inverts the soft-delete filter to return ONLY soft-deleted rows
@@ -28,11 +31,13 @@ const withDeleted = () => (node: SelectNode): SelectNode => Object.freeze({ ...n
  * Disables the default IS NULL filter and injects an IS NOT NULL condition
  * so only rows that have been soft-deleted are returned.
  */
-const onlyDeleted = () => (node: SelectNode): SelectNode =>
-  Object.freeze({
-    ...node,
-    softDeleteFilter: false,
-    conditions: Object.freeze([...node.conditions, makeIsNotNull("deletedAt")]),
-  });
+const onlyDeleted =
+  () =>
+  (node: SelectNode): SelectNode =>
+    Object.freeze({
+      ...node,
+      softDeleteFilter: false,
+      conditions: Object.freeze([...node.conditions, makeIsNotNull("deletedAt")]),
+    });
 
 export { onlyDeleted, withDeleted };

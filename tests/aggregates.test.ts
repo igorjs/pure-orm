@@ -2,9 +2,9 @@
  * Tests for aggregate expressions and include() eager loading.
  */
 
-import { Schema } from "@igorjs/pure-ts";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { Schema } from "@igorjs/pure-ts";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
@@ -155,8 +155,8 @@ describe("PostgreSQL aggregate compilation", () => {
     const node = select("authorId", count("id").as("cnt"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("\"posts\".\"author_id\""));
-    assert.ok(result.sql.includes("COUNT(\"posts\".\"id\") AS \"cnt\""));
+    assert.ok(result.sql.includes('"posts"."author_id"'));
+    assert.ok(result.sql.includes('COUNT("posts"."id") AS "cnt"'));
   });
 
   it("compiles COUNT(*)", () => {
@@ -179,15 +179,15 @@ describe("PostgreSQL aggregate compilation", () => {
     assert.ok(result.sql.includes("AVG("));
     assert.ok(result.sql.includes("MIN("));
     assert.ok(result.sql.includes("MAX("));
-    assert.ok(result.sql.includes("AS \"total\""));
-    assert.ok(result.sql.includes("AS \"average\""));
+    assert.ok(result.sql.includes('AS "total"'));
+    assert.ok(result.sql.includes('AS "average"'));
   });
 
   it("compiles aggregate without alias", () => {
     const node = select(count("id"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("COUNT(\"posts\".\"id\")"));
+    assert.ok(result.sql.includes('COUNT("posts"."id")'));
     assert.ok(!result.sql.includes(" AS "));
   });
 
@@ -199,10 +199,10 @@ describe("PostgreSQL aggregate compilation", () => {
     );
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("SELECT \"posts\".\"author_id\""));
-    assert.ok(result.sql.includes("COUNT(\"posts\".\"id\") AS \"postCount\""));
-    assert.ok(result.sql.includes("AVG(\"posts\".\"views\") AS \"avgViews\""));
-    assert.ok(result.sql.includes("GROUP BY \"posts\".\"author_id\""));
+    assert.ok(result.sql.includes('SELECT "posts"."author_id"'));
+    assert.ok(result.sql.includes('COUNT("posts"."id") AS "postCount"'));
+    assert.ok(result.sql.includes('AVG("posts"."views") AS "avgViews"'));
+    assert.ok(result.sql.includes('GROUP BY "posts"."author_id"'));
     assert.ok(result.sql.includes("HAVING"));
   });
 
@@ -210,7 +210,7 @@ describe("PostgreSQL aggregate compilation", () => {
     const node = select(count("authorId"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("\"author_id\""));
+    assert.ok(result.sql.includes('"author_id"'));
   });
 });
 
@@ -221,9 +221,7 @@ describe("PostgreSQL aggregate compilation", () => {
 describe("SQLite aggregate compilation", () => {
   it("compiles COUNT with ? placeholders in HAVING", () => {
     const node = having(gt("views", 50))(
-      groupBy("authorId")(
-        select("authorId", count("id").as("cnt"))(from(Post)),
-      ),
+      groupBy("authorId")(select("authorId", count("id").as("cnt"))(from(Post))),
     );
     const result = sqliteDialect.compileSelect(node);
 
@@ -271,17 +269,11 @@ describe("include()", () => {
   });
 
   it("throws for unknown relation name", () => {
-    assert.throws(
-      () => include(Post, "nonexistent")(from(Post)),
-      { message: /not found/ },
-    );
+    assert.throws(() => include(Post, "nonexistent")(from(Post)), { message: /not found/ });
   });
 
   it("throws for hasMany relations", () => {
-    assert.throws(
-      () => include(User, "posts")(from(User)),
-      { message: /HasMany/ },
-    );
+    assert.throws(() => include(User, "posts")(from(User)), { message: /HasMany/ });
   });
 
   it("does not mutate the input node", () => {
@@ -303,15 +295,13 @@ describe("include()", () => {
     const result = pgDialect.compileSelect(node);
 
     assert.ok(result.sql.includes("LEFT JOIN"));
-    assert.ok(result.sql.includes("\"users\""));
-    assert.ok(result.sql.includes("\"author_id\""));
+    assert.ok(result.sql.includes('"users"'));
+    assert.ok(result.sql.includes('"author_id"'));
   });
 
   it("composes with other query builders", () => {
     const node = groupBy("authorId")(
-      select("authorId", count("id").as("cnt"))(
-        include(Post, "author")(from(Post)),
-      ),
+      select("authorId", count("id").as("cnt"))(include(Post, "author")(from(Post))),
     );
     const result = pgDialect.compileSelect(node);
 

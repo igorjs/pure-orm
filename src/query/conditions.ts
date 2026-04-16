@@ -44,9 +44,11 @@ const isNull = (column: string): ConditionNode => makeIsNull(column);
 
 const isNotNull = (column: string): ConditionNode => makeIsNotNull(column);
 
-const inArray = (column: string, values: readonly unknown[]): ConditionNode => makeInArray(column, values);
+const inArray = (column: string, values: readonly unknown[]): ConditionNode =>
+  makeInArray(column, values);
 
-const between = (column: string, low: unknown, high: unknown): ConditionNode => makeBetween(column, low, high);
+const between = (column: string, low: unknown, high: unknown): ConditionNode =>
+  makeBetween(column, low, high);
 
 const not = (condition: ConditionNode): ConditionNode => makeNot(condition);
 

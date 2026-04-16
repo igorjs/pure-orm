@@ -7,8 +7,6 @@
  * $insert, and $update inference.
  */
 
-import type { SchemaType } from "@igorjs/pure-ts";
-
 // ---- Field configuration ----
 
 type FieldConfig = {
@@ -27,11 +25,17 @@ type FieldConfig = {
  * FieldDef pairs a pure-ts Schema with ORM metadata.
  * The HasDefault phantom distinguishes fields that are optional in inserts
  * (those with defaults, primary keys with auto-generation, etc.).
+ *
+ * The schema field is stored as `unknown` (not SchemaType<T>) to avoid
+ * SchemaType<T> invariance making FieldDef<string> non-assignable to
+ * FieldDef<unknown>. The phantom type T is preserved for InferModelType.
  */
 type FieldDef<T = unknown, HasDefault extends boolean = boolean> = {
   readonly _tag: "FieldDef";
-  readonly schema: SchemaType<T>;
+  readonly schema: unknown;
   readonly config: Readonly<FieldConfig>;
+  /** Phantom: preserves T for InferModelType without affecting runtime. */
+  readonly _type: T;
   /** Phantom type for compile-time insert optionality tracking. */
   readonly _hasDefault: HasDefault;
 };

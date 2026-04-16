@@ -17,7 +17,13 @@
 
 import type { Model } from "../model/define.ts";
 import { makeIsNotNull } from "./ast.ts";
-import type { DeleteNode, InsertNode, OnConflictClause, ReturningClause, UpdateNode } from "./types.ts";
+import type {
+  DeleteNode,
+  InsertNode,
+  OnConflictClause,
+  ReturningClause,
+  UpdateNode,
+} from "./types.ts";
 
 // ---- Shared model-ref builder ----
 
@@ -67,7 +73,7 @@ const insertMany = <T extends Record<string, unknown>>(
   Object.freeze({
     tag: "Insert",
     model: modelRef(model),
-    rows: Object.freeze(values.map((row) => Object.freeze({ ...row }))),
+    rows: Object.freeze(values.map(row => Object.freeze({ ...row }))),
     returning: null,
     onConflict: null,
   });
@@ -163,12 +169,15 @@ const restore = <T extends Record<string, unknown>>(model: Model<T>): UpdateNode
  * Called with specific column names returns only those columns.
  * Works on InsertNode, UpdateNode, and DeleteNode.
  */
-const returning = (...columns: string[]) => <N extends InsertNode | UpdateNode | DeleteNode>(node: N): N => {
-  const clause: ReturningClause = columns.length === 0 || (columns.length === 1 && columns[0] === "*")
-    ? "*"
-    : Object.freeze([...columns]);
-  return Object.freeze({ ...node, returning: clause }) as N;
-};
+const returning =
+  (...columns: string[]) =>
+  <N extends InsertNode | UpdateNode | DeleteNode>(node: N): N => {
+    const clause: ReturningClause =
+      columns.length === 0 || (columns.length === 1 && columns[0] === "*")
+        ? "*"
+        : Object.freeze([...columns]);
+    return Object.freeze({ ...node, returning: clause }) as N;
+  };
 
 // ---- onConflict ----
 
@@ -179,7 +188,8 @@ const returning = (...columns: string[]) => <N extends InsertNode | UpdateNode |
  * action { update: [...cols] } produces ON CONFLICT DO UPDATE SET col = EXCLUDED.col.
  */
 const onConflict =
-  (columns: string | readonly string[], action: OnConflictClause["action"]) => (node: InsertNode): InsertNode => {
+  (columns: string | readonly string[], action: OnConflictClause["action"]) =>
+  (node: InsertNode): InsertNode => {
     const clause: OnConflictClause = Object.freeze({
       columns: typeof columns === "string" ? Object.freeze([columns]) : Object.freeze([...columns]),
       action,

@@ -6,9 +6,9 @@
  * in $relations as a lazily-evaluated thunk.
  */
 
-import { Schema } from "@igorjs/pure-ts";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { Schema } from "@igorjs/pure-ts";
 import { Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";
 import { belongsTo, hasMany, hasOne, manyToMany } from "../src/model/relations.ts";

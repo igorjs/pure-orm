@@ -15,10 +15,7 @@ import type { ConnectionConfig, DatabaseDriver, RawConnection } from "./types.ts
  * Wraps driver.connect() in a Task, converting any thrown error into a
  * ConnectionError rather than letting it bubble as an unhandled rejection.
  */
-const connect = (
-  driver: DatabaseDriver,
-  config: ConnectionConfig,
-): Task<RawConnection, DbError> =>
+const connect = (driver: DatabaseDriver, config: ConnectionConfig): Task<RawConnection, DbError> =>
   Task.fromPromise(
     () => driver.connect(config),
     (cause: unknown) => connectionError("Failed to establish database connection", cause),

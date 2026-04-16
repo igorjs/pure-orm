@@ -55,8 +55,16 @@ type SchemaSnapshot = {
 
 // ---- Change operations ----
 
-type CreateTable = { readonly tag: "CreateTable"; readonly table: string; readonly snapshot: TableSnapshot };
-type DropTable = { readonly tag: "DropTable"; readonly table: string; readonly snapshot: TableSnapshot };
+type CreateTable = {
+  readonly tag: "CreateTable";
+  readonly table: string;
+  readonly snapshot: TableSnapshot;
+};
+type DropTable = {
+  readonly tag: "DropTable";
+  readonly table: string;
+  readonly snapshot: TableSnapshot;
+};
 type AddColumn = {
   readonly tag: "AddColumn";
   readonly table: string;
@@ -79,7 +87,14 @@ type AlterColumn = {
 type AddIndex = { readonly tag: "AddIndex"; readonly table: string; readonly index: IndexSnapshot };
 type DropIndex = { readonly tag: "DropIndex"; readonly table: string; readonly indexName: string };
 
-type ChangeOperation = CreateTable | DropTable | AddColumn | DropColumn | AlterColumn | AddIndex | DropIndex;
+type ChangeOperation =
+  | CreateTable
+  | DropTable
+  | AddColumn
+  | DropColumn
+  | AlterColumn
+  | AddIndex
+  | DropIndex;
 
 // ---- Migration record (state table) ----
 

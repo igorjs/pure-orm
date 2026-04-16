@@ -16,7 +16,13 @@ import type { DbError } from "../errors/errors.ts";
 import { connectionError } from "../errors/errors.ts";
 import type { Logger } from "../logging/types.ts";
 import { closeConnection, connect } from "./connection.ts";
-import type { ConnectionConfig, ConnectionPool, DatabaseDriver, PoolConfig, RawConnection } from "./types.ts";
+import type {
+  ConnectionConfig,
+  ConnectionPool,
+  DatabaseDriver,
+  PoolConfig,
+  RawConnection,
+} from "./types.ts";
 
 const DEFAULT_MAX = 10;
 const DEFAULT_ACQUIRE_TIMEOUT_MS = 5000;
@@ -71,7 +77,7 @@ const createPool = (
     if (active < max) {
       active += 1;
       logger.debug("pool: opening new connection", { active, idle: idle.length });
-      return connect(driver, config).mapErr((e) => {
+      return connect(driver, config).mapErr(e => {
         active -= 1;
         return e;
       });
@@ -83,21 +89,17 @@ const createPool = (
       () =>
         new Promise<RawConnection>((resolve, reject) => {
           const timer = setTimeout(() => {
-            const idx = waiters.findIndex((w) => w.resolve === resolve);
+            const idx = waiters.findIndex(w => w.resolve === resolve);
             if (idx !== -1) waiters.splice(idx, 1);
-            reject(
-              connectionError(
-                `Pool acquire timed out after ${acquireTimeoutMs}ms`,
-              ),
-            );
+            reject(connectionError(`Pool acquire timed out after ${acquireTimeoutMs}ms`));
           }, acquireTimeoutMs);
 
           waiters.push({
-            resolve: (conn) => {
+            resolve: conn => {
               clearTimeout(timer);
               resolve(conn);
             },
-            reject: (err) => {
+            reject: err => {
               clearTimeout(timer);
               reject(err);
             },
@@ -135,11 +137,11 @@ const createPool = (
     }
 
     // Close all idle connections in parallel, then resolve.
-    const closeAll = idle.splice(0).map((conn) => closeConnection(conn));
+    const closeAll = idle.splice(0).map(conn => closeConnection(conn));
 
     return Task.fromPromise(
       async () => {
-        const results = await Promise.all(closeAll.map((t) => t.run()));
+        const results = await Promise.all(closeAll.map(t => t.run()));
         for (const result of results) {
           if (result.tag === "Err") {
             logger.error("pool: error closing idle connection during end()", {

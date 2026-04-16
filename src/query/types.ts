@@ -98,7 +98,14 @@ type AggregateExpr = {
 
 // ---- Window expressions ----
 
-type WindowFn = "ROW_NUMBER" | "RANK" | "DENSE_RANK" | "LAG" | "LEAD" | "FIRST_VALUE" | "LAST_VALUE";
+type WindowFn =
+  | "ROW_NUMBER"
+  | "RANK"
+  | "DENSE_RANK"
+  | "LAG"
+  | "LEAD"
+  | "FIRST_VALUE"
+  | "LAST_VALUE";
 
 type WindowExpr = {
   readonly tag: "Window";

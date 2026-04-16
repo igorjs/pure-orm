@@ -65,8 +65,10 @@ const from = <T extends Record<string, unknown>>(model: Model<T>): SelectNode =>
  * To project all columns, simply omit select() from the pipeline (the
  * default produced by from() is already "*").
  */
-const select = (...columns: SelectColumn[]) => (node: SelectNode): SelectNode =>
-  Object.freeze({ ...node, columns: Object.freeze([...columns]) });
+const select =
+  (...columns: SelectColumn[]) =>
+  (node: SelectNode): SelectNode =>
+    Object.freeze({ ...node, columns: Object.freeze([...columns]) });
 
 /**
  * Appends a condition to the conditions array (AND semantics).
@@ -80,18 +82,22 @@ const select = (...columns: SelectColumn[]) => (node: SelectNode): SelectNode =>
  * caller never loses type information through a pipe.
  */
 type HasConditions = SelectNode | UpdateNode | DeleteNode;
-const where = (condition: ConditionNode) => <N extends HasConditions>(node: N): N =>
-  Object.freeze({ ...node, conditions: Object.freeze([...node.conditions, condition]) }) as N;
+const where =
+  (condition: ConditionNode) =>
+  <N extends HasConditions>(node: N): N =>
+    Object.freeze({ ...node, conditions: Object.freeze([...node.conditions, condition]) }) as N;
 
 /**
  * Appends an ORDER BY clause, accumulating across multiple calls.
  *
  * Order matters: clauses are applied in the order they were added.
  */
-const orderBy = (column: string, direction: SortDirection) => (node: SelectNode): SelectNode => {
-  const clause: OrderByClause = Object.freeze({ column, direction });
-  return Object.freeze({ ...node, orderBy: Object.freeze([...node.orderBy, clause]) });
-};
+const orderBy =
+  (column: string, direction: SortDirection) =>
+  (node: SelectNode): SelectNode => {
+    const clause: OrderByClause = Object.freeze({ column, direction });
+    return Object.freeze({ ...node, orderBy: Object.freeze([...node.orderBy, clause]) });
+  };
 
 /**
  * Appends columns to the GROUP BY clause, accumulating across multiple calls.
@@ -99,8 +105,10 @@ const orderBy = (column: string, direction: SortDirection) => (node: SelectNode)
  * Column names are resolved through model metadata at compilation time,
  * so camelCase field names are accepted.
  */
-const groupBy = (...columns: string[]) => (node: SelectNode): SelectNode =>
-  Object.freeze({ ...node, groupBy: Object.freeze([...node.groupBy, ...columns]) });
+const groupBy =
+  (...columns: string[]) =>
+  (node: SelectNode): SelectNode =>
+    Object.freeze({ ...node, groupBy: Object.freeze([...node.groupBy, ...columns]) });
 
 /**
  * Appends a HAVING condition, accumulating across multiple calls (AND semantics).
@@ -109,22 +117,30 @@ const groupBy = (...columns: string[]) => (node: SelectNode): SelectNode =>
  * The dialect compiles conditions identically to WHERE but places them
  * after the GROUP BY clause.
  */
-const having = (condition: ConditionNode) => (node: SelectNode): SelectNode =>
-  Object.freeze({ ...node, having: Object.freeze([...node.having, condition]) });
+const having =
+  (condition: ConditionNode) =>
+  (node: SelectNode): SelectNode =>
+    Object.freeze({ ...node, having: Object.freeze([...node.having, condition]) });
 
 /**
  * Sets the maximum number of rows to return.
  *
  * Overwrites any previously set limit (last call wins).
  */
-const limit = (n: number) => (node: SelectNode): SelectNode => Object.freeze({ ...node, limit: n });
+const limit =
+  (n: number) =>
+  (node: SelectNode): SelectNode =>
+    Object.freeze({ ...node, limit: n });
 
 /**
  * Sets the number of rows to skip before returning results.
  *
  * Overwrites any previously set offset (last call wins).
  */
-const offset = (n: number) => (node: SelectNode): SelectNode => Object.freeze({ ...node, offset: n });
+const offset =
+  (n: number) =>
+  (node: SelectNode): SelectNode =>
+    Object.freeze({ ...node, offset: n });
 
 export type { HasConditions };
 export { from, groupBy, having, limit, offset, orderBy, select, where };

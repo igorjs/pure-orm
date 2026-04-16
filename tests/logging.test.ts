@@ -432,7 +432,7 @@ describe("startTimer", () => {
     const elapsed = startTimer();
 
     // Act — wait ~20 ms
-    await new Promise<void>((resolve) => setTimeout(resolve, 20));
+    await new Promise<void>(resolve => setTimeout(resolve, 20));
     const ms = elapsed();
 
     // Assert — allow generous tolerance for CI jitter
@@ -446,7 +446,7 @@ describe("startTimer", () => {
 
     // Act
     const first = elapsed();
-    await new Promise<void>((resolve) => setTimeout(resolve, 5));
+    await new Promise<void>(resolve => setTimeout(resolve, 5));
     const second = elapsed();
 
     // Assert

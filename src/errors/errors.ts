@@ -62,7 +62,11 @@ type DbError =
 // ---- Smart constructors ----
 
 const connectionError = (message: string, cause?: unknown): ConnectionError =>
-  Object.freeze({ tag: "ConnectionError" as const, message, ...(cause !== undefined ? { cause } : {}) });
+  Object.freeze({
+    tag: "ConnectionError" as const,
+    message,
+    ...(cause !== undefined ? { cause } : {}),
+  });
 
 const queryError = (
   message: string,
@@ -104,7 +108,6 @@ const transactionError = (message: string, cause?: unknown): TransactionError =>
 const constraintError = (message: string, constraint: string, table: string): ConstraintError =>
   Object.freeze({ tag: "ConstraintError" as const, message, constraint, table });
 
-export { connectionError, constraintError, migrationError, queryError, transactionError, validationError };
 export type {
   ConnectionError,
   ConstraintError,
@@ -113,4 +116,12 @@ export type {
   QueryError,
   TransactionError,
   ValidationError,
+};
+export {
+  connectionError,
+  constraintError,
+  migrationError,
+  queryError,
+  transactionError,
+  validationError,
 };

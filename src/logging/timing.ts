@@ -7,7 +7,7 @@
  * skew from NTP adjustments during long-running queries.
  */
 
-const startTimer = (): () => number => {
+const startTimer = (): (() => number) => {
   const start = performance.now();
   return (): number => performance.now() - start;
 };

@@ -2,9 +2,9 @@
  * Tests for the migration system: snapshot, differ, and SQL generator.
  */
 
-import { Schema } from "@igorjs/pure-ts";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { Schema } from "@igorjs/pure-ts";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { columnsEqual, diffSnapshots, diffTable } from "../src/migration/differ.ts";
@@ -53,7 +53,11 @@ const makeCol = (overrides: Partial<ColumnSnapshot> = {}): ColumnSnapshot =>
   });
 
 const makeTable = (columns: Record<string, ColumnSnapshot>): TableSnapshot =>
-  Object.freeze({ columns: Object.freeze(columns), indexes: Object.freeze([]), foreignKeys: Object.freeze([]) });
+  Object.freeze({
+    columns: Object.freeze(columns),
+    indexes: Object.freeze([]),
+    foreignKeys: Object.freeze([]),
+  });
 
 const emptySnapshot: SchemaSnapshot = Object.freeze({
   version: 1 as const,
@@ -67,7 +71,7 @@ const emptySnapshot: SchemaSnapshot = Object.freeze({
 
 describe("snapshotColumn()", () => {
   it("extracts primaryKey from field config", () => {
-    const idCol = User.$columns.find((c) => c.name === "id");
+    const idCol = User.$columns.find(c => c.name === "id");
     assert.ok(idCol !== undefined);
     const snap = snapshotColumn(idCol);
 
@@ -75,7 +79,7 @@ describe("snapshotColumn()", () => {
   });
 
   it("extracts unique from field config", () => {
-    const emailCol = User.$columns.find((c) => c.name === "email");
+    const emailCol = User.$columns.find(c => c.name === "email");
     assert.ok(emailCol !== undefined);
     const snap = snapshotColumn(emailCol);
 
@@ -83,7 +87,7 @@ describe("snapshotColumn()", () => {
   });
 
   it("extracts default from field config", () => {
-    const idCol = User.$columns.find((c) => c.name === "id");
+    const idCol = User.$columns.find(c => c.name === "id");
     assert.ok(idCol !== undefined);
     const snap = snapshotColumn(idCol);
 
@@ -91,7 +95,7 @@ describe("snapshotColumn()", () => {
   });
 
   it("returns null default when none set", () => {
-    const nameCol = User.$columns.find((c) => c.name === "name");
+    const nameCol = User.$columns.find(c => c.name === "name");
     assert.ok(nameCol !== undefined);
     const snap = snapshotColumn(nameCol);
 
@@ -128,7 +132,7 @@ describe("snapshotTable()", () => {
   it("generates unique index entries for unique columns", () => {
     const snap = snapshotTable(User);
 
-    const emailIndex = snap.indexes.find((i) => i.columns.includes("email"));
+    const emailIndex = snap.indexes.find(i => i.columns.includes("email"));
     assert.ok(emailIndex !== undefined, "Should have an index for unique email column");
     assert.equal(emailIndex.unique, true);
   });
@@ -364,8 +368,8 @@ describe("generateUp()", () => {
     const sql = generateUp({ tag: "CreateTable", table: "users", snapshot: table }, pgDialect);
 
     assert.ok(sql.includes("CREATE TABLE"));
-    assert.ok(sql.includes("\"users\""));
-    assert.ok(sql.includes("\"id\""));
+    assert.ok(sql.includes('"users"'));
+    assert.ok(sql.includes('"id"'));
     assert.ok(sql.includes("PRIMARY KEY"));
     assert.ok(sql.includes("NOT NULL"));
   });
@@ -389,7 +393,7 @@ describe("generateUp()", () => {
 
     assert.ok(sql.includes("ALTER TABLE"));
     assert.ok(sql.includes("ADD COLUMN"));
-    assert.ok(sql.includes("\"email\""));
+    assert.ok(sql.includes('"email"'));
     assert.ok(sql.includes("UNIQUE"));
   });
 
@@ -400,16 +404,20 @@ describe("generateUp()", () => {
     );
 
     assert.ok(sql.includes("DROP COLUMN"));
-    assert.ok(sql.includes("\"age\""));
+    assert.ok(sql.includes('"age"'));
   });
 
   it("generates DROP TABLE", () => {
     const sql = generateUp(
-      { tag: "DropTable", table: "old", snapshot: makeTable({ id: makeCol({ primaryKey: true }) }) },
+      {
+        tag: "DropTable",
+        table: "old",
+        snapshot: makeTable({ id: makeCol({ primaryKey: true }) }),
+      },
       pgDialect,
     );
 
-    assert.equal(sql, "DROP TABLE \"old\";");
+    assert.equal(sql, 'DROP TABLE "old";');
   });
 
   it("generates CREATE INDEX", () => {
@@ -423,13 +431,13 @@ describe("generateUp()", () => {
     );
 
     assert.ok(sql.includes("CREATE UNIQUE INDEX"));
-    assert.ok(sql.includes("\"idx_users_email\""));
+    assert.ok(sql.includes('"idx_users_email"'));
   });
 
   it("generates DROP INDEX", () => {
     const sql = generateUp({ tag: "DropIndex", table: "users", indexName: "idx_old" }, pgDialect);
 
-    assert.equal(sql, "DROP INDEX \"idx_old\";");
+    assert.equal(sql, 'DROP INDEX "idx_old";');
   });
 });
 
@@ -455,7 +463,9 @@ describe("generateMigration()", () => {
     };
     const to: SchemaSnapshot = {
       ...emptySnapshot,
-      tables: { users: makeTable({ id: makeCol({ primaryKey: true }), email: makeCol({ unique: true }) }) },
+      tables: {
+        users: makeTable({ id: makeCol({ primaryKey: true }), email: makeCol({ unique: true }) }),
+      },
     };
 
     const ops = diffSnapshots(from, to);
@@ -482,7 +492,7 @@ describe("MigrationModel", () => {
   });
 
   it("has expected columns", () => {
-    const names = MigrationModel.$columns.map((c) => c.name);
+    const names = MigrationModel.$columns.map(c => c.name);
 
     assert.ok(names.includes("id"));
     assert.ok(names.includes("name"));
@@ -492,10 +502,10 @@ describe("MigrationModel", () => {
   });
 
   it("resolves column names to snake_case", () => {
-    const appliedCol = MigrationModel.$columns.find((c) => c.name === "appliedAt");
+    const appliedCol = MigrationModel.$columns.find(c => c.name === "appliedAt");
     assert.equal(appliedCol?.columnName, "applied_at");
 
-    const execCol = MigrationModel.$columns.find((c) => c.name === "executionMs");
+    const execCol = MigrationModel.$columns.find(c => c.name === "executionMs");
     assert.equal(execCol?.columnName, "execution_ms");
   });
 });
@@ -511,8 +521,8 @@ describe("end-to-end migration pipeline", () => {
     const migration = generateMigration(ops, pgDialect);
 
     // Should create both tables
-    assert.ok(migration.up.includes("\"users\""));
-    assert.ok(migration.up.includes("\"posts\""));
+    assert.ok(migration.up.includes('"users"'));
+    assert.ok(migration.up.includes('"posts"'));
     assert.ok(migration.up.includes("CREATE TABLE"));
 
     // Down should drop both

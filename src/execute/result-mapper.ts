@@ -11,9 +11,8 @@
  * immutability at the boundary between the database and application layers.
  */
 
+import type { ImmutableList, ImmutableRecord } from "@igorjs/pure-ts";
 import { List, Record } from "@igorjs/pure-ts";
-import type { ImmutableList } from "@igorjs/pure-ts";
-import type { ImmutableRecord } from "@igorjs/pure-ts";
 
 // ---- snake_case -> camelCase conversion ----
 
@@ -27,7 +26,8 @@ import type { ImmutableRecord } from "@igorjs/pure-ts";
  * This is the inverse of the camelToSnake transform used when writing
  * column names into the AST.
  */
-const snakeToCamel = (str: string): string => str.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());
+const snakeToCamel = (str: string): string =>
+  str.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());
 
 // ---- Column metadata reference (subset used here) ----
 
@@ -76,7 +76,7 @@ const mapRows = <T>(
     }
   }
 
-  const mapped = rows.map((row) => {
+  const mapped = rows.map(row => {
     // DB drivers return plain objects with unknown shape — the cast to
     // Record<string, unknown> is the accepted boundary escape hatch.
     const rawRow = row as Record<string, unknown>;

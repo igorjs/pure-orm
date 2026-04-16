@@ -7,7 +7,18 @@ import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { registerDialect, resolveDialect } from "../src/dialect/registry.ts";
 import { Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";
-import { and, between, eq, gt, ilike, inArray, isNull, ne, not, or } from "../src/query/conditions.ts";
+import {
+  and,
+  between,
+  eq,
+  gt,
+  ilike,
+  inArray,
+  isNull,
+  ne,
+  not,
+  or,
+} from "../src/query/conditions.ts";
 import type { SelectNode } from "../src/query/types.ts";
 
 // ---------------------------------------------------------------------------
@@ -37,9 +48,7 @@ const toModelRef = (model: typeof UserModel) => ({
 const dialect = createPostgresDialect();
 
 // Helper to build a minimal SelectNode
-const makeSelect = (
-  overrides: Partial<SelectNode> = {},
-): SelectNode =>
+const makeSelect = (overrides: Partial<SelectNode> = {}): SelectNode =>
   Object.freeze({
     tag: "Select" as const,
     model: toModelRef(UserModel),
@@ -62,20 +71,20 @@ const makeSelect = (
 
 describe("quote()", () => {
   it("wraps an identifier in double-quotes", () => {
-    assert.equal(dialect.quote("users"), "\"users\"");
+    assert.equal(dialect.quote("users"), '"users"');
   });
 
   it("escapes embedded double-quotes by doubling them", () => {
-    assert.equal(dialect.quote("weird\"name"), "\"weird\"\"name\"");
+    assert.equal(dialect.quote('weird"name'), '"weird""name"');
   });
 
   it("handles identifiers with no special characters", () => {
-    assert.equal(dialect.quote("created_at"), "\"created_at\"");
+    assert.equal(dialect.quote("created_at"), '"created_at"');
   });
 
   it("handles an identifier that is already quoted-looking", () => {
     // The double-quote chars inside should be escaped.
-    assert.equal(dialect.quote("\"foo\""), "\"\"\"foo\"\"\"");
+    assert.equal(dialect.quote('"foo"'), '"""foo"""');
   });
 });
 
@@ -110,7 +119,7 @@ describe("compileSelect: SELECT *", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\"");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users"');
     assert.deepEqual(result.params, []);
   });
 });
@@ -128,7 +137,7 @@ describe("compileSelect: specific columns", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".\"id\", \"users\".\"name\", \"users\".\"email\" FROM \"users\"");
+    assert.equal(result.sql, 'SELECT "users"."id", "users"."name", "users"."email" FROM "users"');
     assert.deepEqual(result.params, []);
   });
 
@@ -140,7 +149,7 @@ describe("compileSelect: specific columns", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".\"created_at\" FROM \"users\"");
+    assert.equal(result.sql, 'SELECT "users"."created_at" FROM "users"');
   });
 });
 
@@ -157,7 +166,7 @@ describe("compileSelect: WHERE eq", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"id\" = $1");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."id" = $1');
     assert.deepEqual(result.params, ["u1"]);
   });
 });
@@ -171,7 +180,7 @@ describe("compileSelect: WHERE ne", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"role\" != $1");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."role" != $1');
     assert.deepEqual(result.params, ["banned"]);
   });
 });
@@ -185,7 +194,7 @@ describe("compileSelect: WHERE gt", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"age\" > $1");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."age" > $1');
     assert.deepEqual(result.params, [18]);
   });
 });
@@ -199,7 +208,7 @@ describe("compileSelect: WHERE isNull", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"deleted_at\" IS NULL");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."deleted_at" IS NULL');
     assert.deepEqual(result.params, []);
   });
 });
@@ -213,7 +222,7 @@ describe("compileSelect: WHERE inArray empty", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" WHERE FALSE");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE FALSE');
     assert.deepEqual(result.params, []);
   });
 });
@@ -227,7 +236,7 @@ describe("compileSelect: WHERE inArray non-empty", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"role\" IN ($1, $2)");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."role" IN ($1, $2)');
     assert.deepEqual(result.params, ["admin", "editor"]);
   });
 });
@@ -241,7 +250,7 @@ describe("compileSelect: WHERE between", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"age\" BETWEEN $1 AND $2");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."age" BETWEEN $1 AND $2');
     assert.deepEqual(result.params, [18, 65]);
   });
 });
@@ -255,7 +264,7 @@ describe("compileSelect: WHERE not", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" WHERE NOT (\"users\".\"active\" = $1)");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE NOT ("users"."active" = $1)');
     assert.deepEqual(result.params, [false]);
   });
 });
@@ -273,7 +282,7 @@ describe("compileSelect: WHERE and", () => {
     // Assert
     assert.equal(
       result.sql,
-      "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"role\" = $1 AND \"users\".\"age\" > $2)",
+      'SELECT "users".* FROM "users" WHERE ("users"."role" = $1 AND "users"."age" > $2)',
     );
     assert.deepEqual(result.params, ["admin", 18]);
   });
@@ -292,7 +301,7 @@ describe("compileSelect: WHERE or", () => {
     // Assert
     assert.equal(
       result.sql,
-      "SELECT \"users\".* FROM \"users\" WHERE (\"users\".\"role\" = $1 OR \"users\".\"role\" = $2)",
+      'SELECT "users".* FROM "users" WHERE ("users"."role" = $1 OR "users"."role" = $2)',
     );
     assert.deepEqual(result.params, ["admin", "editor"]);
   });
@@ -306,12 +315,7 @@ describe("compileSelect: compound WHERE", () => {
   it("supports nested and/or with correct param ordering", () => {
     // Arrange: (role = 'admin' OR role = 'editor') AND age > 18
     const node = makeSelect({
-      conditions: [
-        and(
-          or(eq("role", "admin"), eq("role", "editor")),
-          gt("age", 18),
-        ),
-      ],
+      conditions: [and(or(eq("role", "admin"), eq("role", "editor")), gt("age", 18))],
     });
 
     // Act
@@ -320,7 +324,7 @@ describe("compileSelect: compound WHERE", () => {
     // Assert
     assert.equal(
       result.sql,
-      "SELECT \"users\".* FROM \"users\" WHERE ((\"users\".\"role\" = $1 OR \"users\".\"role\" = $2) AND \"users\".\"age\" > $3)",
+      'SELECT "users".* FROM "users" WHERE (("users"."role" = $1 OR "users"."role" = $2) AND "users"."age" > $3)',
     );
     assert.deepEqual(result.params, ["admin", "editor", 18]);
   });
@@ -337,7 +341,7 @@ describe("compileSelect: compound WHERE", () => {
     // Assert
     assert.equal(
       result.sql,
-      "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"role\" = $1 AND \"users\".\"age\" > $2",
+      'SELECT "users".* FROM "users" WHERE "users"."role" = $1 AND "users"."age" > $2',
     );
     assert.deepEqual(result.params, ["admin", 18]);
   });
@@ -356,7 +360,7 @@ describe("compileSelect: ORDER BY", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" ORDER BY \"users\".\"name\" ASC");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" ORDER BY "users"."name" ASC');
   });
 
   it("adds DESC order clause", () => {
@@ -367,7 +371,7 @@ describe("compileSelect: ORDER BY", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" ORDER BY \"users\".\"created_at\" DESC");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" ORDER BY "users"."created_at" DESC');
   });
 
   it("supports multiple ORDER BY columns", () => {
@@ -385,7 +389,7 @@ describe("compileSelect: ORDER BY", () => {
     // Assert
     assert.equal(
       result.sql,
-      "SELECT \"users\".* FROM \"users\" ORDER BY \"users\".\"role\" ASC, \"users\".\"created_at\" DESC",
+      'SELECT "users".* FROM "users" ORDER BY "users"."role" ASC, "users"."created_at" DESC',
     );
   });
 });
@@ -403,7 +407,7 @@ describe("compileSelect: LIMIT", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" LIMIT $1");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" LIMIT $1');
     assert.deepEqual(result.params, [10]);
   });
 });
@@ -417,7 +421,7 @@ describe("compileSelect: OFFSET", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" OFFSET $1");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" OFFSET $1');
     assert.deepEqual(result.params, [20]);
   });
 });
@@ -431,7 +435,7 @@ describe("compileSelect: LIMIT + OFFSET together", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" LIMIT $1 OFFSET $2");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" LIMIT $1 OFFSET $2');
     assert.deepEqual(result.params, [10, 30]);
   });
 
@@ -449,7 +453,7 @@ describe("compileSelect: LIMIT + OFFSET together", () => {
     // Assert
     assert.equal(
       result.sql,
-      "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"role\" = $1 LIMIT $2 OFFSET $3",
+      'SELECT "users".* FROM "users" WHERE "users"."role" = $1 LIMIT $2 OFFSET $3',
     );
     assert.deepEqual(result.params, ["admin", 5, 0]);
   });
@@ -468,7 +472,7 @@ describe("compileSelect: soft delete filter", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"deleted_at\" IS NULL");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."deleted_at" IS NULL');
     assert.deepEqual(result.params, []);
   });
 
@@ -485,7 +489,7 @@ describe("compileSelect: soft delete filter", () => {
     // Assert
     assert.equal(
       result.sql,
-      "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"role\" = $1 AND \"users\".\"deleted_at\" IS NULL",
+      'SELECT "users".* FROM "users" WHERE "users"."role" = $1 AND "users"."deleted_at" IS NULL',
     );
     assert.deepEqual(result.params, ["admin"]);
   });
@@ -504,10 +508,7 @@ describe("compileSelect: column name resolution", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(
-      result.sql,
-      "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"created_at\" = $1",
-    );
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."created_at" = $1');
   });
 
   it("resolves 'role' field to 'role' column (already matches)", () => {
@@ -518,7 +519,7 @@ describe("compileSelect: column name resolution", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.ok(result.sql.includes("\"users\".\"role\""));
+    assert.ok(result.sql.includes('"users"."role"'));
   });
 
   it("strips leading qualifier (Model.field) before resolving", () => {
@@ -529,10 +530,7 @@ describe("compileSelect: column name resolution", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(
-      result.sql,
-      "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"created_at\" = $1",
-    );
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."created_at" = $1');
   });
 
   it("falls back to raw field name when no metadata match exists", () => {
@@ -543,7 +541,7 @@ describe("compileSelect: column name resolution", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.ok(result.sql.includes("\"users\".\"raw_col\""));
+    assert.ok(result.sql.includes('"users"."raw_col"'));
   });
 
   it("resolves ilike column to snake_case", () => {
@@ -554,10 +552,7 @@ describe("compileSelect: column name resolution", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(
-      result.sql,
-      "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"email\" ILIKE $1",
-    );
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."email" ILIKE $1');
     assert.deepEqual(result.params, ["%@example.com"]);
   });
 });
@@ -576,7 +571,7 @@ describe("compileSelect: softDeleteFilter false", () => {
 
     // Assert
     assert.ok(!result.sql.includes("deleted_at"), "should not contain deleted_at");
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\"");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users"');
   });
 });
 
@@ -593,7 +588,7 @@ describe("compileSelect: qualified column names", () => {
     const result = dialect.compileSelect(node);
 
     // Assert — qualifier is stripped, column is resolved correctly
-    assert.ok(result.sql.includes("\"users\".\"role\""), `unexpected SQL: ${result.sql}`);
+    assert.ok(result.sql.includes('"users"."role"'), `unexpected SQL: ${result.sql}`);
     assert.deepEqual(result.params, ["admin"]);
   });
 
@@ -605,7 +600,7 @@ describe("compileSelect: qualified column names", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.ok(result.sql.includes("\"created_at\""), `unexpected SQL: ${result.sql}`);
+    assert.ok(result.sql.includes('"created_at"'), `unexpected SQL: ${result.sql}`);
   });
 });
 
@@ -622,7 +617,7 @@ describe("compileSelect: limit(0)", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" LIMIT $1");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" LIMIT $1');
     assert.deepEqual(result.params, [0]);
   });
 });
@@ -648,7 +643,7 @@ describe("compileSelect: multiple ORDER BY order", () => {
     // Assert — three clauses in declaration order
     assert.equal(
       result.sql,
-      "SELECT \"users\".* FROM \"users\" ORDER BY \"users\".\"name\" ASC, \"users\".\"created_at\" DESC, \"users\".\"id\" ASC",
+      'SELECT "users".* FROM "users" ORDER BY "users"."name" ASC, "users"."created_at" DESC, "users"."id" ASC',
     );
   });
 });

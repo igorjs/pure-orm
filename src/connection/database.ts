@@ -7,8 +7,8 @@
  */
 
 import type { Dialect } from "../dialect/dialect.ts";
-import { resolveDialect } from "../dialect/registry.ts";
 import type { Result } from "../dialect/registry.ts";
+import { resolveDialect } from "../dialect/registry.ts";
 import type { DbError } from "../errors/errors.ts";
 import { createConsoleLogger, createNoopLogger } from "../logging/logger.ts";
 import { createLambdaPool } from "./lambda.ts";
@@ -40,17 +40,19 @@ const Database = (config: DatabaseConfig): DatabaseClient => {
 
   // Build logger from logging config.
   const loggingConfig = config.logging;
-  const logger = loggingConfig?.logger !== undefined
-    ? loggingConfig.logger
-    : loggingConfig?.level === "silent" || loggingConfig === undefined
-    ? createNoopLogger()
-    : createConsoleLogger(loggingConfig.level ?? "info");
+  const logger =
+    loggingConfig?.logger !== undefined
+      ? loggingConfig.logger
+      : loggingConfig?.level === "silent" || loggingConfig === undefined
+        ? createNoopLogger()
+        : createConsoleLogger(loggingConfig.level ?? "info");
 
   // Build the connection pool based on the requested mode.
   const poolConfig = config.pool ?? {};
-  const pool = poolConfig.mode === "lambda"
-    ? createLambdaPool(config.driver, config.connection, poolConfig, logger)
-    : createPool(config.driver, config.connection, poolConfig, logger);
+  const pool =
+    poolConfig.mode === "lambda"
+      ? createLambdaPool(config.driver, config.connection, poolConfig, logger)
+      : createPool(config.driver, config.connection, poolConfig, logger);
 
   return Object.freeze({
     dialect,

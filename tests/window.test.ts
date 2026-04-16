@@ -2,9 +2,9 @@
  * Tests for window function expressions and lazy relation loading.
  */
 
-import { Schema } from "@igorjs/pure-ts";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { Schema } from "@igorjs/pure-ts";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
@@ -128,7 +128,7 @@ describe("PostgreSQL window function compilation", () => {
     const result = pgDialect.compileSelect(node);
 
     assert.ok(result.sql.includes("ROW_NUMBER() OVER ()"));
-    assert.ok(result.sql.includes("AS \"rn\""));
+    assert.ok(result.sql.includes('AS "rn"'));
   });
 
   it("compiles PARTITION BY", () => {
@@ -137,19 +137,17 @@ describe("PostgreSQL window function compilation", () => {
     )(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("PARTITION BY \"posts\".\"author_id\""));
-    assert.ok(result.sql.includes("ORDER BY \"posts\".\"created_at\" DESC"));
-    assert.ok(result.sql.includes("AS \"rank\""));
+    assert.ok(result.sql.includes('PARTITION BY "posts"."author_id"'));
+    assert.ok(result.sql.includes('ORDER BY "posts"."created_at" DESC'));
+    assert.ok(result.sql.includes('AS "rank"'));
   });
 
   it("compiles multiple partition columns", () => {
-    const node = select(
-      rowNumber().partitionBy("authorId", "title").as("rn"),
-    )(from(Post));
+    const node = select(rowNumber().partitionBy("authorId", "title").as("rn"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("\"author_id\""));
-    assert.ok(result.sql.includes("\"title\""));
+    assert.ok(result.sql.includes('"author_id"'));
+    assert.ok(result.sql.includes('"title"'));
   });
 
   it("compiles RANK()", () => {
@@ -174,8 +172,8 @@ describe("PostgreSQL window function compilation", () => {
     )(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("\"posts\".\"author_id\""));
-    assert.ok(result.sql.includes("\"posts\".\"title\""));
+    assert.ok(result.sql.includes('"posts"."author_id"'));
+    assert.ok(result.sql.includes('"posts"."title"'));
     assert.ok(result.sql.includes("ROW_NUMBER()"));
   });
 });
@@ -186,9 +184,9 @@ describe("PostgreSQL window function compilation", () => {
 
 describe("SQLite window function compilation", () => {
   it("compiles window functions same as PostgreSQL", () => {
-    const node = select(
-      rowNumber().partitionBy("authorId").orderBy("views", "desc").as("rn"),
-    )(from(Post));
+    const node = select(rowNumber().partitionBy("authorId").orderBy("views", "desc").as("rn"))(
+      from(Post),
+    );
 
     const pg = pgDialect.compileSelect(node);
     const sqlite = sqliteDialect.compileSelect(node);
@@ -240,18 +238,15 @@ describe("lazy()", () => {
   });
 
   it("throws for unknown relation", () => {
-    assert.throws(
-      () => lazy(User, { id: "u-1" }, "nonexistent"),
-      { message: /not found/ },
-    );
+    assert.throws(() => lazy(User, { id: "u-1" }, "nonexistent"), { message: /not found/ });
   });
 
   it("compiles to correct SQL", () => {
     const node = lazy(User, { id: "u-1", name: "Alice" }, "posts");
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("\"posts\""));
-    assert.ok(result.sql.includes("\"author_id\" = $1"));
+    assert.ok(result.sql.includes('"posts"'));
+    assert.ok(result.sql.includes('"author_id" = $1'));
     assert.deepEqual(result.params, ["u-1"]);
   });
 });

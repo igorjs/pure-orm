@@ -7,9 +7,9 @@
  * both PostgreSQL and SQLite dialects.
  */
 
-import { Schema } from "@igorjs/pure-ts";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { Schema } from "@igorjs/pure-ts";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
@@ -55,20 +55,20 @@ const sqliteDialect = createSqliteDialect();
 
 describe("deletedAt column injection", () => {
   it("adds deletedAt column when softDelete is true", () => {
-    const col = User.$columns.find((c) => c.name === "deletedAt");
+    const col = User.$columns.find(c => c.name === "deletedAt");
 
     assert.ok(col !== undefined, "Should have a deletedAt column");
     assert.equal(col.columnName, "deleted_at");
   });
 
   it("does NOT add deletedAt when softDelete is not set", () => {
-    const col = HardUser.$columns.find((c) => c.name === "deletedAt");
+    const col = HardUser.$columns.find(c => c.name === "deletedAt");
 
     assert.equal(col, undefined);
   });
 
   it("deletedAt comes after timestamp columns when both are enabled", () => {
-    const names = TimestampedUser.$columns.map((c) => c.name);
+    const names = TimestampedUser.$columns.map(c => c.name);
 
     assert.ok(names.includes("createdAt"), "Should have createdAt");
     assert.ok(names.includes("updatedAt"), "Should have updatedAt");
@@ -186,14 +186,14 @@ describe("onlyDeleted()", () => {
   it("PostgreSQL: compiles to WHERE deleted_at IS NOT NULL", () => {
     const result = pgDialect.compileSelect(onlyDeleted()(from(User)));
 
-    assert.ok(result.sql.includes("\"deleted_at\" IS NOT NULL"));
+    assert.ok(result.sql.includes('"deleted_at" IS NOT NULL'));
     assert.ok(!result.sql.includes("IS NULL "), "Should not have IS NULL (only IS NOT NULL)");
   });
 
   it("SQLite: compiles to WHERE deleted_at IS NOT NULL", () => {
     const result = sqliteDialect.compileSelect(onlyDeleted()(from(User)));
 
-    assert.ok(result.sql.includes("\"deleted_at\" IS NOT NULL"));
+    assert.ok(result.sql.includes('"deleted_at" IS NOT NULL'));
   });
 
   it("composes with where() for additional filtering", () => {
@@ -201,7 +201,7 @@ describe("onlyDeleted()", () => {
     const result = pgDialect.compileSelect(node);
 
     assert.ok(result.sql.includes("IS NOT NULL"));
-    assert.ok(result.sql.includes("\"name\" = $1"));
+    assert.ok(result.sql.includes('"name" = $1'));
     assert.deepEqual(result.params, ["Alice"]);
   });
 });
@@ -265,9 +265,9 @@ describe("restore()", () => {
     const node = where(eq("id", "user-1"))(restore(User));
     const result = pgDialect.compileUpdate(node);
 
-    assert.ok(result.sql.includes("SET \"deleted_at\" = $1"));
-    assert.ok(result.sql.includes("\"deleted_at\" IS NOT NULL"));
-    assert.ok(result.sql.includes("\"id\" = $2"));
+    assert.ok(result.sql.includes('SET "deleted_at" = $1'));
+    assert.ok(result.sql.includes('"deleted_at" IS NOT NULL'));
+    assert.ok(result.sql.includes('"id" = $2'));
     assert.deepEqual(result.params, [null, "user-1"]);
   });
 
@@ -275,8 +275,8 @@ describe("restore()", () => {
     const node = where(eq("id", "user-1"))(restore(User));
     const result = sqliteDialect.compileUpdate(node);
 
-    assert.ok(result.sql.includes("SET \"deleted_at\" = ?"));
-    assert.ok(result.sql.includes("\"deleted_at\" IS NOT NULL"));
+    assert.ok(result.sql.includes('SET "deleted_at" = ?'));
+    assert.ok(result.sql.includes('"deleted_at" IS NOT NULL'));
     assert.deepEqual(result.params, [null, "user-1"]);
   });
 });
@@ -301,7 +301,7 @@ describe("default soft-delete behaviour", () => {
   it("PostgreSQL: auto-adds WHERE deleted_at IS NULL for soft-delete models", () => {
     const result = pgDialect.compileSelect(from(User));
 
-    assert.ok(result.sql.includes("\"deleted_at\" IS NULL"));
+    assert.ok(result.sql.includes('"deleted_at" IS NULL'));
   });
 
   it("PostgreSQL: no filter for non-soft-delete models", () => {

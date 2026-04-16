@@ -11,7 +11,6 @@
 
 import type { ColumnMetadata } from "../model/types.ts";
 import type {
-  AggregateExpr,
   ConditionNode,
   DeleteNode,
   InsertNode,
@@ -31,7 +30,7 @@ import type {
  *
  * Both PostgreSQL and SQLite use the same quoting rules per the SQL standard.
  */
-const quote = (identifier: string): string => `"${identifier.replace(/"/g, "\"\"")}"`;
+const quote = (identifier: string): string => `"${identifier.replace(/"/g, '""')}"`;
 
 // ---- Column name resolution ----
 
@@ -42,14 +41,11 @@ const quote = (identifier: string): string => `"${identifier.replace(/"/g, "\"\"
  * Falls back to the raw field name when no metadata entry is found, which
  * allows raw column names to pass through unmodified.
  */
-const resolveColumnName = (
-  field: string,
-  columns: SelectNode["model"]["columns"],
-): string => {
+const resolveColumnName = (field: string, columns: SelectNode["model"]["columns"]): string => {
   // Strip a leading qualifier such as "User." if present.
   const fieldName = field.includes(".") ? field.slice(field.indexOf(".") + 1) : field;
 
-  const meta = columns.find((col) => col.name === fieldName);
+  const meta = columns.find(col => col.name === fieldName);
   return meta !== undefined ? meta.columnName : fieldName;
 };
 
@@ -69,9 +65,10 @@ const compileSelectColumn = (
   }
 
   if (col.tag === "Aggregate") {
-    const inner = col.column === "*"
-      ? "*"
-      : `${quote(tableName)}.${quote(resolveColumnName(col.column, columns))}`;
+    const inner =
+      col.column === "*"
+        ? "*"
+        : `${quote(tableName)}.${quote(resolveColumnName(col.column, columns))}`;
     const expr = `${col.fn}(${inner})`;
     return col.alias !== null ? `${expr} AS ${quote(col.alias)}` : expr;
   }
@@ -80,14 +77,15 @@ const compileSelectColumn = (
   const overParts: string[] = [];
   if (col.partitions.length > 0) {
     const partCols = col.partitions
-      .map((c) => `${quote(tableName)}.${quote(resolveColumnName(c, columns))}`)
+      .map(c => `${quote(tableName)}.${quote(resolveColumnName(c, columns))}`)
       .join(", ");
     overParts.push(`PARTITION BY ${partCols}`);
   }
   if (col.orders.length > 0) {
     const ordCols = col.orders
-      .map((o) =>
-        `${quote(tableName)}.${quote(resolveColumnName(o.column, columns))} ${o.direction === "asc" ? "ASC" : "DESC"}`
+      .map(
+        o =>
+          `${quote(tableName)}.${quote(resolveColumnName(o.column, columns))} ${o.direction === "asc" ? "ASC" : "DESC"}`,
       )
       .join(", ");
     overParts.push(`ORDER BY ${ordCols}`);
@@ -127,7 +125,7 @@ const resolveJoinLeft = (
     if (tableName === mainTable) {
       return `${quote(mainTable)}.${quote(resolveColumnName(fieldName, mainColumns))}`;
     }
-    const joined = priorJoins.find((j) => j.model.name === tableName);
+    const joined = priorJoins.find(j => j.model.name === tableName);
     if (joined !== undefined) {
       return `${quote(tableName)}.${quote(resolveColumnName(fieldName, joined.model.columns))}`;
     }
@@ -208,7 +206,7 @@ const buildWhereClause = (
   ctx: MutationCtx,
   compileCondition: ConditionCompiler,
 ): string => {
-  const parts: string[] = conditions.map((c) => compileCondition(c, ctx));
+  const parts: string[] = conditions.map(c => compileCondition(c, ctx));
   if (softDeleteFilter) {
     parts.push(`${quote(ctx.tableName)}.${quote("deleted_at")} IS NULL`);
   }
@@ -219,10 +217,13 @@ const buildWhereClause = (
  * Builds the RETURNING clause SQL fragment, or an empty string when
  * returning is null. Column names are resolved via model metadata.
  */
-const buildReturningClause = (returning: ReturningClause, columns: readonly ColumnMetadata[]): string => {
+const buildReturningClause = (
+  returning: ReturningClause,
+  columns: readonly ColumnMetadata[],
+): string => {
   if (returning === null) return "";
   if (returning === "*") return "RETURNING *";
-  const cols = returning.map((col) => quote(resolveColumnName(col, columns))).join(", ");
+  const cols = returning.map(col => quote(resolveColumnName(col, columns))).join(", ");
   return `RETURNING ${cols}`;
 };
 
@@ -243,12 +244,12 @@ const compileInsertShared = (node: InsertNode, ctx: MutationCtx): string => {
   }
 
   const fieldKeys = Object.keys(firstRow);
-  const colNames = fieldKeys.map((key) => resolveColumnName(key, columns));
+  const colNames = fieldKeys.map(key => resolveColumnName(key, columns));
   const colList = colNames.map(quote).join(", ");
 
   // One VALUES group per row: ($1, $2) or (?, ?)
-  const valueGroups = node.rows.map((row) => {
-    const placeholders = fieldKeys.map((key) => addMutationParam(ctx, row[key])).join(", ");
+  const valueGroups = node.rows.map(row => {
+    const placeholders = fieldKeys.map(key => addMutationParam(ctx, row[key])).join(", ");
     return `(${placeholders})`;
   });
 
@@ -256,14 +257,16 @@ const compileInsertShared = (node: InsertNode, ctx: MutationCtx): string => {
 
   // ON CONFLICT clause
   if (node.onConflict !== null) {
-    const conflictCols = node.onConflict.columns.map((col) => quote(resolveColumnName(col, columns))).join(", ");
+    const conflictCols = node.onConflict.columns
+      .map(col => quote(resolveColumnName(col, columns)))
+      .join(", ");
     const action = node.onConflict.action;
     if (action === "nothing") {
       sql += ` ON CONFLICT (${conflictCols}) DO NOTHING`;
     } else {
       // { update: string[] }
       const setClauses = action.update
-        .map((col) => {
+        .map(col => {
           const colName = quote(resolveColumnName(col, columns));
           return `${colName} = EXCLUDED.${colName}`;
         })
@@ -291,17 +294,22 @@ const compileUpdateShared = (
   const { tableName, columns } = ctx;
 
   const setClauses = Object.keys(node.values)
-    .map((key) => {
+    .map(key => {
       const colName = quote(resolveColumnName(key, columns));
       const placeholder = addMutationParam(ctx, node.values[key]);
       return `${colName} = ${placeholder}`;
     })
     .join(", ");
 
-  const whereClause = buildWhereClause(node.conditions, node.softDeleteFilter, ctx, compileCondition);
+  const whereClause = buildWhereClause(
+    node.conditions,
+    node.softDeleteFilter,
+    ctx,
+    compileCondition,
+  );
 
   const parts = [`UPDATE ${quote(tableName)} SET ${setClauses}`, whereClause].filter(
-    (p) => p.length > 0,
+    p => p.length > 0,
   );
 
   const returningClause = buildReturningClause(node.returning, columns);
@@ -326,11 +334,16 @@ const compileDeleteShared = (
 
   if (node.isSoftDelete) {
     // Soft delete — mark deleted_at rather than removing the row.
-    const whereClause = buildWhereClause(node.conditions, node.softDeleteFilter, ctx, compileCondition);
+    const whereClause = buildWhereClause(
+      node.conditions,
+      node.softDeleteFilter,
+      ctx,
+      compileCondition,
+    );
     const parts = [
       `UPDATE ${quote(tableName)} SET ${quote("deleted_at")} = ${nowExpression}`,
       whereClause,
-    ].filter((p) => p.length > 0);
+    ].filter(p => p.length > 0);
 
     const returningClause = buildReturningClause(node.returning, columns);
     if (returningClause.length > 0) parts.push(returningClause);
@@ -339,8 +352,13 @@ const compileDeleteShared = (
   }
 
   // Hard delete
-  const whereClause = buildWhereClause(node.conditions, node.softDeleteFilter, ctx, compileCondition);
-  const parts = [`DELETE FROM ${quote(tableName)}`, whereClause].filter((p) => p.length > 0);
+  const whereClause = buildWhereClause(
+    node.conditions,
+    node.softDeleteFilter,
+    ctx,
+    compileCondition,
+  );
+  const parts = [`DELETE FROM ${quote(tableName)}`, whereClause].filter(p => p.length > 0);
 
   const returningClause = buildReturningClause(node.returning, columns);
   if (returningClause.length > 0) parts.push(returningClause);

@@ -42,7 +42,12 @@ const makeWindow = (
     partitionBy: (...cols: string[]): WindowBuilder =>
       makeWindow(fn, Object.freeze([...partitions, ...cols]), orders, alias),
     orderBy: (col: string, dir: SortDirection): WindowBuilder =>
-      makeWindow(fn, partitions, Object.freeze([...orders, Object.freeze({ column: col, direction: dir })]), alias),
+      makeWindow(
+        fn,
+        partitions,
+        Object.freeze([...orders, Object.freeze({ column: col, direction: dir })]),
+        alias,
+      ),
     as: (a: string): WindowBuilder => makeWindow(fn, partitions, orders, a),
   });
 

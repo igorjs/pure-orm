@@ -17,8 +17,8 @@
  * lifecycle.
  */
 
-import { Err, Ok, Task } from "@igorjs/pure-ts";
 import type { Result } from "@igorjs/pure-ts";
+import { Err, Ok, Task } from "@igorjs/pure-ts";
 
 import type { DbError } from "../errors/errors.ts";
 import { transactionError } from "../errors/errors.ts";
@@ -155,7 +155,9 @@ const runTopLevelTransaction = async <T>(
 ): Promise<Result<T, DbError>> => {
   const acquireResult = await db.pool.acquire().run();
   if (acquireResult.isErr) {
-    return Err(transactionError("Failed to acquire connection for transaction", acquireResult.error));
+    return Err(
+      transactionError("Failed to acquire connection for transaction", acquireResult.error),
+    );
   }
 
   const conn = acquireResult.value;
@@ -230,5 +232,5 @@ const transaction = <T>(
     return runTopLevelTransaction(db, fn, options);
   });
 
-export { createTransactionClient, isTransactionClient, transaction };
 export type { IsolationLevel, TransactionClient, TransactionOptions };
+export { createTransactionClient, isTransactionClient, transaction };

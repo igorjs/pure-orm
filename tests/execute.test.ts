@@ -68,10 +68,7 @@ const createMockConnection = (
 /**
  * Build a mock DatabaseClient whose pool always returns `conn`.
  */
-const createMockDb = (
-  conn: RawConnection,
-  hooks: Partial<QueryHooks> = {},
-): DatabaseClient => ({
+const createMockDb = (conn: RawConnection, hooks: Partial<QueryHooks> = {}): DatabaseClient => ({
   dialect: createPostgresDialect(),
   pool: {
     acquire: () => Task.of(conn),
@@ -174,7 +171,9 @@ describe("execute(): success path", () => {
     const node = from(UserModel);
 
     // Act
-    const result = await execute<{ id: string; name: string; email: string; createdAt: string }>(db)(node).run();
+    const result = await execute<{ id: string; name: string; email: string; createdAt: string }>(
+      db,
+    )(node).run();
 
     // Assert
     assert.equal(result.isOk, true);
@@ -292,7 +291,7 @@ describe("execute(): lifecycle hooks", () => {
     // Arrange
     let capturedEvent: unknown;
     const hooks: Partial<QueryHooks> = {
-      afterExecute: (event) => {
+      afterExecute: event => {
         capturedEvent = event;
       },
     };
@@ -320,7 +319,9 @@ describe("execute(): lifecycle hooks", () => {
 describe("findOne(): success path", () => {
   it("returns Some(record) when a row exists", async () => {
     // Arrange
-    const rawRows = [{ id: "u1", name: "Alice", email: "alice@example.com", created_at: "2024-01-01" }];
+    const rawRows = [
+      { id: "u1", name: "Alice", email: "alice@example.com", created_at: "2024-01-01" },
+    ];
     const { conn } = createMockConnection(rawRows);
     const db = createMockDb(conn);
     const node = from(UserModel);
@@ -360,7 +361,7 @@ describe("findOne(): success path", () => {
     // Arrange: capture the compiled SQL via a hook
     let capturedSql = "";
     const hooks: Partial<QueryHooks> = {
-      beforeExecute: (compiled) => {
+      beforeExecute: compiled => {
         capturedSql = compiled.sql;
       },
     };
@@ -380,7 +381,7 @@ describe("findOne(): success path", () => {
     // We capture the SQL via hook to verify LIMIT $1 param is the set value
     let capturedSql = "";
     const hooks: Partial<QueryHooks> = {
-      beforeExecute: (compiled) => {
+      beforeExecute: compiled => {
         capturedSql = compiled.sql;
       },
     };

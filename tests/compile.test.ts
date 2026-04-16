@@ -44,7 +44,7 @@ describe("compile(): SelectNode produces SQL", () => {
     const result = compile(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\"");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users"');
     assert.deepEqual(result.params, []);
   });
 
@@ -56,7 +56,7 @@ describe("compile(): SelectNode produces SQL", () => {
     const result = compile(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"email\" = $1");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."email" = $1');
     assert.deepEqual(result.params, ["alice@example.com"]);
   });
 
@@ -68,7 +68,7 @@ describe("compile(): SelectNode produces SQL", () => {
     const result = compile(node);
 
     // Assert
-    assert.ok(result.sql.includes("\"created_at\""));
+    assert.ok(result.sql.includes('"created_at"'));
   });
 });
 
@@ -140,7 +140,7 @@ describe("compile(): InsertNode produces SQL", () => {
 
     // Assert
     assert.ok(result.sql.startsWith("INSERT INTO"));
-    assert.ok(result.sql.includes("\"users\""));
+    assert.ok(result.sql.includes('"users"'));
     assert.ok(result.params.length > 0);
   });
 });
@@ -155,7 +155,7 @@ describe("compile(): UpdateNode produces SQL", () => {
 
     // Assert
     assert.ok(result.sql.startsWith("UPDATE"));
-    assert.ok(result.sql.includes("\"users\""));
+    assert.ok(result.sql.includes('"users"'));
     assert.ok(result.params.length > 0);
   });
 });
@@ -170,7 +170,7 @@ describe("compile(): DeleteNode produces SQL", () => {
 
     // Assert — UserModel has softDelete, so this emits an UPDATE
     assert.ok(result.sql.length > 0);
-    assert.ok(result.sql.includes("\"users\""));
+    assert.ok(result.sql.includes('"users"'));
   });
 });
 

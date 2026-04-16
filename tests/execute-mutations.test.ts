@@ -21,7 +21,14 @@ import { Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";
 import { where } from "../src/query/builders.ts";
 import { eq } from "../src/query/conditions.ts";
-import { hardRemove, insert, insertMany, remove, returning, update } from "../src/query/mutations.ts";
+import {
+  hardRemove,
+  insert,
+  insertMany,
+  remove,
+  returning,
+  update,
+} from "../src/query/mutations.ts";
 
 // ---------------------------------------------------------------------------
 // Test models
@@ -98,13 +105,17 @@ const createMockDb = (conn: RawConnection): DatabaseClient => ({
 describe("execute(): InsertNode with RETURNING", () => {
   it("returns Ok with a List of Records when RETURNING * is used", async () => {
     // Arrange
-    const rawRows = [{ id: "u1", email: "alice@example.com", name: "Alice", created_at: "2024-01-01" }];
+    const rawRows = [
+      { id: "u1", email: "alice@example.com", name: "Alice", created_at: "2024-01-01" },
+    ];
     const { conn } = createMockConnection(rawRows);
     const db = createMockDb(conn);
     const node = returning()(insert(UserModel, { email: "alice@example.com", name: "Alice" }));
 
     // Act
-    const result = await execute<{ id: string; email: string; name: string; createdAt: string }>(db)(node).run();
+    const result = await execute<{ id: string; email: string; name: string; createdAt: string }>(
+      db,
+    )(node).run();
 
     // Assert
     assert.equal(result.isOk, true);
@@ -140,10 +151,15 @@ describe("execute(): InsertNode with RETURNING", () => {
 
   it("returns Ok with a single-row insert result", async () => {
     // Arrange
-    const rawRows = [{ id: "u1", email: "alice@example.com", name: "Alice", created_at: "2024-01-01" }];
+    const rawRows = [
+      { id: "u1", email: "alice@example.com", name: "Alice", created_at: "2024-01-01" },
+    ];
     const { conn } = createMockConnection(rawRows);
     const db = createMockDb(conn);
-    const node = returning("id", "email")(insert(UserModel, { email: "alice@example.com", name: "Alice" }));
+    const node = returning(
+      "id",
+      "email",
+    )(insert(UserModel, { email: "alice@example.com", name: "Alice" }));
 
     // Act
     const result = await execute(db)(node).run();
@@ -188,7 +204,9 @@ describe("execute(): InsertNode with RETURNING", () => {
 describe("execute(): UpdateNode", () => {
   it("returns Ok with affected rows via RETURNING", async () => {
     // Arrange
-    const rawRows = [{ id: "u1", email: "alice@example.com", name: "Updated", created_at: "2024-01-01" }];
+    const rawRows = [
+      { id: "u1", email: "alice@example.com", name: "Updated", created_at: "2024-01-01" },
+    ];
     const { conn } = createMockConnection(rawRows);
     const db = createMockDb(conn);
     const node = returning()(where(eq("id", "u1"))(update(UserModel, { name: "Updated" })));
@@ -233,7 +251,9 @@ describe("execute(): UpdateNode", () => {
 describe("execute(): DeleteNode", () => {
   it("soft delete: returns affected rows via RETURNING", async () => {
     // Arrange — UserModel has softDelete enabled; remove() emits a soft-delete UPDATE
-    const rawRows = [{ id: "u1", email: "alice@example.com", name: "Alice", created_at: "2024-01-01" }];
+    const rawRows = [
+      { id: "u1", email: "alice@example.com", name: "Alice", created_at: "2024-01-01" },
+    ];
     const { conn } = createMockConnection(rawRows);
     const db = createMockDb(conn);
     const node = returning()(where(eq("id", "u1"))(remove(UserModel)));
@@ -299,7 +319,11 @@ describe("execute(): RawNode", () => {
     const rawRows = [{ count: "42" }];
     const { conn } = createMockConnection(rawRows);
     const db = createMockDb(conn);
-    const node = Object.freeze({ tag: "Raw" as const, sql: "SELECT COUNT(*) AS count FROM users", params: [] });
+    const node = Object.freeze({
+      tag: "Raw" as const,
+      sql: "SELECT COUNT(*) AS count FROM users",
+      params: [],
+    });
 
     // Act
     const result = await execute(db)(node).run();
@@ -369,13 +393,17 @@ describe("execute(): RawNode", () => {
 describe("findOne(): InsertNode with RETURNING", () => {
   it("returns Some(record) for a RETURNING insert", async () => {
     // Arrange
-    const rawRows = [{ id: "u1", email: "alice@example.com", name: "Alice", created_at: "2024-01-01" }];
+    const rawRows = [
+      { id: "u1", email: "alice@example.com", name: "Alice", created_at: "2024-01-01" },
+    ];
     const { conn } = createMockConnection(rawRows);
     const db = createMockDb(conn);
     const node = returning()(insert(UserModel, { email: "alice@example.com", name: "Alice" }));
 
     // Act
-    const result = await findOne<{ id: string; email: string; name: string; createdAt: string }>(db)(node).run();
+    const result = await findOne<{ id: string; email: string; name: string; createdAt: string }>(
+      db,
+    )(node).run();
 
     // Assert
     assert.equal(result.isOk, true);
@@ -409,7 +437,9 @@ describe("findOne(): InsertNode with RETURNING", () => {
 
   it("returns Some(record) for an UpdateNode with RETURNING", async () => {
     // Arrange
-    const rawRows = [{ id: "u1", email: "alice@example.com", name: "Updated", created_at: "2024-01-01" }];
+    const rawRows = [
+      { id: "u1", email: "alice@example.com", name: "Updated", created_at: "2024-01-01" },
+    ];
     const { conn } = createMockConnection(rawRows);
     const db = createMockDb(conn);
     const node = returning()(where(eq("id", "u1"))(update(UserModel, { name: "Updated" })));
@@ -460,7 +490,7 @@ describe("compile(): InsertNode via compile()", () => {
 
     // Assert
     assert.ok(result.sql.startsWith("INSERT INTO"));
-    assert.ok(result.sql.includes("\"users\""));
+    assert.ok(result.sql.includes('"users"'));
     assert.ok(result.params.length > 0);
   });
 
@@ -486,7 +516,7 @@ describe("compile(): UpdateNode via compile()", () => {
 
     // Assert
     assert.ok(result.sql.startsWith("UPDATE"));
-    assert.ok(result.sql.includes("\"users\""));
+    assert.ok(result.sql.includes('"users"'));
     assert.ok(result.sql.includes("WHERE"));
     assert.ok(result.params.length > 0);
   });
@@ -502,7 +532,7 @@ describe("compile(): DeleteNode via compile()", () => {
 
     // Assert — soft delete emits an UPDATE, not a DELETE
     assert.ok(result.sql.startsWith("UPDATE"));
-    assert.ok(result.sql.includes("\"users\""));
+    assert.ok(result.sql.includes('"users"'));
   });
 
   it("compiles a hard-delete node to a DELETE SQL", () => {
@@ -514,7 +544,7 @@ describe("compile(): DeleteNode via compile()", () => {
 
     // Assert
     assert.ok(result.sql.startsWith("DELETE FROM"));
-    assert.ok(result.sql.includes("\"posts\""));
+    assert.ok(result.sql.includes('"posts"'));
   });
 });
 

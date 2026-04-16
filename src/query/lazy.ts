@@ -56,8 +56,8 @@ const lazy = (
 
     case "ManyToMany":
       throw new Error(
-        `lazy() does not yet support ManyToMany relations. `
-          + `Use a raw query with the junction table "${rel.through}" instead.`,
+        `lazy() does not yet support ManyToMany relations. ` +
+          `Use a raw query with the junction table "${rel.through}" instead.`,
       );
   }
 };

@@ -24,25 +24,34 @@ import type {
   OrNode,
 } from "./types.ts";
 
-const makeEq = (column: string, value: unknown): EqNode => Object.freeze({ tag: "Eq", column, value });
+const makeEq = (column: string, value: unknown): EqNode =>
+  Object.freeze({ tag: "Eq", column, value });
 
-const makeNe = (column: string, value: unknown): NeNode => Object.freeze({ tag: "Ne", column, value });
+const makeNe = (column: string, value: unknown): NeNode =>
+  Object.freeze({ tag: "Ne", column, value });
 
-const makeGt = (column: string, value: unknown): GtNode => Object.freeze({ tag: "Gt", column, value });
+const makeGt = (column: string, value: unknown): GtNode =>
+  Object.freeze({ tag: "Gt", column, value });
 
-const makeGte = (column: string, value: unknown): GteNode => Object.freeze({ tag: "Gte", column, value });
+const makeGte = (column: string, value: unknown): GteNode =>
+  Object.freeze({ tag: "Gte", column, value });
 
-const makeLt = (column: string, value: unknown): LtNode => Object.freeze({ tag: "Lt", column, value });
+const makeLt = (column: string, value: unknown): LtNode =>
+  Object.freeze({ tag: "Lt", column, value });
 
-const makeLte = (column: string, value: unknown): LteNode => Object.freeze({ tag: "Lte", column, value });
+const makeLte = (column: string, value: unknown): LteNode =>
+  Object.freeze({ tag: "Lte", column, value });
 
-const makeLike = (column: string, pattern: string): LikeNode => Object.freeze({ tag: "Like", column, pattern });
+const makeLike = (column: string, pattern: string): LikeNode =>
+  Object.freeze({ tag: "Like", column, pattern });
 
-const makeILike = (column: string, pattern: string): ILikeNode => Object.freeze({ tag: "ILike", column, pattern });
+const makeILike = (column: string, pattern: string): ILikeNode =>
+  Object.freeze({ tag: "ILike", column, pattern });
 
 const makeIsNull = (column: string): IsNullNode => Object.freeze({ tag: "IsNull", column });
 
-const makeIsNotNull = (column: string): IsNotNullNode => Object.freeze({ tag: "IsNotNull", column });
+const makeIsNotNull = (column: string): IsNotNullNode =>
+  Object.freeze({ tag: "IsNotNull", column });
 
 const makeInArray = (column: string, values: readonly unknown[]): InArrayNode =>
   Object.freeze({ tag: "InArray", column, values: Object.freeze([...values]) });

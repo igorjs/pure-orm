@@ -27,12 +27,14 @@ import type { CteClause, SelectNode } from "./types.ts";
  * Multiple withCte() calls accumulate: each invocation adds another CTE.
  * CTEs are compiled in the order they were added.
  */
-const withCte = (name: string, query: SelectNode) => (node: SelectNode): SelectNode => {
-  const clause: CteClause = Object.freeze({ name, query });
-  return Object.freeze({
-    ...node,
-    ctes: Object.freeze([...node.ctes, clause]),
-  });
-};
+const withCte =
+  (name: string, query: SelectNode) =>
+  (node: SelectNode): SelectNode => {
+    const clause: CteClause = Object.freeze({ name, query });
+    return Object.freeze({
+      ...node,
+      ctes: Object.freeze([...node.ctes, clause]),
+    });
+  };
 
 export { withCte };

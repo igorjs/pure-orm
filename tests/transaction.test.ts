@@ -10,9 +10,8 @@ import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
 import { Task } from "@igorjs/pure-ts";
-
-import { isTransactionClient, transaction } from "../src/connection/transaction.ts";
 import type { TransactionClient } from "../src/connection/transaction.ts";
+import { isTransactionClient, transaction } from "../src/connection/transaction.ts";
 import type { DatabaseClient, RawConnection } from "../src/connection/types.ts";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createNoopLogger } from "../src/logging/logger.ts";
@@ -152,7 +151,7 @@ describe("transaction(): nested savepoint on success", () => {
     const conn = createMockConnection();
     const { db } = createMockDb(conn);
 
-    const result = await transaction(db, async (outerTx) => {
+    const result = await transaction(db, async outerTx => {
       return transaction(outerTx, async () => "nested").run();
     }).run();
 
@@ -177,7 +176,7 @@ describe("transaction(): nested savepoint rollback", () => {
     const conn = createMockConnection();
     const { db } = createMockDb(conn);
 
-    const result = await transaction(db, async (outerTx) => {
+    const result = await transaction(db, async outerTx => {
       // Nested transaction throws — expect ROLLBACK TO SAVEPOINT
       await transaction(outerTx, async () => {
         throw new Error("inner failure");
@@ -202,7 +201,7 @@ describe("transaction(): nested savepoint rollback", () => {
     const { db } = createMockDb(conn);
 
     let nestedResult: unknown;
-    await transaction(db, async (outerTx) => {
+    await transaction(db, async outerTx => {
       nestedResult = await transaction(outerTx, async () => {
         throw new Error("inner failure");
       }).run();
@@ -210,10 +209,10 @@ describe("transaction(): nested savepoint rollback", () => {
     }).run();
 
     assert.ok(
-      nestedResult !== null
-        && typeof nestedResult === "object"
-        && "isErr" in nestedResult
-        && (nestedResult as { isErr: boolean }).isErr === true,
+      nestedResult !== null &&
+        typeof nestedResult === "object" &&
+        "isErr" in nestedResult &&
+        (nestedResult as { isErr: boolean }).isErr === true,
     );
   });
 });
@@ -327,7 +326,7 @@ describe("isTransactionClient()", () => {
     const { db } = createMockDb(conn);
 
     let capturedTx: TransactionClient | null = null;
-    await transaction(db, async (tx) => {
+    await transaction(db, async tx => {
       capturedTx = tx;
     }).run();
 
@@ -346,7 +345,7 @@ describe("TransactionClient pool", () => {
     const { db } = createMockDb(conn);
 
     let acquiredConn: RawConnection | null = null;
-    await transaction(db, async (tx) => {
+    await transaction(db, async tx => {
       const r = await tx.pool.acquire().run();
       assert.equal(r.isOk, true);
       if (r.isOk) {
@@ -362,7 +361,7 @@ describe("TransactionClient pool", () => {
     const conn = createMockConnection();
     const { db, released } = createMockDb(conn);
 
-    await transaction(db, async (tx) => {
+    await transaction(db, async tx => {
       // Manually call release on the tx pool — should be a no-op.
       const r = await tx.pool.release(conn).run();
       assert.equal(r.isOk, true);
@@ -378,9 +377,9 @@ describe("TransactionClient pool", () => {
     let outerDepth = 0;
     let innerDepth = 0;
 
-    await transaction(db, async (outerTx) => {
+    await transaction(db, async outerTx => {
       outerDepth = outerTx._transactionDepth;
-      await transaction(outerTx, async (innerTx) => {
+      await transaction(outerTx, async innerTx => {
         innerDepth = innerTx._transactionDepth;
       }).run();
     }).run();

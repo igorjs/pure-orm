@@ -24,6 +24,7 @@ import { AuditModel } from "./table.ts";
  * Creates a SelectNode for the _pure_orm_audit table, pre-filtered
  * to entries matching the given model's table name.
  */
-const auditLog = (model: Model): SelectNode => where(eq("tableName", model.$name))(from(AuditModel));
+const auditLog = (model: Model): SelectNode =>
+  where(eq("tableName", model.$name))(from(AuditModel));
 
 export { auditLog };

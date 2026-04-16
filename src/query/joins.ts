@@ -30,30 +30,28 @@ import type { JoinClause, JoinCondition, JoinType, SelectNode } from "./types.ts
  * leftColumn: field name in the source table, or "Table.field" for qualified refs.
  * rightColumn: field name in the joined (target) table.
  */
-const on = (leftColumn: string, rightColumn: string): JoinCondition => Object.freeze({ leftColumn, rightColumn });
+const on = (leftColumn: string, rightColumn: string): JoinCondition =>
+  Object.freeze({ leftColumn, rightColumn });
 
 // ---- Generic join builder ----
 
-const addJoin = (
-  joinType: JoinType,
-  model: Model,
-  condition: JoinCondition,
-) =>
-(node: SelectNode): SelectNode => {
-  const clause: JoinClause = Object.freeze({
-    model: Object.freeze({
-      name: model.$name,
-      columns: model.$columns,
-      options: model.$options,
-    }),
-    joinType,
-    condition,
-  });
-  return Object.freeze({
-    ...node,
-    joins: Object.freeze([...node.joins, clause]),
-  });
-};
+const addJoin =
+  (joinType: JoinType, model: Model, condition: JoinCondition) =>
+  (node: SelectNode): SelectNode => {
+    const clause: JoinClause = Object.freeze({
+      model: Object.freeze({
+        name: model.$name,
+        columns: model.$columns,
+        options: model.$options,
+      }),
+      joinType,
+      condition,
+    });
+    return Object.freeze({
+      ...node,
+      joins: Object.freeze([...node.joins, clause]),
+    });
+  };
 
 // ---- Public join builders ----
 

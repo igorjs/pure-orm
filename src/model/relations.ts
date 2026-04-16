@@ -128,5 +128,12 @@ const manyToMany = (
     otherLocalKey: config.otherLocalKey,
   });
 
-export type { BelongsToRelation, HasManyRelation, HasOneRelation, ManyToManyRelation, RelationDef, RelationMap };
+export type {
+  BelongsToRelation,
+  HasManyRelation,
+  HasOneRelation,
+  ManyToManyRelation,
+  RelationDef,
+  RelationMap,
+};
 export { belongsTo, hasMany, hasOne, manyToMany };

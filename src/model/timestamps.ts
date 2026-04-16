@@ -26,8 +26,7 @@ const updatedAtColumn: ColumnMetadata = Object.freeze({
  * Returns a new readonly array with createdAt and updatedAt appended.
  * The original array is not mutated.
  */
-const injectTimestampColumns = (
-  columns: readonly ColumnMetadata[],
-): readonly ColumnMetadata[] => Object.freeze([...columns, createdAtColumn, updatedAtColumn]);
+const injectTimestampColumns = (columns: readonly ColumnMetadata[]): readonly ColumnMetadata[] =>
+  Object.freeze([...columns, createdAtColumn, updatedAtColumn]);
 
 export { injectTimestampColumns };

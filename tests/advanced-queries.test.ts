@@ -2,9 +2,9 @@
  * Tests for Phase 6 advanced query features: groupBy, having, raw, sql.
  */
 
-import { Schema } from "@igorjs/pure-ts";
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { Schema } from "@igorjs/pure-ts";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
@@ -94,9 +94,7 @@ describe("having()", () => {
   });
 
   it("accumulates across multiple calls", () => {
-    const node = having(eq("published", true))(
-      having(gt("views", 100))(from(Post)),
-    );
+    const node = having(eq("published", true))(having(gt("views", 100))(from(Post)));
 
     assert.equal(node.having.length, 2);
   });
@@ -132,14 +130,14 @@ describe("PostgreSQL GROUP BY / HAVING compilation", () => {
     const node = groupBy("authorId")(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("GROUP BY \"posts\".\"author_id\""));
+    assert.ok(result.sql.includes('GROUP BY "posts"."author_id"'));
   });
 
   it("compiles multiple GROUP BY columns", () => {
     const node = groupBy("authorId", "published")(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("GROUP BY \"posts\".\"author_id\", \"posts\".\"published\""));
+    assert.ok(result.sql.includes('GROUP BY "posts"."author_id", "posts"."published"'));
   });
 
   it("places GROUP BY after WHERE", () => {
@@ -156,16 +154,15 @@ describe("PostgreSQL GROUP BY / HAVING compilation", () => {
     const result = pgDialect.compileSelect(node);
 
     assert.ok(result.sql.includes("HAVING"));
-    assert.ok(result.sql.includes("\"views\" > $1"));
+    assert.ok(result.sql.includes('"views" > $1'));
     assert.deepEqual(result.params, [100]);
   });
 
   it("places HAVING after GROUP BY and before ORDER BY", () => {
-    const node = orderBy("authorId", "asc")(
-      having(gt("views", 100))(
-        groupBy("authorId")(from(Post)),
-      ),
-    );
+    const node = orderBy(
+      "authorId",
+      "asc",
+    )(having(gt("views", 100))(groupBy("authorId")(from(Post))));
     const result = pgDialect.compileSelect(node);
 
     const groupPos = result.sql.indexOf("GROUP BY");
@@ -182,18 +179,15 @@ describe("PostgreSQL GROUP BY / HAVING compilation", () => {
 
     assert.ok(!result.sql.includes("GROUP BY"));
     assert.ok(!result.sql.includes("HAVING"));
-    assert.equal(result.sql, "SELECT \"users\".* FROM \"users\" WHERE \"users\".\"role\" = $1");
+    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."role" = $1');
   });
 
   it("composes all clauses correctly", () => {
     const node = limit(10)(
-      orderBy("authorId", "asc")(
-        having(gt("views", 50))(
-          groupBy("authorId")(
-            where(eq("published", true))(from(Post)),
-          ),
-        ),
-      ),
+      orderBy(
+        "authorId",
+        "asc",
+      )(having(gt("views", 50))(groupBy("authorId")(where(eq("published", true))(from(Post))))),
     );
     const result = pgDialect.compileSelect(node);
 
@@ -215,7 +209,7 @@ describe("SQLite GROUP BY / HAVING compilation", () => {
     const node = groupBy("authorId")(from(Post));
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("GROUP BY \"posts\".\"author_id\""));
+    assert.ok(result.sql.includes('GROUP BY "posts"."author_id"'));
   });
 
   it("compiles HAVING with ? placeholders", () => {
@@ -255,10 +249,10 @@ describe("raw()", () => {
   });
 
   it("passes through to compile() without modification", () => {
-    const node = raw("SELECT * FROM \"users\" WHERE id = $1", ["user-1"]);
+    const node = raw('SELECT * FROM "users" WHERE id = $1', ["user-1"]);
 
     // RawNode bypasses dialect compilation; compile() returns it as-is.
-    assert.equal(node.sql, "SELECT * FROM \"users\" WHERE id = $1");
+    assert.equal(node.sql, 'SELECT * FROM "users" WHERE id = $1');
     assert.deepEqual(node.params, ["user-1"]);
   });
 });

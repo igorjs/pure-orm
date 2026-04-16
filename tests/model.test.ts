@@ -253,7 +253,7 @@ describe("Model()", () => {
     });
 
     // Assert
-    const colNames = PostModel.$columns.map((c) => c.columnName);
+    const colNames = PostModel.$columns.map(c => c.columnName);
     assert.deepEqual(colNames, ["id", "author_id", "created_at"]);
   });
 
@@ -341,7 +341,7 @@ describe("Model()", () => {
 
     // Assert
     assert.equal(MyModel.$columns.length, 3);
-    const names = MyModel.$columns.map((c) => c.columnName);
+    const names = MyModel.$columns.map(c => c.columnName);
     assert.deepEqual(names, ["id", "created_at", "updated_at"]);
   });
 

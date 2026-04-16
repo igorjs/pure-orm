@@ -12,7 +12,12 @@ import { beforeEach, describe, it } from "node:test";
 import { Database } from "../src/connection/database.ts";
 import { createLambdaPool, resetLambdaConnection } from "../src/connection/lambda.ts";
 import { createPool } from "../src/connection/pool.ts";
-import type { ConnectionConfig, DatabaseDriver, PoolConfig, RawConnection } from "../src/connection/types.ts";
+import type {
+  ConnectionConfig,
+  DatabaseDriver,
+  PoolConfig,
+  RawConnection,
+} from "../src/connection/types.ts";
 import { createNoopLogger } from "../src/logging/logger.ts";
 
 // ---------------------------------------------------------------------------
@@ -391,7 +396,12 @@ describe("createPool — error paths", () => {
 
   it("returns ConnectionError when acquire is called after pool is shut down", async () => {
     // Arrange — use a very short timeout so the pending waiter resolves quickly
-    const pool = createPool(createMockDriver(), DUMMY_CONFIG, { max: 1, acquireTimeoutMs: 50 }, noop);
+    const pool = createPool(
+      createMockDriver(),
+      DUMMY_CONFIG,
+      { max: 1, acquireTimeoutMs: 50 },
+      noop,
+    );
 
     // Consume the one allowed slot so the next acquire must wait
     const r1 = await pool.acquire().run();

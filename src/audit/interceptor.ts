@@ -43,7 +43,7 @@ const detectOperation = (sql: string): AuditOperation | null => {
   if (trimmed.startsWith("DELETE")) return "DELETE";
   if (trimmed.startsWith("UPDATE")) {
     // Soft delete: UPDATE ... SET "deleted_at"
-    if (trimmed.includes("\"DELETED_AT\"") || trimmed.includes("DELETED_AT")) return "SOFT_DELETE";
+    if (trimmed.includes('"DELETED_AT"') || trimmed.includes("DELETED_AT")) return "SOFT_DELETE";
     // Restore: SET "deleted_at" = NULL / = $N with null param
     // Simplified heuristic: if it contains deleted_at, it's a soft-delete concern
     return "UPDATE";
@@ -53,8 +53,8 @@ const detectOperation = (sql: string): AuditOperation | null => {
 
 const detectTable = (sql: string): string => {
   // Extract table name from INSERT INTO "table", UPDATE "table", DELETE FROM "table"
-  const match = sql.match(/(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+"([^"]+)"/i);
-  return match !== null ? match[1] : "unknown";
+  const match = /(?:INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+"([^"]+)"/i.exec(sql);
+  return match !== null ? (match[1] ?? "unknown") : "unknown";
 };
 
 // ---- createAuditHooks ----
@@ -78,11 +78,11 @@ const createAuditHooks = (options: {
   let pendingParams: readonly unknown[] = [];
 
   return {
-    beforeExecute: (compiled) => {
+    beforeExecute: compiled => {
       pendingSql = compiled.sql;
       pendingParams = compiled.params;
     },
-    afterExecute: (result) => {
+    afterExecute: result => {
       if (pendingSql === null) return;
 
       const operation = detectOperation(pendingSql);
@@ -125,10 +125,10 @@ const withAuditContext = (db: DatabaseClient, context: AuditContext): DatabaseCl
   // Otherwise, create minimal hooks that just track context for later use.
   const hooks: Partial<QueryHooks> = {
     ...existingHooks,
-    beforeExecute: (compiled) => {
+    beforeExecute: compiled => {
       existingHooks.beforeExecute?.(compiled);
     },
-    afterExecute: (result) => {
+    afterExecute: result => {
       existingHooks.afterExecute?.(result);
     },
   };
@@ -140,25 +140,5 @@ const withAuditContext = (db: DatabaseClient, context: AuditContext): DatabaseCl
   }) as DatabaseClient;
 };
 
-/**
- * Merges an AuditContext into existing audit hooks, creating a new set
- * of hooks that inject the context into every callback invocation.
- */
-const mergeAuditContext = (
-  hooks: Partial<QueryHooks>,
-  context: AuditContext,
-): Partial<QueryHooks> => {
-  // The simplest integration: create new audit hooks with the context
-  // and chain them with existing hooks.
-  const originalAfterExecute = hooks.afterExecute;
-
-  return {
-    ...hooks,
-    afterExecute: (result) => {
-      originalAfterExecute?.(result);
-    },
-  };
-};
-
 export type { AuditCallback, AuditEntryInput };
-export { createAuditHooks, mergeAuditContext, withAuditContext };
+export { createAuditHooks, withAuditContext };
