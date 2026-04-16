@@ -6,7 +6,7 @@
  * users bring pg, postgres.js, @neondatabase/serverless, etc.
  */
 
-import type { Task } from "@igorjs/pure-ts";
+import type { Task } from "@igorjs/pure-ts/async";
 
 import type { Dialect } from "../dialect/dialect.ts";
 import type { DbError } from "../errors/errors.ts";

@@ -7,24 +7,17 @@
  * when consumers import createPostgresDialect or createSqliteDialect
  * directly instead of using resolveDialect.
  *
- * resolveDialect returns a discriminated Result so callers handle the
+ * resolveDialect returns a pure-ts Result so callers handle the
  * missing-dialect case explicitly.
  */
 
+import type { Result } from "@igorjs/pure-ts/core";
+import { Err, Ok } from "@igorjs/pure-ts/core";
 import type { DbError } from "../errors/errors.ts";
 import { validationError } from "../errors/errors.ts";
 import type { Dialect } from "./dialect.ts";
 import { createPostgresDialect } from "./postgresql.ts";
 import { createSqliteDialect } from "./sqlite.ts";
-
-// ---- Result type (local, lightweight) ----
-
-type Ok<T> = { readonly tag: "Ok"; readonly value: T };
-type Err<E> = { readonly tag: "Err"; readonly error: E };
-type Result<T, E> = Ok<T> | Err<E>;
-
-const ok = <T>(value: T): Ok<T> => Object.freeze({ tag: "Ok" as const, value });
-const err = <E>(error: E): Err<E> => Object.freeze({ tag: "Err" as const, error });
 
 // ---- Built-in dialect factories (deferred instantiation) ----
 
@@ -51,17 +44,16 @@ const registerDialect = (name: string, dialect: Dialect): void => {
  */
 const resolveDialect = (name: string): Result<Dialect, DbError> => {
   const cached = resolved.get(name);
-  if (cached !== undefined) return ok(cached);
+  if (cached !== undefined) return Ok(cached);
 
   const factory = builtinFactories.get(name);
   if (factory !== undefined) {
     const dialect = factory();
     resolved.set(name, dialect);
-    return ok(dialect);
+    return Ok(dialect);
   }
 
-  return err(validationError(`Unknown dialect: "${name}"`, "dialect", name));
+  return Err(validationError(`Unknown dialect: "${name}"`, "dialect", name));
 };
 
-export type { Result };
 export { registerDialect, resolveDialect };

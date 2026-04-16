@@ -9,7 +9,8 @@
  * Health checking is deferred to Phase 2.
  */
 
-import { Ok, Task } from "@igorjs/pure-ts";
+import { Task } from "@igorjs/pure-ts/async";
+import { Ok } from "@igorjs/pure-ts/core";
 
 import type { DbError } from "../errors/errors.ts";
 import type { Logger } from "../logging/types.ts";

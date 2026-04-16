@@ -4,7 +4,7 @@
  * injection logic independently testable and composable.
  */
 
-import { Schema } from "@igorjs/pure-ts";
+import { Schema } from "@igorjs/pure-ts/data";
 import type { ColumnMetadata } from "./types.ts";
 
 // Reusable frozen metadata for the two standard timestamp columns.

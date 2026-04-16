@@ -7,7 +7,7 @@
  * pattern in timestamps.ts.
  */
 
-import { Schema } from "@igorjs/pure-ts";
+import { Schema } from "@igorjs/pure-ts/data";
 import type { ColumnMetadata } from "./types.ts";
 
 const deletedAtColumn: ColumnMetadata = Object.freeze({

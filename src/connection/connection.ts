@@ -5,7 +5,7 @@
  * work in a purely functional pipeline without reaching for try/catch.
  */
 
-import { Task } from "@igorjs/pure-ts";
+import { Task } from "@igorjs/pure-ts/async";
 
 import type { DbError } from "../errors/errors.ts";
 import { connectionError } from "../errors/errors.ts";

@@ -9,8 +9,10 @@
  * does not leak connections back into the pool.
  */
 
-import type { ImmutableList, ImmutableRecord, Option } from "@igorjs/pure-ts";
-import { Err, None, Ok, Task } from "@igorjs/pure-ts";
+import { Task } from "@igorjs/pure-ts/async";
+import type { Option } from "@igorjs/pure-ts/core";
+import { Err, None, Ok } from "@igorjs/pure-ts/core";
+import type { ImmutableList, ImmutableRecord } from "@igorjs/pure-ts/data";
 
 import type { DatabaseClient } from "../connection/types.ts";
 import type { DbError } from "../errors/errors.ts";

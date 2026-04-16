@@ -6,8 +6,8 @@
  * frozen DatabaseClient ready for use by the query execution layer.
  */
 
+import type { Result } from "@igorjs/pure-ts/core";
 import type { Dialect } from "../dialect/dialect.ts";
-import type { Result } from "../dialect/registry.ts";
 import { resolveDialect } from "../dialect/registry.ts";
 import type { DbError } from "../errors/errors.ts";
 import { createConsoleLogger, createNoopLogger } from "../logging/logger.ts";

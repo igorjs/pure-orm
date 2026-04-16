@@ -11,8 +11,8 @@
  * immutability at the boundary between the database and application layers.
  */
 
-import type { ImmutableList, ImmutableRecord } from "@igorjs/pure-ts";
-import { List, Record } from "@igorjs/pure-ts";
+import type { ImmutableList, ImmutableRecord } from "@igorjs/pure-ts/data";
+import { List, Record } from "@igorjs/pure-ts/data";
 
 // ---- snake_case -> camelCase conversion ----
 

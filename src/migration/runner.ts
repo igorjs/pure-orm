@@ -8,7 +8,9 @@
  * SQL strings directly. File I/O is the CLI's responsibility.
  */
 
-import { Err, Ok, Task } from "@igorjs/pure-ts";
+import { Task } from "@igorjs/pure-ts/async";
+import type { Result } from "@igorjs/pure-ts/core";
+import { Err, Ok } from "@igorjs/pure-ts/core";
 import type { DatabaseClient } from "../connection/types.ts";
 import type { DbError } from "../errors/errors.ts";
 import { queryError } from "../errors/errors.ts";
@@ -20,19 +22,16 @@ import { startTimer } from "../logging/timing.ts";
  * Executes raw SQL directly against a connection. Used for DDL statements
  * that don't return meaningful rows.
  */
-const execRaw = async (
-  db: DatabaseClient,
-  sql: string,
-): Promise<{ readonly ok: true } | { readonly ok: false; readonly error: DbError }> => {
+const execRaw = async (db: DatabaseClient, sql: string): Promise<Result<void, DbError>> => {
   const acquireResult = await db.pool.acquire().run();
-  if (acquireResult.isErr) return { ok: false, error: acquireResult.error };
+  if (acquireResult.isErr) return Err(acquireResult.error);
 
   const conn = acquireResult.value;
   try {
     await conn.query(sql, []);
-    return { ok: true };
+    return Ok(undefined);
   } catch (cause: unknown) {
-    return { ok: false, error: queryError("Migration SQL failed", sql, [], cause) };
+    return Err(queryError("Migration SQL failed", sql, [], cause));
   } finally {
     await conn.release();
   }
@@ -45,19 +44,16 @@ const execQuery = async (
   db: DatabaseClient,
   sql: string,
   params: readonly unknown[],
-): Promise<
-  | { readonly ok: true; readonly rows: readonly unknown[] }
-  | { readonly ok: false; readonly error: DbError }
-> => {
+): Promise<Result<readonly unknown[], DbError>> => {
   const acquireResult = await db.pool.acquire().run();
-  if (acquireResult.isErr) return { ok: false, error: acquireResult.error };
+  if (acquireResult.isErr) return Err(acquireResult.error);
 
   const conn = acquireResult.value;
   try {
     const { rows } = await conn.query(sql, params);
-    return { ok: true, rows };
+    return Ok(rows);
   } catch (cause: unknown) {
-    return { ok: false, error: queryError("Migration query failed", sql, params, cause) };
+    return Err(queryError("Migration query failed", sql, params, cause));
   } finally {
     await conn.release();
   }
@@ -89,9 +85,6 @@ const ensureMigrationTable = (db: DatabaseClient): Task<void, DbError> =>
   "checksum" TEXT NOT NULL,
   "execution_ms" INTEGER NOT NULL
 );`;
-    // Use a dialect-aware DDL if possible. For now, SQLite-compatible syntax
-    // that also works on PostgreSQL (SERIAL vs AUTOINCREMENT differ, but
-    // CREATE TABLE IF NOT EXISTS is universal).
     const pgDdl = `CREATE TABLE IF NOT EXISTS "_pure_orm_migrations" (
   "id" SERIAL PRIMARY KEY,
   "name" TEXT NOT NULL UNIQUE,
@@ -101,7 +94,7 @@ const ensureMigrationTable = (db: DatabaseClient): Task<void, DbError> =>
 );`;
     const sql = db.dialect.name === "sqlite" ? ddl : pgDdl;
     const result = await execRaw(db, sql);
-    return result.ok ? Ok(undefined) : Err(result.error);
+    return result.isOk ? Ok(undefined) : Err(result.error);
   });
 
 /**
@@ -111,13 +104,11 @@ const applyMigration = (db: DatabaseClient, migration: MigrationInput): Task<voi
   Task<void, DbError>(async () => {
     const timer = startTimer();
 
-    // Execute the migration SQL.
     const upResult = await execRaw(db, migration.upSql);
-    if (!upResult.ok) return Err(upResult.error);
+    if (upResult.isErr) return Err(upResult.error);
 
     const durationMs = Math.round(timer());
 
-    // Record in state table.
     const placeholder = db.dialect.name === "sqlite" ? "?, ?, ?" : "$1, $2, $3";
     const insertSql = `INSERT INTO "_pure_orm_migrations" ("name", "checksum", "execution_ms") VALUES (${placeholder})`;
     const insertResult = await execQuery(db, insertSql, [
@@ -125,7 +116,7 @@ const applyMigration = (db: DatabaseClient, migration: MigrationInput): Task<voi
       migration.checksum,
       durationMs,
     ]);
-    if (!insertResult.ok) return Err(insertResult.error);
+    if (insertResult.isErr) return Err(insertResult.error);
 
     return Ok(undefined);
   });
@@ -135,15 +126,13 @@ const applyMigration = (db: DatabaseClient, migration: MigrationInput): Task<voi
  */
 const rollbackMigration = (db: DatabaseClient, migration: RollbackInput): Task<void, DbError> =>
   Task<void, DbError>(async () => {
-    // Execute the rollback SQL.
     const downResult = await execRaw(db, migration.downSql);
-    if (!downResult.ok) return Err(downResult.error);
+    if (downResult.isErr) return Err(downResult.error);
 
-    // Remove from state table.
     const placeholder = db.dialect.name === "sqlite" ? "?" : "$1";
     const deleteSql = `DELETE FROM "_pure_orm_migrations" WHERE "name" = ${placeholder}`;
     const deleteResult = await execQuery(db, deleteSql, [migration.name]);
-    if (!deleteResult.ok) return Err(deleteResult.error);
+    if (deleteResult.isErr) return Err(deleteResult.error);
 
     return Ok(undefined);
   });
@@ -157,8 +146,8 @@ const getMigrationStatus = (
   Task<readonly Record<string, unknown>[], DbError>(async () => {
     const sql = 'SELECT * FROM "_pure_orm_migrations" ORDER BY "id" ASC';
     const result = await execQuery(db, sql, []);
-    if (!result.ok) return Err(result.error);
-    return Ok(result.rows as Record<string, unknown>[]);
+    if (result.isErr) return Err(result.error);
+    return Ok(result.value as Record<string, unknown>[]);
   });
 
 export type { MigrationInput, RollbackInput };
