@@ -6,8 +6,6 @@
  * into readable named steps.
  *
  * Usage:
- *   import { with as withCte } from "@igorjs/pure-orm"
- *
  *   pipe(
  *     from(Post),
  *     withCte("active_posts", pipe(from(Post), where(eq("published", true)))),
@@ -26,13 +24,10 @@ import type { CteClause, SelectNode } from "./types.ts";
 /**
  * Attaches a CTE (WITH clause) to the SelectNode.
  *
- * Multiple with() calls accumulate: each invocation adds another CTE.
+ * Multiple withCte() calls accumulate: each invocation adds another CTE.
  * CTEs are compiled in the order they were added.
- *
- * Exported as `with` (a reserved word in JS). Import with rename:
- *   import { with as withCte } from "@igorjs/pure-orm"
  */
-const withFn = (name: string, query: SelectNode) => (node: SelectNode): SelectNode => {
+const withCte = (name: string, query: SelectNode) => (node: SelectNode): SelectNode => {
   const clause: CteClause = Object.freeze({ name, query });
   return Object.freeze({
     ...node,
@@ -40,7 +35,4 @@ const withFn = (name: string, query: SelectNode) => (node: SelectNode): SelectNo
   });
 };
 
-// `with` is a reserved word so it cannot be a local variable name,
-// but it CAN be an export name via the `as` syntax.
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export { withFn as with };
+export { withCte };
