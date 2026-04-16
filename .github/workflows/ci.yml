@@ -39,6 +39,56 @@ jobs:
       - name: Type tests
         run: pnpm run test:types
 
+  integration-sqlite:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    name: integration / sqlite
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: SQLite integration tests
+        run: node --experimental-strip-types --no-warnings --test tests/integration/sqlite.test.ts
+
+  integration-pg:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    name: integration / postgresql
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: pure_orm_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: PostgreSQL integration tests
+        run: node --experimental-strip-types --no-warnings --test tests/integration/pg.test.ts
+        env:
+          PG_HOST: localhost
+          PG_PORT: 5432
+          PG_DATABASE: pure_orm_test
+          PG_USER: postgres
+          PG_PASSWORD: postgres
+
   smoke-node:
     needs: lint-and-test
     runs-on: ubuntu-latest
