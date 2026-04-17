@@ -23,3 +23,6 @@ Thumbs.db
 
 # Local dev files
 .local/
+
+# Brain / knowledge DB
+brain.db*
