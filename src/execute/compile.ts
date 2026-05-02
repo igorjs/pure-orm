@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Query compilation: converts a QueryNode AST into SQL + parameters.
  *
@@ -11,6 +13,7 @@
  * concrete SQL.
  */
 
+import { Match } from "@igorjs/pure-ts/core";
 import { resolveDialect } from "../dialect/registry.ts";
 import type { CompiledQuery, QueryNode } from "../query/types.ts";
 
@@ -22,29 +25,23 @@ import type { CompiledQuery, QueryNode } from "../query/types.ts";
  * correct signal.
  */
 const compile = (node: QueryNode, dialectName = "postgresql"): CompiledQuery => {
-  const result = resolveDialect(dialectName);
+  const dialect = Match(resolveDialect(dialectName))
+    .with({ tag: "Ok" }, r => r.value)
+    .with({ tag: "Err" }, r => {
+      // Dialect resolution failures are programmer errors (misconfigured dialect
+      // name), so we surface them immediately as thrown errors rather than
+      // hiding them in a Result or Task.
+      throw r.error;
+    })
+    .exhaustive();
 
-  if (result.tag === "Err") {
-    // Dialect resolution failures are programmer errors (misconfigured dialect
-    // name), so we surface them immediately as thrown errors rather than
-    // hiding them in a Result or Task.
-    throw result.error;
-  }
-
-  const dialect = result.value;
-
-  switch (node.tag) {
-    case "Select":
-      return dialect.compileSelect(node);
-    case "Insert":
-      return dialect.compileInsert(node);
-    case "Update":
-      return dialect.compileUpdate(node);
-    case "Delete":
-      return dialect.compileDelete(node);
-    case "Raw":
-      return { sql: node.sql, params: node.params };
-  }
+  return Match(node)
+    .with({ tag: "Select" }, n => dialect.compileSelect(n))
+    .with({ tag: "Insert" }, n => dialect.compileInsert(n))
+    .with({ tag: "Update" }, n => dialect.compileUpdate(n))
+    .with({ tag: "Delete" }, n => dialect.compileDelete(n))
+    .with({ tag: "Raw" }, n => ({ sql: n.sql, params: n.params }))
+    .exhaustive();
 };
 
 export { compile };

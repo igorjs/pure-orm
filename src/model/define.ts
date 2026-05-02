@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Model() factory: converts a FieldsRecord into a frozen Model with a
  * runtime Schema (for validation), ColumnMetadata (for query generation),

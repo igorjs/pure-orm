@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Standard connection pool.
  *
@@ -141,19 +143,15 @@ const createPool = (
     // Close all idle connections in parallel, then resolve.
     const closeAll = idle.splice(0).map(conn => closeConnection(conn));
 
-    return Task.fromPromise(
-      async () => {
-        const results = await Promise.all(closeAll.map(t => t.run()));
-        for (const result of results) {
-          if (result.tag === "Err") {
-            logger.error("pool: error closing idle connection during end()", {
-              error: String(result.error),
-            });
-          }
+    return Task.allSettled(closeAll).map(results => {
+      for (const result of results) {
+        if (result.tag === "Err") {
+          logger.error("pool: error closing idle connection during end()", {
+            error: String(result.error),
+          });
         }
-      },
-      (cause: unknown) => connectionError("Pool end() failed", cause),
-    );
+      }
+    });
   };
 
   return Object.freeze({ acquire, release, end, mode: "pool" as const });

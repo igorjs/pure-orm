@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Field() wraps a pure-ts SchemaType with ORM metadata (FieldConfig) to produce
  * a frozen FieldDef. The HasDefault phantom type enables compile-time tracking

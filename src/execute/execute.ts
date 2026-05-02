@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Terminal query execution stages.
  *
@@ -11,7 +13,7 @@
 
 import { Task } from "@igorjs/pure-ts/async";
 import type { Option } from "@igorjs/pure-ts/core";
-import { Err, None, Ok } from "@igorjs/pure-ts/core";
+import { Err, Match, None, Ok } from "@igorjs/pure-ts/core";
 import type { ImmutableList, ImmutableRecord } from "@igorjs/pure-ts/data";
 
 import type { DatabaseClient } from "../connection/types.ts";
@@ -34,20 +36,14 @@ import { mapRows } from "./result-mapper.ts";
 const compileNode = (
   db: DatabaseClient,
   node: QueryNode,
-): { readonly sql: string; readonly params: readonly unknown[] } => {
-  switch (node.tag) {
-    case "Select":
-      return db.dialect.compileSelect(node);
-    case "Insert":
-      return db.dialect.compileInsert(node);
-    case "Update":
-      return db.dialect.compileUpdate(node);
-    case "Delete":
-      return db.dialect.compileDelete(node);
-    case "Raw":
-      return { sql: node.sql, params: node.params };
-  }
-};
+): { readonly sql: string; readonly params: readonly unknown[] } =>
+  Match(node)
+    .with({ tag: "Select" }, n => db.dialect.compileSelect(n))
+    .with({ tag: "Insert" }, n => db.dialect.compileInsert(n))
+    .with({ tag: "Update" }, n => db.dialect.compileUpdate(n))
+    .with({ tag: "Delete" }, n => db.dialect.compileDelete(n))
+    .with({ tag: "Raw" }, n => ({ sql: n.sql, params: n.params }))
+    .exhaustive();
 
 /**
  * Extract the ModelRef from a QueryNode for result mapping.
@@ -55,20 +51,7 @@ const compileNode = (
  * Returns null for RawNode — column name remapping is skipped and
  * snakeToCamel() is used as the sole mapping strategy instead.
  */
-const getModelRef = (node: QueryNode): ModelRef | null => {
-  switch (node.tag) {
-    case "Select":
-      return node.model;
-    case "Insert":
-      return node.model;
-    case "Update":
-      return node.model;
-    case "Delete":
-      return node.model;
-    case "Raw":
-      return null;
-  }
-};
+const getModelRef = (node: QueryNode): ModelRef | null => (node.tag === "Raw" ? null : node.model);
 
 // ---- execute ----
 

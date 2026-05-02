@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * injectSoftDeleteColumn appends the deletedAt column to a ColumnMetadata
  * array when a model has softDelete enabled. This ensures resolveColumnName

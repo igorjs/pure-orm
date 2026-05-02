@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@igorjs/pure-ts':
-        specifier: ^0.7.4
-        version: 0.7.4(typescript@6.0.2)
+        specifier: ^0.9.0
+        version: 0.9.0(typescript@6.0.2)
       typescript:
         specifier: '>=5.5.0'
         version: 6.0.2
@@ -93,8 +93,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@igorjs/pure-ts@0.7.4':
-    resolution: {integrity: sha512-Z31vAz6NQL2ylj8+N9xF9M2R67eX+lceSp77ZzEp8W+8mq4K6cS9F+pVlkR8YPR4qIxmTJDzxMTaifHJpA5LVg==}
+  '@igorjs/pure-ts@0.9.0':
+    resolution: {integrity: sha512-+eqmeelj4epPU9vfpom/myJFFu2c5Ec/EHQjelCYSXLWmMy+Ujtlu9I593d/6qIfBkjHtancE2OMtCciiOXdWA==}
     engines: {node: '>=22'}
     peerDependencies:
       typescript: '>=5.5.0'
@@ -383,7 +383,7 @@ snapshots:
   '@biomejs/cli-win32-x64@2.4.7':
     optional: true
 
-  '@igorjs/pure-ts@0.7.4(typescript@6.0.2)':
+  '@igorjs/pure-ts@0.9.0(typescript@6.0.2)':
     optionalDependencies:
       typescript: 6.0.2
 

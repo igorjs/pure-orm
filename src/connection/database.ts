@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Database factory.
  *
@@ -6,10 +8,9 @@
  * frozen DatabaseClient ready for use by the query execution layer.
  */
 
-import type { Result } from "@igorjs/pure-ts/core";
+import { Match } from "@igorjs/pure-ts/core";
 import type { Dialect } from "../dialect/dialect.ts";
 import { resolveDialect } from "../dialect/registry.ts";
-import type { DbError } from "../errors/errors.ts";
 import { createConsoleLogger, createNoopLogger } from "../logging/logger.ts";
 import { createLambdaPool } from "./lambda.ts";
 import { createPool } from "./pool.ts";
@@ -26,17 +27,16 @@ import type { DatabaseClient, DatabaseConfig } from "./types.ts";
  */
 const Database = (config: DatabaseConfig): DatabaseClient => {
   // Resolve dialect by name. The registry exports a discriminated Result so
-  // the missing-dialect case is handled explicitly without type assertions.
-  const dialectResult: Result<Dialect, DbError> = resolveDialect(config.dialect);
-
-  if (dialectResult.tag === "Err") {
-    // Dialect resolution errors are programmer mistakes (wrong config), so we
-    // surface them immediately as thrown errors rather than hiding them in a
-    // Task or returning null.
-    throw dialectResult.error;
-  }
-
-  const dialect = dialectResult.value;
+  // the missing-dialect case is handled explicitly via Match.
+  const dialect: Dialect = Match(resolveDialect(config.dialect))
+    .with({ tag: "Ok" }, r => r.value)
+    .with({ tag: "Err" }, r => {
+      // Dialect resolution errors are programmer mistakes (wrong config), so we
+      // surface them immediately as thrown errors rather than hiding them in a
+      // Task or returning null.
+      throw r.error;
+    })
+    .exhaustive();
 
   // Build logger from logging config.
   const loggingConfig = config.logging;

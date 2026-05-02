@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * injectTimestampColumns appends standard audit columns (created_at, updated_at)
  * to a ColumnMetadata array. Keeping this separate from define.ts makes the

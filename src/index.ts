@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * @module @igorjs/pure-orm
  *
@@ -7,6 +9,9 @@
  * Complete public API: models, queries, mutations, relations, joins, aggregates,
  * window functions, CTEs, subqueries, soft deletes, audit, migrations.
  */
+
+// ---- pure-ts re-exports (convenience for consumers) ----
+export { flow, pipe } from "@igorjs/pure-ts/core";
 
 export type { AuditCallback, AuditEntryInput } from "./audit/interceptor.ts";
 // ---- Audit system (Phase 4) ----
