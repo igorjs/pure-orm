@@ -9,12 +9,12 @@
  * back to a mechanical snake_case -> camelCase conversion when no metadata
  * match exists.
  *
- * All output is wrapped in List/Record from @igorjs/pure-ts to enforce
+ * All output is wrapped in List/Record from @igorjs/pure-fx to enforce
  * immutability at the boundary between the database and application layers.
  */
 
-import type { ImmutableList, ImmutableRecord } from "@igorjs/pure-ts/data";
-import { List, Record } from "@igorjs/pure-ts/data";
+import type { ImmutableList, ImmutableRecord } from "@igorjs/pure-fx/data";
+import { List, Record } from "@igorjs/pure-fx/data";
 
 // ---- snake_case -> camelCase conversion ----
 

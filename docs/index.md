@@ -1,6 +1,6 @@
 # @igorjs/pure-orm Documentation
 
-Functional-first, type-safe ORM built on [@igorjs/pure-ts](https://github.com/igorjs/pure-ts). Pure query composition via immutable AST nodes, PostgreSQL and SQLite dialects, Lambda-ready connections.
+Functional-first, type-safe ORM built on [@igorjs/pure-fx](https://github.com/igorjs/pure-fx). Pure query composition via immutable AST nodes, PostgreSQL and SQLite dialects, Lambda-ready connections.
 
 ## Guides
 
@@ -36,4 +36,4 @@ Functional-first, type-safe ORM built on [@igorjs/pure-ts](https://github.com/ig
 
 - Node.js >= 22
 - TypeScript >= 5.5
-- @igorjs/pure-ts >= 0.7.4
+- @igorjs/pure-fx >= 0.7.4

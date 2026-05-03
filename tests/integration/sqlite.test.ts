@@ -11,7 +11,7 @@
 import { strict as assert } from "node:assert";
 import { after, before, describe, it } from "node:test";
 
-import { pipe, Schema, Task } from "@igorjs/pure-ts";
+import { pipe, Schema, Task } from "@igorjs/pure-fx";
 
 import { transaction } from "../../src/connection/transaction.ts";
 import type { ConnectionPool, DatabaseClient, RawConnection } from "../../src/connection/types.ts";

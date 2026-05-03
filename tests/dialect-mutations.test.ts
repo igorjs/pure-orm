@@ -16,7 +16,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import { Schema } from "@igorjs/pure-ts";
+import { Schema } from "@igorjs/pure-fx";
 
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";

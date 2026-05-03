@@ -9,7 +9,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import { Schema } from "@igorjs/pure-ts";
+import { Schema } from "@igorjs/pure-fx";
 
 import { compile } from "../src/execute/compile.ts";
 import { Model } from "../src/model/define.ts";

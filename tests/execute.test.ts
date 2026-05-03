@@ -9,7 +9,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import { Schema, Task } from "@igorjs/pure-ts";
+import { Schema, Task } from "@igorjs/pure-fx";
 
 import type { DatabaseClient, RawConnection } from "../src/connection/types.ts";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";

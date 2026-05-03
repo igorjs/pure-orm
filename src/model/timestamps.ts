@@ -6,7 +6,7 @@
  * injection logic independently testable and composable.
  */
 
-import { Schema } from "@igorjs/pure-ts/data";
+import { Schema } from "@igorjs/pure-fx/data";
 import type { ColumnMetadata } from "./types.ts";
 
 // Reusable frozen metadata for the two standard timestamp columns.

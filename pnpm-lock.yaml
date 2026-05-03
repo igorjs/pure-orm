@@ -4,15 +4,18 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@igorjs/pure-fx': link:../pure-ts
+
 importers:
 
   .:
     dependencies:
-      '@igorjs/pure-ts':
-        specifier: ^0.9.0
-        version: 0.9.0(typescript@6.0.2)
+      '@igorjs/pure-fx':
+        specifier: link:../pure-ts
+        version: link:../pure-ts
       typescript:
-        specifier: '>=5.5.0'
+        specifier: '>=5.7.0'
         version: 6.0.2
     devDependencies:
       '@biomejs/biome':
@@ -92,15 +95,6 @@ packages:
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
-
-  '@igorjs/pure-ts@0.9.0':
-    resolution: {integrity: sha512-+eqmeelj4epPU9vfpom/myJFFu2c5Ec/EHQjelCYSXLWmMy+Ujtlu9I593d/6qIfBkjHtancE2OMtCciiOXdWA==}
-    engines: {node: '>=22'}
-    peerDependencies:
-      typescript: '>=5.5.0'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
 
   '@types/better-sqlite3@7.6.13':
     resolution: {integrity: sha512-NMv9ASNARoKksWtsq/SHakpYAYnhBrQgGD8zkLYk/jaK8jUGn08CfEdTRgYhMypUQAfzSP8W6gNLe0q19/t4VA==}
@@ -382,10 +376,6 @@ snapshots:
 
   '@biomejs/cli-win32-x64@2.4.14':
     optional: true
-
-  '@igorjs/pure-ts@0.9.0(typescript@6.0.2)':
-    optionalDependencies:
-      typescript: 6.0.2
 
   '@types/better-sqlite3@7.6.13':
     dependencies:

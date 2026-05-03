@@ -1,7 +1,7 @@
 {
   "name": "@igorjs/pure-orm",
   "version": "0.1.0",
-  "description": "Functional-first, type-safe ORM built on @igorjs/pure-ts. Pure query composition, PostgreSQL dialect, Lambda-ready connections. Zero dependencies.",
+  "description": "Functional-first, type-safe ORM built on @igorjs/pure-fx. Pure query composition, PostgreSQL dialect, Lambda-ready connections. Zero dependencies.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -65,8 +65,8 @@
     "pg": "^8.20.0"
   },
   "peerDependencies": {
-    "@igorjs/pure-ts": "^0.9.0",
-    "typescript": ">=5.5.0"
+    "@igorjs/pure-fx": "^0.1.0",
+    "typescript": ">=5.7.0"
   },
   "peerDependenciesMeta": {
     "typescript": {
@@ -76,6 +76,9 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "better-sqlite3"
-    ]
+    ],
+    "overrides": {
+      "@igorjs/pure-fx": "link:../pure-ts"
+    }
   }
 }

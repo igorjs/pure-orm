@@ -9,7 +9,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import { Task } from "@igorjs/pure-ts";
+import { Task } from "@igorjs/pure-fx";
 import type { TransactionClient } from "../src/connection/transaction.ts";
 import { isTransactionClient, transaction } from "../src/connection/transaction.ts";
 import type { DatabaseClient, RawConnection } from "../src/connection/types.ts";

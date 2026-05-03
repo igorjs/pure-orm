@@ -3,15 +3,15 @@
 ## Installation
 
 ```bash
-npm install @igorjs/pure-orm @igorjs/pure-ts
+npm install @igorjs/pure-orm @igorjs/pure-fx
 ```
 
 Both packages use tree-shakable subpath exports. Import only what you need:
 
 ```typescript
 import { Model, Field } from "@igorjs/pure-orm";
-import { Schema } from "@igorjs/pure-ts/data";
-import { pipe } from "@igorjs/pure-ts/core";
+import { Schema } from "@igorjs/pure-fx/data";
+import { pipe } from "@igorjs/pure-fx/core";
 ```
 
 ## Define a Model
@@ -19,7 +19,7 @@ import { pipe } from "@igorjs/pure-ts/core";
 A Model maps a TypeScript type to a database table. Fields define columns with schema validation and ORM metadata.
 
 ```typescript
-import { Schema } from "@igorjs/pure-ts/data";
+import { Schema } from "@igorjs/pure-fx/data";
 import { Model, Field } from "@igorjs/pure-orm";
 
 const User = Model("users", {
@@ -42,7 +42,7 @@ const User = Model("users", {
 Queries are built by composing pure functions via `pipe()`. No SQL is generated until execution.
 
 ```typescript
-import { pipe } from "@igorjs/pure-ts/core";
+import { pipe } from "@igorjs/pure-fx/core";
 import { from, where, orderBy, limit, execute } from "@igorjs/pure-orm";
 import { eq, gt } from "@igorjs/pure-orm";
 

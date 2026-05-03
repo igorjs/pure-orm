@@ -1,7 +1,7 @@
 // Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
 
 /**
- * Pure join builder functions, composable via pipe() from @igorjs/pure-ts.
+ * Pure join builder functions, composable via pipe() from @igorjs/pure-fx.
  *
  * Each builder appends a frozen JoinClause to the SelectNode's joins array,
  * never mutating the input node. Join clauses carry the target model's

@@ -1,12 +1,12 @@
 // Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
 
 /**
- * Field() wraps a pure-ts SchemaType with ORM metadata (FieldConfig) to produce
+ * Field() wraps a pure-fx SchemaType with ORM metadata (FieldConfig) to produce
  * a frozen FieldDef. The HasDefault phantom type enables compile-time tracking
  * of which fields are optional in insert operations.
  */
 
-import type { SchemaType } from "@igorjs/pure-ts/data";
+import type { SchemaType } from "@igorjs/pure-fx/data";
 import type { FieldConfig, FieldDef } from "./types.ts";
 
 // Overload: no config -> HasDefault is false (insert requires this field)

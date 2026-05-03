@@ -3,7 +3,7 @@
 /**
  * Model layer types.
  *
- * FieldDef wraps a pure-ts Schema with ORM metadata (primaryKey, unique, etc.)
+ * FieldDef wraps a pure-fx Schema with ORM metadata (primaryKey, unique, etc.)
  * without modifying the schema itself. Model is the runtime + type-level
  * representation of a database table, carrying phantom types for $type,
  * $insert, and $update inference.
@@ -24,7 +24,7 @@ type FieldConfig = {
 };
 
 /**
- * FieldDef pairs a pure-ts Schema with ORM metadata.
+ * FieldDef pairs a pure-fx Schema with ORM metadata.
  * The HasDefault phantom distinguishes fields that are optional in inserts
  * (those with defaults, primary keys with auto-generation, etc.).
  *

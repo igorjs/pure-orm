@@ -148,9 +148,9 @@ src/
 
 ## Dependencies
 
-- **Runtime**: `@igorjs/pure-ts` (peer dependency)
-  - `@igorjs/pure-ts/core`: Ok, Err, Result, Option, pipe, flow
-  - `@igorjs/pure-ts/async`: Task
-  - `@igorjs/pure-ts/data`: Schema, List, Record
+- **Runtime**: `@igorjs/pure-fx` (peer dependency)
+  - `@igorjs/pure-fx/core`: Ok, Err, Result, Option, pipe, flow
+  - `@igorjs/pure-fx/async`: Task
+  - `@igorjs/pure-fx/data`: Schema, List, Record
 - **Dev**: `@biomejs/biome` (lint/format), `@typescript/native-preview` (tsgo compiler)
 - **Driver**: none (bring your own)

@@ -10,7 +10,7 @@
  * SQL strings directly. File I/O is the CLI's responsibility.
  */
 
-import { Task } from "@igorjs/pure-ts/async";
+import { Task } from "@igorjs/pure-fx/async";
 import type { DatabaseClient } from "../connection/types.ts";
 import type { DbError } from "../errors/errors.ts";
 import { queryError } from "../errors/errors.ts";

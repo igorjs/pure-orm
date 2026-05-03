@@ -5,7 +5,7 @@
 `Model(tableName, config)` creates a frozen, immutable model definition that maps a TypeScript type to a database table.
 
 ```typescript
-import { Schema } from "@igorjs/pure-ts/data";
+import { Schema } from "@igorjs/pure-fx/data";
 import { Model, Field } from "@igorjs/pure-orm";
 
 const Post = Model("posts", {
@@ -36,7 +36,7 @@ const Post = Model("posts", {
 
 ## Field()
 
-`Field(schema, config?)` wraps a pure-ts Schema with ORM metadata.
+`Field(schema, config?)` wraps a pure-fx Schema with ORM metadata.
 
 ```typescript
 // Required field (no default)

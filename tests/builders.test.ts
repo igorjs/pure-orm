@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import { pipe, Schema } from "@igorjs/pure-ts";
+import { pipe, Schema } from "@igorjs/pure-fx";
 
 import { Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";

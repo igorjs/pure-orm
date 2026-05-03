@@ -3,15 +3,15 @@
 /**
  * @module @igorjs/pure-orm
  *
- * Functional-first, type-safe ORM built on @igorjs/pure-ts.
+ * Functional-first, type-safe ORM built on @igorjs/pure-fx.
  * Pure query composition, PostgreSQL dialect, Lambda-ready connections.
  *
  * Complete public API: models, queries, mutations, relations, joins, aggregates,
  * window functions, CTEs, subqueries, soft deletes, audit, migrations.
  */
 
-// ---- pure-ts re-exports (convenience for consumers) ----
-export { flow, pipe } from "@igorjs/pure-ts/core";
+// ---- pure-fx re-exports (convenience for consumers) ----
+export { flow, pipe } from "@igorjs/pure-fx/core";
 
 export type { AuditCallback, AuditEntryInput } from "./audit/interceptor.ts";
 // ---- Audit system (Phase 4) ----

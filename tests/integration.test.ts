@@ -10,7 +10,7 @@
 
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
-import { Schema, Task } from "@igorjs/pure-ts";
+import { Schema, Task } from "@igorjs/pure-fx";
 
 import type { DatabaseClient, RawConnection } from "../src/connection/types.ts";
 import {
@@ -116,7 +116,7 @@ const createMockDb = (rows: readonly Record<string, unknown>[]): DatabaseClient 
 
 describe("integration: full compile pipeline", () => {
   it("compiles a query with WHERE, ORDER BY, and LIMIT into correct SQL", () => {
-    // Build query using manual composition to avoid importing pipe from @igorjs/pure-ts
+    // Build query using manual composition to avoid importing pipe from @igorjs/pure-fx
     // (the public API test below confirms it works with the barrel export).
     const query = limit(10)(
       orderBy("name", "asc")(where(and(eq("role", "admin"), gt("age", 25)))(from(User))),

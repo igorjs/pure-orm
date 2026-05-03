@@ -1,7 +1,7 @@
 // Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
 
 /**
- * Pure query builder functions, composable via pipe() from @igorjs/pure-ts.
+ * Pure query builder functions, composable via pipe() from @igorjs/pure-fx.
  *
  * Each builder accepts a SelectNode and returns a NEW frozen SelectNode,
  * never mutating the input. This immutability guarantee means builders are

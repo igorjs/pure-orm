@@ -19,9 +19,9 @@
  * lifecycle.
  */
 
-import { Task } from "@igorjs/pure-ts/async";
-import type { Result } from "@igorjs/pure-ts/core";
-import { Err, Ok } from "@igorjs/pure-ts/core";
+import { Task } from "@igorjs/pure-fx/async";
+import type { Result } from "@igorjs/pure-fx/core";
+import { Err, Ok } from "@igorjs/pure-fx/core";
 
 import type { DbError } from "../errors/errors.ts";
 import { transactionError } from "../errors/errors.ts";

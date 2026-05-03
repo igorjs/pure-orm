@@ -1,17 +1,17 @@
 # @igorjs/pure-orm
 
-Functional-first, type-safe ORM built on [@igorjs/pure-ts](https://github.com/igorjs/pure-ts). Pure query composition, immutable AST, PostgreSQL and SQLite dialects, Lambda-ready connections. Zero runtime dependencies.
+Functional-first, type-safe ORM built on [@igorjs/pure-fx](https://github.com/igorjs/pure-fx). Pure query composition, immutable AST, PostgreSQL and SQLite dialects, Lambda-ready connections. Zero runtime dependencies.
 
 ## Install
 
 ```bash
-npm install @igorjs/pure-orm @igorjs/pure-ts
+npm install @igorjs/pure-orm @igorjs/pure-fx
 ```
 
 ## Quick Start
 
 ```typescript
-import { pipe } from "@igorjs/pure-ts";
+import { pipe } from "@igorjs/pure-fx";
 import {
   Model, Field, Schema,
   from, select, where, orderBy, limit,
@@ -186,7 +186,7 @@ pipe(auditLog(User), where(eq("rowId", userId)), orderBy("createdAt", "desc"), l
 
 - Node.js >= 22
 - TypeScript >= 5.5
-- @igorjs/pure-ts >= 0.7.0
+- @igorjs/pure-fx >= 0.7.0
 
 ## Disclaimer
 

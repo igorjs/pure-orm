@@ -4,7 +4,7 @@
 
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { Schema } from "@igorjs/pure-ts";
+import { Schema } from "@igorjs/pure-fx";
 import { auditLog } from "../src/audit/logger.ts";
 import { AuditModel } from "../src/audit/table.ts";
 import type { AuditContext, AuditEntry, AuditOperation } from "../src/audit/types.ts";

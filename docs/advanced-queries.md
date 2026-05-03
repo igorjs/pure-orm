@@ -7,7 +7,7 @@
 ```typescript
 import { withCte, from, where, select, groupBy, execute } from "@igorjs/pure-orm";
 import { eq, gt, count } from "@igorjs/pure-orm";
-import { pipe } from "@igorjs/pure-ts/core";
+import { pipe } from "@igorjs/pure-fx/core";
 
 // Define a CTE subquery
 const activePosts = pipe(

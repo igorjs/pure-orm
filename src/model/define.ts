@@ -9,8 +9,8 @@
  * derivation. If it is needed elsewhere later, extract to a shared utils file.
  */
 
-import type { SchemaType } from "@igorjs/pure-ts/data";
-import { Schema } from "@igorjs/pure-ts/data";
+import type { SchemaType } from "@igorjs/pure-fx/data";
+import { Schema } from "@igorjs/pure-fx/data";
 import type { RelationMap } from "./relations.ts";
 import { injectSoftDeleteColumn } from "./soft-delete.ts";
 import { injectTimestampColumns } from "./timestamps.ts";

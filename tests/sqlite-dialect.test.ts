@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { describe, it } from "node:test";
 
-import { Schema } from "@igorjs/pure-ts";
+import { Schema } from "@igorjs/pure-fx";
 
 import { resolveDialect } from "../src/dialect/registry.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";

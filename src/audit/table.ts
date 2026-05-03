@@ -23,7 +23,7 @@
  *   );
  */
 
-import { Schema } from "@igorjs/pure-ts/data";
+import { Schema } from "@igorjs/pure-fx/data";
 import { Model } from "../model/define.ts";
 import { Field } from "../model/field.ts";
 

@@ -179,7 +179,7 @@ A complete migration script for a project:
 // scripts/migrate.ts
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { pipe } from "@igorjs/pure-ts/core";
+import { pipe } from "@igorjs/pure-fx/core";
 import {
   Database, createSnapshot, diffSnapshots, generateMigration,
   ensureMigrationTable, applyMigration, getMigrationStatus,

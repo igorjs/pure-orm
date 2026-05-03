@@ -9,12 +9,12 @@
  * when consumers import createPostgresDialect or createSqliteDialect
  * directly instead of using resolveDialect.
  *
- * resolveDialect returns a pure-ts Result so callers handle the
+ * resolveDialect returns a pure-fx Result so callers handle the
  * missing-dialect case explicitly.
  */
 
-import type { Result } from "@igorjs/pure-ts/core";
-import { Err, Ok } from "@igorjs/pure-ts/core";
+import type { Result } from "@igorjs/pure-fx/core";
+import { Err, Ok } from "@igorjs/pure-fx/core";
 import type { DbError } from "../errors/errors.ts";
 import { validationError } from "../errors/errors.ts";
 import type { Dialect } from "./dialect.ts";

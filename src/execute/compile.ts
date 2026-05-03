@@ -13,7 +13,7 @@
  * concrete SQL.
  */
 
-import { Match } from "@igorjs/pure-ts/core";
+import { Match } from "@igorjs/pure-fx/core";
 import { resolveDialect } from "../dialect/registry.ts";
 import type { CompiledQuery, QueryNode } from "../query/types.ts";
 

@@ -6,7 +6,7 @@
  * and various field types.
  */
 
-import { Schema } from "@igorjs/pure-ts";
+import { Schema } from "@igorjs/pure-fx";
 import { Model } from "../../src/model/define.ts";
 import { Field } from "../../src/model/field.ts";
 import { belongsTo, hasMany, hasOne } from "../../src/model/relations.ts";
