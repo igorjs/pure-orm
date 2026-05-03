@@ -89,10 +89,10 @@ The repository has git hooks that run automatically:
 Use [Conventional Commits](https://www.conventionalcommits.org/):
 
 ```
-feat(core): add Validation module
-fix(runtime): wire up Deno memoryUsage
-docs: update FFI troubleshooting guide
-test: add HashMap integration tests
+feat(query): add window function support
+fix(connection): handle pool exhaustion gracefully
+docs: update migration guide
+test: add PostgreSQL integration tests
 ```
 
 Always sign commits: `git commit --signoff --gpg-sign`

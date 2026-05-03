@@ -20,9 +20,7 @@ coverage/
 *.swp
 *.swo
 Thumbs.db
-
-# Local dev files
-.local/
-
-# Brain / knowledge DB
-brain.db*
+brain.db
+brain.db-shm
+brain.db-wal
+.claude/

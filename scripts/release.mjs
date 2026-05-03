@@ -6,10 +6,10 @@
  * release with the changelog as release notes.
  *
  * Usage:
- *   node scripts/release.mjs patch    # 0.1.0 -> 0.1.1
- *   node scripts/release.mjs minor    # 0.1.0 -> 0.2.0
- *   node scripts/release.mjs major    # 0.1.0 -> 1.0.0
- *   node scripts/release.mjs 0.2.0    # explicit version
+ *   node scripts/release.mjs patch    # 0.3.1 -> 0.3.2
+ *   node scripts/release.mjs minor    # 0.3.1 -> 0.4.0
+ *   node scripts/release.mjs major    # 0.3.1 -> 1.0.0
+ *   node scripts/release.mjs 0.4.0    # explicit version
  *   node scripts/release.mjs minor --yes  # skip confirmation prompt
  *
  * Requires: gh CLI (authenticated), git signing configured.
@@ -58,29 +58,40 @@ try {
   die("GitHub CLI (gh) is not installed or not in PATH.");
 }
 
-const ciStatus = run("gh run list --branch main --limit 1 --json conclusion --jq '.[0].conclusion'");
-if (ciStatus !== "success") {
-  die(`Last CI run on main is not green (status: ${ciStatus}). Fix CI before releasing.`);
+// Wait for any in-progress CI runs to finish, then check result
+const ciCheckCmd = "gh run list --branch main --workflow ci.yml --limit 1 --json status,conclusion --jq '.[0]'";
+let ciRun = JSON.parse(run(ciCheckCmd));
+if (ciRun.status !== "completed") {
+  log(`CI run is ${ciRun.status}. Waiting for it to finish...`);
+  while (ciRun.status !== "completed") {
+    run("sleep 10");
+    ciRun = JSON.parse(run(ciCheckCmd));
+  }
+}
+if (ciRun.conclusion !== "success") {
+  die(`Last CI run on main failed (conclusion: ${ciRun.conclusion}). Fix CI before releasing.`);
 }
 
 if (skipTestCi) {
   log("Skipping test:ci and publish dry run (--skip-test-ci).");
 } else {
-log("Running full test matrix (native + Docker)...");
-try {
-  run("pnpm run test:ci", { stdio: "inherit" });
-} catch {
-  die("Test matrix failed. Fix all failures before releasing.");
-}
+  log("Running full test matrix (native + Docker)...");
+  try {
+    run("pnpm run test:ci", { stdio: "inherit" });
+  } catch {
+    die("Test matrix failed. Fix all failures before releasing.");
+  }
 
-log("Verifying npm publish (dry run)...");
-try {
-  const cleanEnv = Object.fromEntries(
-    Object.entries(process.env).filter(([k]) => !k.startsWith("npm_")),
-  );
-  execSync("npm publish --dry-run --ignore-scripts", { stdio: "inherit", env: cleanEnv });
-} catch {
-  die("npm publish dry run failed. Fix packaging issues before releasing.");
+  log("Verifying npm publish (dry run)...");
+  try {
+    // Strip pnpm-injected npm_config_ env vars that npm doesn't recognise
+    const cleanEnv = Object.fromEntries(
+      Object.entries(process.env).filter(([k]) => !k.startsWith("npm_")),
+    );
+    execSync("npm publish --dry-run --ignore-scripts", { stdio: "inherit", env: cleanEnv });
+  } catch {
+    die("npm publish dry run failed. Fix packaging issues before releasing.");
+  }
 }
 
 // -- Detect repo URL from git remote ------------------------------------------
@@ -258,6 +269,25 @@ const jsr = JSON.parse(readFileSync("jsr.json", "utf8"));
 jsr.version = newVersion;
 writeFileSync("jsr.json", JSON.stringify(jsr, null, 2) + "\n");
 
+// -- Update test badge in README ----------------------------------------------
+
+try {
+  const readme = readFileSync("README.md", "utf8");
+  const testCount = run("pnpm run build > /dev/null 2>&1 && pnpm test 2>&1 | grep -oP '(?<=pass )\\d+'");
+  if (testCount) {
+    const updated = readme.replace(
+      /tests-\d+_passing/,
+      `tests-${testCount}_passing`,
+    );
+    if (updated !== readme) {
+      writeFileSync("README.md", updated);
+      log(`Updated test badge: ${testCount} passing`);
+    }
+  }
+} catch {
+  // Non-critical: skip if test count extraction fails
+}
+
 // -- Update SECURITY.md supported version -------------------------------------
 
 try {
@@ -325,7 +355,7 @@ if (changelogEntry) {
 // -- Commit, tag, push --------------------------------------------------------
 
 log("Committing...");
-run("git add package.json jsr.json SECURITY.md CHANGELOG.md");
+run("git add package.json jsr.json README.md SECURITY.md CHANGELOG.md");
 const commitMsg = `chore: bump to ${newVersion}\n\n${changelog}`;
 writeFileSync(".git/.release-msg.tmp", commitMsg);
 const canSign = !!run("git config user.signingkey || true");

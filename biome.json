@@ -1,7 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.14/schema.json",
   "files": {
-    "includes": ["src/**", "tests/**"]
+    "includes": ["src/**/*.ts", "!src/**/*.d.ts", "tests/**"]
   },
   "formatter": {
     "indentStyle": "space",
@@ -19,6 +19,7 @@
   "linter": {
     "rules": {
       "recommended": true,
+      "a11y": { "recommended": true },
       "complexity": {
         "recommended": true,
         "useLiteralKeys": "off",
@@ -34,13 +35,14 @@
       "security": { "recommended": true },
       "style": {
         "recommended": true,
-        "noNonNullAssertion": "error",
+        "noNonNullAssertion": "off",
         "noParameterAssign": "off",
         "useNamingConvention": "off",
         "noDefaultExport": "error",
         "useFilenamingConvention": "off",
         "useExplicitLengthCheck": "error",
         "useForOf": "error",
+        "useFragmentSyntax": "off",
         "useShorthandAssign": "error",
         "useConsistentBuiltinInstantiation": "error",
         "useThrowOnlyError": "error",
@@ -53,6 +55,7 @@
         "noExplicitAny": "error",
         "noConsole": "error",
         "noEmptyBlockStatements": "error",
+        "noMisleadingCharacterClass": "error",
         "noThenProperty": "error",
         "useAwait": "off"
       },
@@ -78,6 +81,7 @@
         "useNullishCoalescing": "off",
         "useSpread": "error",
         "noExcessiveClassesPerFile": "off",
+        "noImpliedEval": "off",
         "noExcessiveLinesPerFile": "off",
         "noScriptUrl": "error",
         "noFloatingPromises": "error",
@@ -97,7 +101,24 @@
       }
     }
   },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "overrides": [
+    {
+      "includes": ["src/index.ts"],
+      "assist": {
+        "actions": {
+          "source": {
+            "organizeImports": "off"
+          }
+        }
+      }
+    },
     {
       "includes": ["tests/**"],
       "linter": {

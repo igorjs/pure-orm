@@ -35,22 +35,21 @@ If the report is declined (not a vulnerability, or out of scope), you will recei
 ### Scope
 
 The following are in scope:
-- Code execution vulnerabilities in any module
-- Cryptographic weaknesses in the `Crypto` module
-- Path traversal or injection in `File`, `Command`, `Url` modules
-- FFI safety issues (arbitrary code execution via type confusion)
-- Denial of service via crafted input (e.g., hash collision attacks on `HashMap`)
+- SQL injection via query builder or raw SQL composition
+- Connection string or credential exposure
+- Migration runner executing unintended schema changes
+- Denial of service via crafted query input
 
 The following are out of scope:
-- Vulnerabilities in dependencies (there are none)
+- Vulnerabilities in database drivers (peer dependencies)
 - Issues requiring physical access to the machine
 - Social engineering attacks
 - Issues in test files or development tooling
 
 ## Security Design Principles
 
-- **Zero dependencies** eliminates supply chain risk
+- **Zero own dependencies** minimises supply chain risk
 - **All errors are values** (Result/Option) prevents unhandled exceptions
-- **No eval, no dynamic require** in production code (FFI uses `Function()` constructor for runtime detection only)
-- **Timing-safe comparison** (`Crypto.timingSafeEqual`) for constant-time byte comparison
-- **Input validation** via `Schema` before processing untrusted data
+- **Parameterised queries** by default: values are never interpolated into SQL strings
+- **Immutable query AST** prevents accidental mutation of shared query objects
+- **No eval, no dynamic require** in production code
