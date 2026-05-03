@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Pure ORM"
+abstract: "Type-safe database toolkit for TypeScript. Built on Pure TS primitives."
+type: software
+license: Apache-2.0
+url: "https://github.com/igorjs/pure-orm"
+repository-code: "https://github.com/igorjs/pure-orm"
+authors:
+  - alias: igorjs
+    email: oss@mail.igorjs.io
+keywords:
+  - orm
+  - database
+  - typescript
+  - type-safe
+  - query-builder
