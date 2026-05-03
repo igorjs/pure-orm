@@ -57,7 +57,7 @@
   },
   "homepage": "https://github.com/igorjs/pure-orm#readme",
   "devDependencies": {
-    "@biomejs/biome": "2.4.7",
+    "@biomejs/biome": "2.4.14",
     "@types/better-sqlite3": "^7.6.13",
     "@types/pg": "^8.20.0",
     "@typescript/native-preview": "latest",

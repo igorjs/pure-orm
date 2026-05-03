@@ -151,6 +151,7 @@ const createPool = (
           });
         }
       }
+      return undefined;
     });
   };
 
