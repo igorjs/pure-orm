@@ -78,9 +78,6 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "better-sqlite3"
-    ],
-    "overrides": {
-      "@igorjs/pure-fx": "link:../pure-ts"
-    }
+    ]
   }
 }
