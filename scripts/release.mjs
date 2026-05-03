@@ -20,7 +20,10 @@ import { readFileSync, writeFileSync } from "node:fs";
 
 // -- Helpers ------------------------------------------------------------------
 
-const run = (cmd, opts) => execSync(cmd, { encoding: "utf-8", stdio: "pipe", ...opts }).trim();
+const run = (cmd, opts) => {
+  const result = execSync(cmd, { encoding: "utf-8", stdio: "pipe", ...opts });
+  return result ? result.trim() : "";
+};
 const log = (msg) => process.stdout.write(`${msg}\n`);
 const die = (msg) => {
   process.stderr.write(`Error: ${msg}\n`);
@@ -31,9 +34,10 @@ const die = (msg) => {
 
 const args = process.argv.slice(2);
 const yesFlag = args.includes("--yes") || args.includes("-y");
+const skipTestCi = args.includes("--skip-test-ci");
 const bump = args.find((a) => !a.startsWith("-"));
 if (!bump) {
-  die("Usage: node scripts/release.mjs <patch|minor|major|x.y.z> [--yes]");
+  die("Usage: node scripts/release.mjs <patch|minor|major|x.y.z> [--yes] [--skip-test-ci]");
 }
 
 // -- Pre-flight checks --------------------------------------------------------
@@ -59,11 +63,24 @@ if (ciStatus !== "success") {
   die(`Last CI run on main is not green (status: ${ciStatus}). Fix CI before releasing.`);
 }
 
+if (skipTestCi) {
+  log("Skipping test:ci and publish dry run (--skip-test-ci).");
+} else {
 log("Running full test matrix (native + Docker)...");
 try {
   run("pnpm run test:ci", { stdio: "inherit" });
 } catch {
   die("Test matrix failed. Fix all failures before releasing.");
+}
+
+log("Verifying npm publish (dry run)...");
+try {
+  const cleanEnv = Object.fromEntries(
+    Object.entries(process.env).filter(([k]) => !k.startsWith("npm_")),
+  );
+  execSync("npm publish --dry-run --ignore-scripts", { stdio: "inherit", env: cleanEnv });
+} catch {
+  die("npm publish dry run failed. Fix packaging issues before releasing.");
 }
 
 // -- Detect repo URL from git remote ------------------------------------------
@@ -203,7 +220,7 @@ for (const cat of CHANGELOG_CATEGORIES) {
   keepSections.push(`### ${cat.label}\n${entries.join("\n")}`);
 }
 
-const changelogEntry = keepSections.length > 0
+let changelogEntry = keepSections.length > 0
   ? `## [${newVersion}] - ${today}\n\n${keepSections.join("\n\n")}`
   : null;
 
@@ -274,30 +291,35 @@ if (changelogEntry) {
     ].join("\n");
   }
 
-  // Insert new section after header, before first version entry
-  const firstVersion = content.indexOf("\n## [");
-  if (firstVersion !== -1) {
-    content = `${content.slice(0, firstVersion)}\n${changelogEntry}\n${content.slice(firstVersion)}`;
+  // Skip if this version already has an entry (e.g. hand-written for initial release)
+  if (content.includes(`## [${newVersion}]`)) {
+    log("CHANGELOG.md already has an entry for this version, skipping.");
   } else {
-    content = `${content.trimEnd()}\n\n${changelogEntry}\n`;
-  }
-
-  // Add comparison link at the top of the links block
-  const versionLink = hasLastTag
-    ? `[${newVersion}]: ${repoUrl}/compare/v${currentVersion}...v${newVersion}`
-    : `[${newVersion}]: ${repoUrl}/releases/tag/v${newVersion}`;
-
-  if (!content.includes(`[${newVersion}]:`)) {
-    const firstLink = content.search(/\n\[[^\]]+\]: https?:\/\//);
-    if (firstLink !== -1) {
-      content = `${content.slice(0, firstLink + 1)}${versionLink}\n${content.slice(firstLink + 1)}`;
+    // Insert new section after header, before first version entry
+    const firstVersion = content.indexOf("\n## [");
+    if (firstVersion !== -1) {
+      content = `${content.slice(0, firstVersion)}\n${changelogEntry}\n${content.slice(firstVersion)}`;
     } else {
-      content = `${content.trimEnd()}\n\n${versionLink}\n`;
+      content = `${content.trimEnd()}\n\n${changelogEntry}\n`;
     }
-  }
 
-  writeFileSync(changelogPath, content);
-  log("Updated CHANGELOG.md");
+    // Add comparison link at the top of the links block
+    const versionLink = hasLastTag
+      ? `[${newVersion}]: ${repoUrl}/compare/v${currentVersion}...v${newVersion}`
+      : `[${newVersion}]: ${repoUrl}/releases/tag/v${newVersion}`;
+
+    if (!content.includes(`[${newVersion}]:`)) {
+      const firstLink = content.search(/\n\[[^\]]+\]: https?:\/\//);
+      if (firstLink !== -1) {
+        content = `${content.slice(0, firstLink + 1)}${versionLink}\n${content.slice(firstLink + 1)}`;
+      } else {
+        content = `${content.trimEnd()}\n\n${versionLink}\n`;
+      }
+    }
+
+    writeFileSync(changelogPath, content);
+    log("Updated CHANGELOG.md");
+  }
 }
 
 // -- Commit, tag, push --------------------------------------------------------
@@ -306,11 +328,13 @@ log("Committing...");
 run("git add package.json jsr.json SECURITY.md CHANGELOG.md");
 const commitMsg = `chore: bump to ${newVersion}\n\n${changelog}`;
 writeFileSync(".git/.release-msg.tmp", commitMsg);
-run('git commit --signoff --gpg-sign --file .git/.release-msg.tmp');
+const canSign = !!run("git config user.signingkey || true");
+const signFlag = canSign ? "--gpg-sign" : "";
+run(`git commit --signoff ${signFlag} --file .git/.release-msg.tmp`);
 run("rm -f .git/.release-msg.tmp");
 
 log("Tagging...");
-run(`git tag -s v${newVersion} -m "v${newVersion}"`);
+run(canSign ? `git tag -s v${newVersion} -m "v${newVersion}"` : `git tag v${newVersion} -m "v${newVersion}"`);
 
 log("Pushing...");
 run("git push origin HEAD:refs/heads/main");
