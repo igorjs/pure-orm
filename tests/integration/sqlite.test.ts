@@ -1000,6 +1000,8 @@ describe("SQLite Integration Tests", () => {
         name: "001_test_migration",
         upSql: 'CREATE TABLE IF NOT EXISTS "migration_test_tbl" ("id" INTEGER PRIMARY KEY);',
         checksum: "abc123",
+        batch: 1,
+        transaction: true,
       }).run();
       assert.equal(result.isOk, true, "applyMigration should succeed");
 

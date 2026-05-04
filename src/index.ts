@@ -79,24 +79,44 @@ export { createConsoleLogger, createNoopLogger } from "./logging/logger.ts";
 export { startTimer } from "./logging/timing.ts";
 // ---- Logging types (implementations added in WU-5) ----
 export type { Logger, LogLevel, QueryEvent, QueryHooks } from "./logging/types.ts";
-// ---- Migration system (Phase 5) ----
+// ---- Migration system ----
+export { computeChecksum, validateChecksums } from "./migration/checksum.ts";
 export { columnsEqual, diffSnapshots, diffTable } from "./migration/differ.ts";
+export { discoverMigrations } from "./migration/discovery.ts";
+export { executeBatch, rollbackBatch } from "./migration/executor.ts";
+export type { RollbackTarget } from "./migration/executor.ts";
 export { generateDown, generateMigration, generateUp } from "./migration/generator.ts";
+export { acquireLock } from "./migration/locking.ts";
+export type { LockHandle } from "./migration/locking.ts";
+export { orderOperations } from "./migration/ordering.ts";
 export type { MigrationInput, RollbackInput } from "./migration/runner.ts";
 export {
   applyMigration,
   ensureMigrationTable,
+  getAppliedNames,
   getMigrationStatus,
+  getNextBatch,
   rollbackMigration,
 } from "./migration/runner.ts";
 export { createSnapshot, snapshotColumn, snapshotTable } from "./migration/snapshot.ts";
+export { parseSqlMigration } from "./migration/sql-parser.ts";
+export type { ParseError } from "./migration/sql-parser.ts";
 export { MigrationModel } from "./migration/state.ts";
 export type {
+  BatchResult,
   ChangeOperation,
+  ChecksumMismatch,
   ColumnSnapshot,
+  ExecutorOptions,
   ForeignKeySnapshot,
   IndexSnapshot,
+  Migration,
+  MigrationFile,
+  MigrationHookContext,
+  MigrationHooks,
   MigrationRecord,
+  MigrationResult,
+  MigrationStatus,
   SchemaSnapshot,
   TableSnapshot,
 } from "./migration/types.ts";

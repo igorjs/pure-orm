@@ -9,6 +9,7 @@
     "module": "es2022",
     "moduleResolution": "bundler",
     "lib": ["es2024"],
+    "types": ["node"],
 
     // ── Strict - Maximum Safety ────────────────────────────────────────
     // TS7 enables --strict by default. We go further.

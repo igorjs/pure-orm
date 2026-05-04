@@ -106,20 +106,91 @@ type MigrationRecord = {
   readonly appliedAt: string;
   readonly checksum: string;
   readonly executionMs: number;
+  readonly batch: number;
+  readonly status: string;
+};
+
+// ---- Migration input/output ----
+
+type MigrationStatus = "applied" | "failed" | "in_progress";
+
+type Migration = {
+  readonly up: string;
+  readonly down: string;
+  readonly transaction: boolean;
+  readonly concurrent: boolean;
+};
+
+type MigrationFile = {
+  readonly name: string;
+  readonly path: string;
+  readonly migration: Migration;
+  readonly checksum: string;
+};
+
+type MigrationResult = {
+  readonly name: string;
+  readonly status: "applied" | "skipped" | "failed";
+  readonly durationMs: number;
+  readonly sql: string;
+};
+
+type BatchResult = {
+  readonly batch: number;
+  readonly results: readonly MigrationResult[];
+  readonly dryRun: boolean;
+};
+
+type ChecksumMismatch = {
+  readonly name: string;
+  readonly expected: string;
+  readonly actual: string;
+};
+
+// ---- Migration hooks ----
+
+type MigrationHookContext = {
+  readonly name: string;
+  readonly direction: "up" | "down";
+};
+
+type MigrationHooks = {
+  readonly beforeMigrate: (migration: MigrationHookContext) => void;
+  readonly afterMigrate: (
+    migration: MigrationHookContext & { readonly durationMs: number },
+  ) => void;
+  readonly onMigrationError: (migration: MigrationHookContext, error: unknown) => void;
+};
+
+// ---- Executor options ----
+
+type ExecutorOptions = {
+  readonly dryRun: boolean;
+  readonly force: boolean;
+  readonly hooks: Partial<MigrationHooks> | null;
 };
 
 export type {
   AddColumn,
   AlterColumn,
+  BatchResult,
   ChangeOperation,
+  ChecksumMismatch,
   ColumnSnapshot,
   CreateTable,
   DropColumn,
   DropIndex,
   DropTable,
+  ExecutorOptions,
   ForeignKeySnapshot,
   IndexSnapshot,
+  Migration,
+  MigrationFile,
+  MigrationHookContext,
+  MigrationHooks,
   MigrationRecord,
+  MigrationResult,
+  MigrationStatus,
   SchemaSnapshot,
   TableSnapshot,
 };

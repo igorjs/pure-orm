@@ -1114,6 +1114,8 @@ describe("PostgreSQL Integration Tests", () => {
         name: "001_pg_test",
         upSql: 'CREATE TABLE IF NOT EXISTS "pg_migration_test_tbl" ("id" SERIAL PRIMARY KEY);',
         checksum: "pg123",
+        batch: 1,
+        transaction: true,
       }).run();
       assert.equal(result.isOk, true);
 
