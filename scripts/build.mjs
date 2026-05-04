@@ -58,4 +58,17 @@ for (const path of jsFiles) {
   await writeFile(path, code);
 }
 
+// -- Add shebang to CLI entry point -------------------------------------------
+
+const cliEntry = join(DIST, "cli", "index.js");
+try {
+  let cliCode = await readFile(cliEntry, "utf8");
+  if (!cliCode.startsWith("#!")) {
+    cliCode = "#!/usr/bin/env node\n" + cliCode;
+    await writeFile(cliEntry, cliCode);
+  }
+} catch {
+  // CLI entry may not exist in all build configurations
+}
+
 process.stdout.write(`Build complete: ${jsFiles.length} JS files stripped.\n`);
