@@ -11,6 +11,12 @@ importers:
       '@igorjs/pure-fx':
         specifier: ^0.1.0
         version: 0.1.0(typescript@6.0.2)
+      better-sqlite3:
+        specifier: '>=11.0.0'
+        version: 12.9.0
+      pg:
+        specifier: '>=8.0.0'
+        version: 8.20.0
       typescript:
         specifier: '>=5.7.0'
         version: 6.0.2
@@ -27,12 +33,6 @@ importers:
       '@typescript/native-preview':
         specifier: 7.0.0-dev.20260406.1
         version: 7.0.0-dev.20260406.1
-      better-sqlite3:
-        specifier: 12.9.0
-        version: 12.9.0
-      pg:
-        specifier: 8.20.0
-        version: 8.20.0
 
 packages:
 
