@@ -58,6 +58,10 @@
     "url": "https://github.com/igorjs/pure-orm/issues"
   },
   "homepage": "https://github.com/igorjs/pure-orm#readme",
+  "funding": {
+    "type": "github",
+    "url": "https://github.com/sponsors/igorjs"
+  },
   "devDependencies": {
     "@biomejs/biome": "2.4.14",
     "@types/better-sqlite3": "^7.6.13",
