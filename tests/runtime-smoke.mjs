@@ -104,7 +104,7 @@ assert(typeof orm.auditLog === "function", "auditLog is a function");
 
 section("Functional: build + compile query");
 
-const { Schema } = await import("@igorjs/pure-ts");
+const { Schema } = await import("@igorjs/pure-fx");
 
 const User = orm.Model("users", {
   fields: {

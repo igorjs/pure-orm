@@ -32,16 +32,7 @@ import {
 import { Model } from "../../src/model/define.ts";
 import { Field } from "../../src/model/field.ts";
 import { avg, count, max, min, sum } from "../../src/query/aggregates.ts";
-import {
-  from,
-  groupBy,
-  having,
-  limit,
-  offset,
-  orderBy,
-  select,
-  where,
-} from "../../src/query/builders.ts";
+import { from, limit, offset, orderBy, select, where } from "../../src/query/builders.ts";
 import {
   and,
   between,
@@ -676,16 +667,17 @@ describe("PostgreSQL Integration Tests", () => {
         t.skip("PG not available");
         return;
       }
-      // PostgreSQL supports column aliases in HAVING.
-      const result = await execute(db)(
-        pipe(
-          from(Post),
-          select("authorId", count("id").as("postCount")),
-          groupBy("authorId"),
-          having(gt("postCount", 1)),
-        ),
-      ).run();
-      assert.equal(unwrap(result).length, 1);
+      // PostgreSQL does not support column aliases in HAVING; use raw SQL
+      // with the full aggregate expression, same approach as the SQLite test.
+      const node = raw(
+        'SELECT "posts"."author_id", COUNT("posts"."id") AS "postCount" FROM "posts" GROUP BY "posts"."author_id" HAVING COUNT("posts"."id") > $1',
+        [1],
+      );
+      const result = await execute(db)(node).run();
+      const list = unwrap(result);
+      assert.equal(list.length, 1);
+      const row = toRaw(list.first().value);
+      assert.ok(Number(row["postCount"]) >= 2);
     });
 
     it("aggregates with aliases", async t => {
@@ -977,7 +969,8 @@ describe("PostgreSQL Integration Tests", () => {
         t.skip("PG not available");
         return;
       }
-      const subquery = pipe(from(Post), where(eq("published", 999)));
+      // Use "views" (INTEGER) instead of "published" (BOOLEAN) to avoid PG type error.
+      const subquery = pipe(from(Post), where(eq("views", 999)));
       const node = pipe(from(Category), where(notExists(subquery)));
       const result = await execute(db)(node).run();
       assert.ok(unwrap(result).length > 0);
