@@ -39,6 +39,13 @@ jobs:
       - name: Type tests
         run: pnpm run test:types
 
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
   integration-sqlite:
     needs: lint-and-test
     runs-on: ubuntu-latest
@@ -52,7 +59,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: SQLite integration tests
-        run: node --experimental-strip-types --no-warnings --test tests/integration/sqlite.test.ts
+        run: node --experimental-strip-types --no-warnings tests/integration/sqlite.test.ts
 
   integration-pg:
     needs: lint-and-test
@@ -81,7 +88,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: PostgreSQL integration tests
-        run: node --experimental-strip-types --no-warnings --test tests/integration/pg.test.ts
+        run: node --experimental-strip-types --no-warnings tests/integration/pg.test.ts
         env:
           PG_HOST: localhost
           PG_PORT: 5432
@@ -95,7 +102,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: ["22", "24"]
+        node-version: ["22", "24", "25"]
     name: smoke / node-${{ matrix.node-version }}
     steps:
       - uses: actions/checkout@v6
@@ -108,3 +115,53 @@ jobs:
       - run: pnpm run build
       - name: Runtime smoke test
         run: node tests/runtime-smoke.mjs
+
+  smoke-deno:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    name: smoke / deno
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Install peer dependency
+        run: |
+          echo '{"dependencies":{"@igorjs/pure-fx":"0.1.0"}}' > /tmp/deno-deps.json
+          cd /tmp && cp deno-deps.json package.json && deno install --node-modules-dir
+          cp -r /tmp/node_modules ./node_modules
+
+      - name: Runtime smoke test
+        run: deno run --allow-all --node-modules-dir tests/runtime-smoke.mjs
+
+  smoke-bun:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    name: smoke / bun
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Install peer dependency
+        run: |
+          echo '{"dependencies":{"@igorjs/pure-fx":"0.1.0"}}' > /tmp/bun-deps.json
+          cd /tmp && cp bun-deps.json package.json && bun install
+          cp -r /tmp/node_modules ./node_modules
+
+      - name: Runtime smoke test
+        run: bun tests/runtime-smoke.mjs
