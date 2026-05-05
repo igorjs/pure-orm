@@ -39,12 +39,7 @@ jobs:
       - name: Type tests
         run: pnpm run test:types
 
-      - name: Upload dist
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist/
-          retention-days: 1
+  # ── Integration tests (Node only, need native drivers) ─────────────────
 
   integration-sqlite:
     needs: lint-and-test
@@ -96,14 +91,16 @@ jobs:
           PG_USER: postgres
           PG_PASSWORD: postgres
 
-  smoke-node:
+  # ── Node: unit tests on 4 versions (parallel) ─────────────────────────
+
+  test-node:
     needs: lint-and-test
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        node-version: ["22", "24", "25"]
-    name: smoke / node-${{ matrix.node-version }}
+        node-version: ["22", "23", "24", "25"]
+    name: test / node-${{ matrix.node-version }}
     steps:
       - uses: actions/checkout@v6
       - run: corepack enable
@@ -112,56 +109,70 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Unit tests (762 tests)
+        run: node --experimental-strip-types --no-warnings scripts/test-runner.mjs --skip-integration
       - run: pnpm run build
       - name: Runtime smoke test
         run: node tests/runtime-smoke.mjs
 
-  smoke-deno:
+  # ── Deno: unit tests on stable + canary (parallel) ────────────────────
+
+  test-deno:
     needs: lint-and-test
     runs-on: ubuntu-latest
-    name: smoke / deno
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - deno-version: v2.x
+            name: deno-stable
+          - deno-version: canary
+            name: deno-canary
+    name: test / ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v6
-
       - uses: denoland/setup-deno@v2
         with:
-          deno-version: v2.x
-
-      - uses: actions/download-artifact@v4
+          deno-version: ${{ matrix.deno-version }}
+      - run: corepack enable
+      - uses: actions/setup-node@v6
         with:
-          name: dist
-          path: dist/
-
-      - name: Install peer dependency
-        run: |
-          echo '{"dependencies":{"@igorjs/pure-fx":"0.1.0"}}' > /tmp/deno-deps.json
-          cd /tmp && cp deno-deps.json package.json && deno install --node-modules-dir
-          cp -r /tmp/node_modules ./node_modules
-
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests (762 tests)
+        run: deno run --allow-all scripts/test-runner.mjs --skip-integration
+      - run: pnpm run build
       - name: Runtime smoke test
         run: deno run --allow-all --node-modules-dir tests/runtime-smoke.mjs
 
-  smoke-bun:
+  # ── Bun: unit tests on latest + canary (parallel) ─────────────────────
+
+  test-bun:
     needs: lint-and-test
     runs-on: ubuntu-latest
-    name: smoke / bun
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - bun-version: latest
+            name: bun-latest
+          - bun-version: canary
+            name: bun-canary
+    name: test / ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v6
-
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
-
-      - uses: actions/download-artifact@v4
+          bun-version: ${{ matrix.bun-version }}
+      - run: corepack enable
+      - uses: actions/setup-node@v6
         with:
-          name: dist
-          path: dist/
-
-      - name: Install peer dependency
-        run: |
-          echo '{"dependencies":{"@igorjs/pure-fx":"0.1.0"}}' > /tmp/bun-deps.json
-          cd /tmp && cp bun-deps.json package.json && bun install
-          cp -r /tmp/node_modules ./node_modules
-
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Unit tests (762 tests)
+        run: bun scripts/test-runner.mjs --skip-integration
+      - run: pnpm run build
       - name: Runtime smoke test
         run: bun tests/runtime-smoke.mjs

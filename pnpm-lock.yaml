@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@igorjs/pure-fx':
-        specifier: ^0.1.0
-        version: 0.1.0(typescript@6.0.2)
       better-sqlite3:
         specifier: '>=11.0.0'
         version: 12.9.0
@@ -24,6 +21,9 @@ importers:
       '@biomejs/biome':
         specifier: 2.4.14
         version: 2.4.14
+      '@igorjs/pure-fx':
+        specifier: 0.1.0
+        version: 0.1.0(typescript@6.0.2)
       '@igorjs/pure-test':
         specifier: 0.3.0
         version: 0.3.0(typescript@6.0.2)
