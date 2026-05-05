@@ -25,8 +25,8 @@ importers:
         specifier: 2.4.14
         version: 2.4.14
       '@igorjs/pure-test':
-        specifier: 0.1.0
-        version: 0.1.0(typescript@6.0.2)
+        specifier: 0.3.0
+        version: 0.3.0(typescript@6.0.2)
       '@types/better-sqlite3':
         specifier: 7.6.13
         version: 7.6.13
@@ -108,8 +108,8 @@ packages:
       typescript:
         optional: true
 
-  '@igorjs/pure-test@0.1.0':
-    resolution: {integrity: sha512-hLNppk0sBvFgI4+AWIb7R79g+aRk2UJe9eqMyodyfYCrVXWyU4n20jS+tP5+4bUmND8d6tomjgp3+VReWgFqRQ==}
+  '@igorjs/pure-test@0.3.0':
+    resolution: {integrity: sha512-gM3t/3MSvlvdWMVQLAUSdRXVzyehehvruHWkZoNNhS5WFC2FPi/C1BORF1UYFv35MWIA0wBLxlmmnmz9J5dIAA==}
     engines: {node: '>=22'}
     hasBin: true
     peerDependencies:
@@ -403,7 +403,7 @@ snapshots:
     optionalDependencies:
       typescript: 6.0.2
 
-  '@igorjs/pure-test@0.1.0(typescript@6.0.2)':
+  '@igorjs/pure-test@0.3.0(typescript@6.0.2)':
     optionalDependencies:
       typescript: 6.0.2
 
