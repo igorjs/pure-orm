@@ -1,7 +1,7 @@
 {
   "name": "@igorjs/pure-orm",
   "version": "0.1.0",
-  "description": "Functional-first, type-safe ORM built on @igorjs/pure-fx. Pure query composition, PostgreSQL dialect, Lambda-ready connections. Zero dependencies.",
+  "description": "Functional-first, type-safe ORM built on @igorjs/pure-fx. Pure query composition, PostgreSQL and SQLite dialects, Lambda-ready connections, migration CLI.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
