@@ -8,10 +8,8 @@
  * Uses node:test (describe, it, before, after) and node:assert/strict.
  */
 
-import { strict as assert } from "node:assert";
-import { after, before, describe, it } from "node:test";
-
 import { pipe, Schema, Task } from "@igorjs/pure-fx";
+import { afterAll, beforeAll, describe, expect, it } from "@igorjs/pure-test";
 
 import { transaction } from "../../src/connection/transaction.ts";
 import type { ConnectionPool, DatabaseClient, RawConnection } from "../../src/connection/types.ts";
@@ -128,7 +126,7 @@ const createTestClient = (conn: RawConnection): DatabaseClient => {
 // ---------------------------------------------------------------------------
 
 describe("SQLite Integration Tests", () => {
-  before(async () => {
+  beforeAll(async () => {
     const driver = createSqliteDriver();
 
     // Create a single connection that all tests share.
@@ -144,7 +142,7 @@ describe("SQLite Integration Tests", () => {
     }
   });
 
-  after(async () => {
+  afterAll(async () => {
     // Drop all tables.
     for (const stmt of DROP_TABLES.split(";").filter(s => s.trim().length > 0)) {
       await rawConn.query(`${stmt.trim()};`, []);
@@ -159,19 +157,19 @@ describe("SQLite Integration Tests", () => {
 
   describe("1. Connection & Setup", () => {
     it("DatabaseClient has a working sqlite dialect", () => {
-      assert.ok(db !== undefined, "db should be defined");
-      assert.equal(db.dialect.name, "sqlite", "dialect should be sqlite");
+      expect(db !== undefined).toBeTruthy();
+      expect(db.dialect.name).toBe("sqlite");
     });
 
     it("ensureMigrationTable creates the state table", async () => {
       const result = await ensureMigrationTable(db).run();
-      assert.equal(result.isOk, true, "ensureMigrationTable should succeed");
+      expect(result.isOk).toBe(true);
 
       // Verify the table exists by querying it.
       const rows = await execRaw(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='_pure_orm_migrations'",
       );
-      assert.equal(rows.length, 1, "migration table should exist");
+      expect(rows.length).toBe(1);
     });
   });
 
@@ -185,11 +183,11 @@ describe("SQLite Integration Tests", () => {
       const insertNode = pipe(insert(Category, { name: "Tech" }), returning("id", "name"));
       const insertResult = await execute(db)(insertNode).run();
       const list = unwrap(insertResult);
-      assert.equal(list.length, 1, "should return 1 inserted row");
+      expect(list.length).toBe(1);
 
       const row = toRaw(list.first().value);
-      assert.equal(row["name"], "Tech");
-      assert.ok(row["id"] !== undefined, "id should be auto-generated");
+      expect(row["name"]).toBe("Tech");
+      expect(row["id"] !== undefined).toBeTruthy();
     });
 
     it("insertMany() multiple rows", async () => {
@@ -199,23 +197,23 @@ describe("SQLite Integration Tests", () => {
       );
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 2, "should return 2 inserted rows");
+      expect(list.length).toBe(2);
     });
 
     it("from() + execute() reads inserted rows", async () => {
       const node = from(Category);
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.ok(list.length >= 3, "should have at least 3 categories");
+      expect(list.length >= 3).toBeTruthy();
     });
 
     it("findOne() returns Some for matching row", async () => {
       const node = pipe(from(Category), where(eq("name", "Tech")));
       const result = await findOne(db)(node).run();
       const opt = unwrap(result);
-      assert.equal(opt.isSome, true, "should find the Tech category");
+      expect(opt.isSome).toBe(true);
       if (opt.isSome) {
-        assert.equal(toRaw(opt.value)["name"], "Tech");
+        expect(toRaw(opt.value)["name"]).toBe("Tech");
       }
     });
 
@@ -223,7 +221,7 @@ describe("SQLite Integration Tests", () => {
       const node = pipe(from(Category), where(eq("name", "NonExistent")));
       const result = await findOne(db)(node).run();
       const opt = unwrap(result);
-      assert.equal(opt.isNone, true, "should return None");
+      expect(opt.isNone).toBe(true);
     });
 
     it("update() modifies rows", async () => {
@@ -235,8 +233,8 @@ describe("SQLite Integration Tests", () => {
       );
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1, "should update 1 row");
-      assert.equal(toRaw(list.first().value)["name"], "Technology");
+      expect(list.length).toBe(1);
+      expect(toRaw(list.first().value)["name"]).toBe("Technology");
     });
 
     it("hardRemove() physically deletes rows", async () => {
@@ -245,12 +243,12 @@ describe("SQLite Integration Tests", () => {
 
       const deleteNode = pipe(hardRemove(Category), where(eq("name", "Temp")));
       const delResult = await execute(db)(deleteNode).run();
-      assert.equal(delResult.isOk, true, "delete should succeed");
+      expect(delResult.isOk).toBe(true);
 
       // Verify it's gone.
       const findResult = await findOne(db)(pipe(from(Category), where(eq("name", "Temp")))).run();
       const opt = unwrap(findResult);
-      assert.equal(opt.isNone, true, "Temp should be physically deleted");
+      expect(opt.isNone).toBe(true);
     });
   });
 
@@ -260,7 +258,7 @@ describe("SQLite Integration Tests", () => {
 
   describe("3. Query Builders", () => {
     // Seed some users for query testing.
-    before(async () => {
+    beforeAll(async () => {
       await execute(db)(
         insert(User, { email: "alice@test.com", name: "Alice", age: 30, role: "admin" }),
       ).run();
@@ -279,53 +277,53 @@ describe("SQLite Integration Tests", () => {
       const node = pipe(from(User), where(eq("name", "Alice")));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
-      assert.equal(toRaw(list.first().value)["name"], "Alice");
+      expect(list.length).toBe(1);
+      expect(toRaw(list.first().value)["name"]).toBe("Alice");
     });
 
     it("where() with ne", async () => {
       const node = pipe(from(User), where(ne("role", "admin")));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 2);
+      expect(list.length).toBe(2);
     });
 
     it("where() with gt", async () => {
       const node = pipe(from(User), where(gt("age", 30)));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
-      assert.equal(toRaw(list.first().value)["name"], "Charlie");
+      expect(list.length).toBe(1);
+      expect(toRaw(list.first().value)["name"]).toBe("Charlie");
     });
 
     it("where() with gte", async () => {
       const node = pipe(from(User), where(gte("age", 30)));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 2);
+      expect(list.length).toBe(2);
     });
 
     it("where() with lt", async () => {
       const node = pipe(from(User), where(lt("age", 28)));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
-      assert.equal(toRaw(list.first().value)["name"], "Bob");
+      expect(list.length).toBe(1);
+      expect(toRaw(list.first().value)["name"]).toBe("Bob");
     });
 
     it("where() with lte", async () => {
       const node = pipe(from(User), where(lte("age", 28)));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 2);
+      expect(list.length).toBe(2);
     });
 
     it("where() with like", async () => {
       const node = pipe(from(User), where(like("name", "A%")));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
-      assert.equal(toRaw(list.first().value)["name"], "Alice");
+      expect(list.length).toBe(1);
+      expect(toRaw(list.first().value)["name"]).toBe("Alice");
     });
 
     it("where() with isNull", async () => {
@@ -333,50 +331,50 @@ describe("SQLite Integration Tests", () => {
       const node = pipe(from(User), withDeleted(), where(isNull("deletedAt")));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.ok(list.length >= 4, "all users should have null deleted_at");
+      expect(list.length >= 4).toBeTruthy();
     });
 
     it("where() with isNotNull", async () => {
       const node = pipe(from(User), withDeleted(), where(isNotNull("name")));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.ok(list.length >= 4, "all users have non-null name");
+      expect(list.length >= 4).toBeTruthy();
     });
 
     it("where() with inArray", async () => {
       const node = pipe(from(User), where(inArray("name", ["Alice", "Bob"])));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 2);
+      expect(list.length).toBe(2);
     });
 
     it("where() with between", async () => {
       const node = pipe(from(User), where(between("age", 25, 30)));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 3); // Bob(25), Diana(28), Alice(30)
+      expect(list.length).toBe(3); // Bob(25), Diana(28), Alice(30)
     });
 
     it("where() with and()", async () => {
       const node = pipe(from(User), where(and(eq("role", "admin"), gt("age", 29))));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
-      assert.equal(toRaw(list.first().value)["name"], "Alice");
+      expect(list.length).toBe(1);
+      expect(toRaw(list.first().value)["name"]).toBe("Alice");
     });
 
     it("where() with or()", async () => {
       const node = pipe(from(User), where(or(eq("name", "Alice"), eq("name", "Bob"))));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 2);
+      expect(list.length).toBe(2);
     });
 
     it("where() with not()", async () => {
       const node = pipe(from(User), where(not(eq("role", "admin"))));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 2);
+      expect(list.length).toBe(2);
     });
 
     it("orderBy() ascending", async () => {
@@ -387,7 +385,7 @@ describe("SQLite Integration Tests", () => {
         const item = list.at(i);
         return item.isSome ? toRaw(item.value)["name"] : null;
       });
-      assert.deepEqual(names, ["Alice", "Bob", "Charlie", "Diana"]);
+      expect(names).toEqual(["Alice", "Bob", "Charlie", "Diana"]);
     });
 
     it("orderBy() descending", async () => {
@@ -395,33 +393,33 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       const first = list.first();
-      assert.equal(first.isSome, true);
-      assert.equal(toRaw(first.value)["name"], "Diana");
+      expect(first.isSome).toBe(true);
+      expect(toRaw(first.value)["name"]).toBe("Diana");
     });
 
     it("limit()", async () => {
       const node = pipe(from(User), orderBy("name", "asc"), limit(2));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 2);
+      expect(list.length).toBe(2);
     });
 
     it("offset()", async () => {
       const node = pipe(from(User), orderBy("name", "asc"), limit(2), offset(2));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 2);
-      assert.equal(toRaw(list.first().value)["name"], "Charlie");
+      expect(list.length).toBe(2);
+      expect(toRaw(list.first().value)["name"]).toBe("Charlie");
     });
 
     it("select() specific columns", async () => {
       const node = pipe(from(User), select("name", "email"), where(eq("name", "Alice")));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
+      expect(list.length).toBe(1);
       const row = toRaw(list.first().value);
-      assert.equal(row["name"], "Alice");
-      assert.equal(row["email"], "alice@test.com");
+      expect(row["name"]).toBe("Alice");
+      expect(row["email"]).toBe("alice@test.com");
     });
   });
 
@@ -430,7 +428,7 @@ describe("SQLite Integration Tests", () => {
   // =========================================================================
 
   describe("4. Joins", () => {
-    before(async () => {
+    beforeAll(async () => {
       // Get user IDs and category IDs for post creation.
       const usersResult = await execute(db)(pipe(from(User), where(eq("name", "Alice")))).run();
       const aliceId = toRaw(unwrap(usersResult).first().value)["id"];
@@ -483,7 +481,7 @@ describe("SQLite Integration Tests", () => {
       const node = pipe(from(Post), join(User, on("authorId", "id")), where(eq("published", 1)));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 2, "should return 2 published posts with author");
+      expect(list.length).toBe(2);
     });
 
     it("leftJoin() LEFT JOIN includes unmatched rows", async () => {
@@ -492,7 +490,7 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       // All users returned, including those without profiles.
-      assert.ok(list.length >= 4, "should return all users");
+      expect(list.length >= 4).toBeTruthy();
     });
 
     it("multiple joins in one query", async () => {
@@ -503,7 +501,7 @@ describe("SQLite Integration Tests", () => {
       );
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.ok(list.length >= 3, "should return posts with author and category");
+      expect(list.length >= 3).toBeTruthy();
     });
   });
 
@@ -516,9 +514,9 @@ describe("SQLite Integration Tests", () => {
       const node = pipe(from(Post), select(count("id").as("total")));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
+      expect(list.length).toBe(1);
       const row = toRaw(list.first().value);
-      assert.ok(Number(row["total"]) >= 3);
+      expect(Number(row["total"]) >= 3).toBeTruthy();
     });
 
     it("sum()", async () => {
@@ -526,7 +524,7 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       const row = toRaw(list.first().value);
-      assert.ok(Number(row["totalViews"]) >= 350);
+      expect(Number(row["totalViews"]) >= 350).toBeTruthy();
     });
 
     it("avg()", async () => {
@@ -534,7 +532,7 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       const row = toRaw(list.first().value);
-      assert.ok(Number(row["avgViews"]) > 0);
+      expect(Number(row["avgViews"]) > 0).toBeTruthy();
     });
 
     it("min()", async () => {
@@ -542,7 +540,7 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       const row = toRaw(list.first().value);
-      assert.equal(Number(row["minViews"]), 0);
+      expect(Number(row["minViews"])).toBe(0);
     });
 
     it("max()", async () => {
@@ -550,7 +548,7 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       const row = toRaw(list.first().value);
-      assert.equal(Number(row["maxViews"]), 250);
+      expect(Number(row["maxViews"])).toBe(250);
     });
 
     it("groupBy() + having()", async () => {
@@ -563,9 +561,9 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       // Only Alice has > 1 post.
-      assert.equal(list.length, 1);
+      expect(list.length).toBe(1);
       const row = toRaw(list.first().value);
-      assert.ok(Number(row["postCount"]) >= 2);
+      expect(Number(row["postCount"]) >= 2).toBeTruthy();
     });
 
     it("aggregates with aliases", async () => {
@@ -582,11 +580,11 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       const row = toRaw(list.first().value);
-      assert.ok(row["cnt"] !== undefined);
-      assert.ok(row["sumV"] !== undefined);
-      assert.ok(row["avgV"] !== undefined);
-      assert.ok(row["minV"] !== undefined);
-      assert.ok(row["maxV"] !== undefined);
+      expect(row["cnt"] !== undefined).toBeTruthy();
+      expect(row["sumV"] !== undefined).toBeTruthy();
+      expect(row["avgV"] !== undefined).toBeTruthy();
+      expect(row["minV"] !== undefined).toBeTruthy();
+      expect(row["maxV"] !== undefined).toBeTruthy();
     });
   });
 
@@ -597,7 +595,7 @@ describe("SQLite Integration Tests", () => {
   describe("6. Soft Deletes", () => {
     let softDeleteUserId: unknown;
 
-    before(async () => {
+    beforeAll(async () => {
       // Insert a user specifically for soft-delete testing.
       const insertNode = pipe(
         insert(User, { email: "softdel@test.com", name: "SoftDel", age: 40, role: "user" }),
@@ -610,46 +608,46 @@ describe("SQLite Integration Tests", () => {
     it("remove() on soft-delete model sets deleted_at instead of deleting", async () => {
       const node = pipe(remove(User), where(eq("id", softDeleteUserId)));
       const result = await execute(db)(node).run();
-      assert.equal(result.isOk, true);
+      expect(result.isOk).toBe(true);
 
       // Verify the row still exists with a non-null deleted_at.
       const rawRows = await execRaw(`SELECT * FROM "users" WHERE "id" = ${softDeleteUserId}`);
-      assert.equal(rawRows.length, 1);
+      expect(rawRows.length).toBe(1);
       const row = rawRows[0] as Record<string, unknown>;
-      assert.ok(row["deleted_at"] !== null, "deleted_at should be set");
+      expect(row["deleted_at"] !== null).toBeTruthy();
     });
 
     it("default query filters deleted rows", async () => {
       const node = pipe(from(User), where(eq("id", softDeleteUserId)));
       const result = await findOne(db)(node).run();
       const opt = unwrap(result);
-      assert.equal(opt.isNone, true, "soft-deleted user should not appear in default queries");
+      expect(opt.isNone).toBe(true);
     });
 
     it("withDeleted() includes deleted rows", async () => {
       const node = pipe(from(User), withDeleted(), where(eq("id", softDeleteUserId)));
       const result = await findOne(db)(node).run();
       const opt = unwrap(result);
-      assert.equal(opt.isSome, true, "should find soft-deleted user with withDeleted()");
+      expect(opt.isSome).toBe(true);
     });
 
     it("onlyDeleted() shows only deleted rows", async () => {
       const node = pipe(from(User), onlyDeleted(), where(eq("id", softDeleteUserId)));
       const result = await findOne(db)(node).run();
       const opt = unwrap(result);
-      assert.equal(opt.isSome, true, "should find the soft-deleted user");
+      expect(opt.isSome).toBe(true);
     });
 
     it("restore() clears deleted_at", async () => {
       const restoreNode = pipe(restore(User), where(eq("id", softDeleteUserId)));
       const restoreResult = await execute(db)(restoreNode).run();
-      assert.equal(restoreResult.isOk, true);
+      expect(restoreResult.isOk).toBe(true);
 
       // Verify the user is now visible in default queries.
       const findNode = pipe(from(User), where(eq("id", softDeleteUserId)));
       const findResult = await findOne(db)(findNode).run();
       const opt = unwrap(findResult);
-      assert.equal(opt.isSome, true, "restored user should appear in default queries");
+      expect(opt.isSome).toBe(true);
     });
 
     it("hardRemove() physically deletes even a soft-delete model", async () => {
@@ -658,11 +656,11 @@ describe("SQLite Integration Tests", () => {
 
       const node = pipe(hardRemove(User), where(eq("id", softDeleteUserId)));
       const result = await execute(db)(node).run();
-      assert.equal(result.isOk, true);
+      expect(result.isOk).toBe(true);
 
       // Verify the row is physically gone.
       const rawRows = await execRaw(`SELECT * FROM "users" WHERE "id" = ${softDeleteUserId}`);
-      assert.equal(rawRows.length, 0, "row should be physically deleted");
+      expect(rawRows.length).toBe(0);
     });
   });
 
@@ -677,9 +675,9 @@ describe("SQLite Integration Tests", () => {
         return "ok";
       }).run();
 
-      assert.equal(result.isOk, true);
+      expect(result.isOk).toBe(true);
       if (result.isOk) {
-        assert.equal(result.value, "ok");
+        expect(result.value).toBe("ok");
       }
 
       // Verify the tag was committed.
@@ -687,7 +685,7 @@ describe("SQLite Integration Tests", () => {
         pipe(from(Tag), where(eq("label", "committed-tag"))),
       ).run();
       const opt = unwrap(findResult);
-      assert.equal(opt.isSome, true, "committed tag should exist");
+      expect(opt.isSome).toBe(true);
     });
 
     it("failed transaction rolls back", async () => {
@@ -696,14 +694,14 @@ describe("SQLite Integration Tests", () => {
         throw new Error("intentional failure");
       }).run();
 
-      assert.equal(result.isErr, true, "transaction should fail");
+      expect(result.isErr).toBe(true);
 
       // Verify the tag was NOT committed.
       const findResult = await findOne(db)(
         pipe(from(Tag), where(eq("label", "rollback-tag"))),
       ).run();
       const opt = unwrap(findResult);
-      assert.equal(opt.isNone, true, "rolled-back tag should not exist");
+      expect(opt.isNone).toBe(true);
     });
 
     it("nested transaction (savepoint) rolls back independently", async () => {
@@ -716,20 +714,20 @@ describe("SQLite Integration Tests", () => {
           throw new Error("nested failure");
         }).run();
 
-        assert.equal(nestedResult.isErr, true, "nested tx should fail");
+        expect(nestedResult.isErr).toBe(true);
 
         return "outer-done";
       }).run();
 
-      assert.equal(result.isOk, true, "outer transaction should succeed");
+      expect(result.isOk).toBe(true);
 
       // Outer tag was committed.
       const outerResult = await findOne(db)(pipe(from(Tag), where(eq("label", "outer-tag")))).run();
-      assert.equal(unwrap(outerResult).isSome, true, "outer-tag should exist");
+      expect(unwrap(outerResult).isSome).toBe(true);
 
       // Inner tag was rolled back.
       const innerResult = await findOne(db)(pipe(from(Tag), where(eq("label", "inner-tag")))).run();
-      assert.equal(unwrap(innerResult).isNone, true, "inner-tag should not exist");
+      expect(unwrap(innerResult).isNone).toBe(true);
     });
   });
 
@@ -745,11 +743,11 @@ describe("SQLite Integration Tests", () => {
       // Attempt to insert the same tag with DO NOTHING.
       const node = pipe(insert(Tag, { label: "unique-tag" }), onConflict("label", "nothing"));
       const result = await execute(db)(node).run();
-      assert.equal(result.isOk, true);
+      expect(result.isOk).toBe(true);
 
       // Should still be exactly one.
       const allResult = await execute(db)(pipe(from(Tag), where(eq("label", "unique-tag")))).run();
-      assert.equal(unwrap(allResult).length, 1);
+      expect(unwrap(allResult).length).toBe(1);
     });
 
     it("onConflict DO UPDATE SET updates existing row", async () => {
@@ -764,14 +762,14 @@ describe("SQLite Integration Tests", () => {
       );
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
-      assert.equal(toRaw(list.first().value)["name"], "Upsert-Cat");
+      expect(list.length).toBe(1);
+      expect(toRaw(list.first().value)["name"]).toBe("Upsert-Cat");
 
       // Should still be exactly one.
       const allResult = await execute(db)(
         pipe(from(Category), where(eq("name", "Upsert-Cat"))),
       ).run();
-      assert.equal(unwrap(allResult).length, 1);
+      expect(unwrap(allResult).length).toBe(1);
     });
   });
 
@@ -784,8 +782,8 @@ describe("SQLite Integration Tests", () => {
       const node = raw('SELECT "name" FROM "categories" WHERE "name" = ?', ["Technology"]);
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
-      assert.equal(toRaw(list.first().value)["name"], "Technology");
+      expect(list.length).toBe(1);
+      expect(toRaw(list.first().value)["name"]).toBe("Technology");
     });
 
     it("sql`` tagged template parameterises values", async () => {
@@ -793,8 +791,8 @@ describe("SQLite Integration Tests", () => {
       const node = sql`SELECT "name" FROM "categories" WHERE "name" = ${target}`;
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
-      assert.equal(toRaw(list.first().value)["name"], "Technology");
+      expect(list.length).toBe(1);
+      expect(toRaw(list.first().value)["name"]).toBe("Technology");
     });
   });
 
@@ -815,9 +813,9 @@ describe("SQLite Integration Tests", () => {
 
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
+      expect(list.length).toBe(1);
       const row = toRaw(list.first().value);
-      assert.ok(Number(row["total"]) >= 0, "CTE query should return a count");
+      expect(Number(row["total"]) >= 0).toBeTruthy();
     });
   });
 
@@ -834,7 +832,7 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       // EXISTS returns all categories since published posts exist.
-      assert.ok(list.length > 0, "categories returned when published posts exist");
+      expect(list.length > 0).toBeTruthy();
     });
 
     it("exists() correlated subquery via raw SQL", async () => {
@@ -846,7 +844,7 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       // Alice and Bob have posts.
-      assert.ok(list.length >= 2, "should find users with posts");
+      expect(list.length >= 2).toBeTruthy();
     });
 
     it("notExists() in WHERE filters with a subquery", async () => {
@@ -858,7 +856,7 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       // No posts with published=999, so NOT EXISTS is true for all categories.
-      assert.ok(list.length > 0, "categories returned when no matching posts");
+      expect(list.length > 0).toBeTruthy();
     });
 
     it("notExists() correlated subquery via raw SQL", async () => {
@@ -868,7 +866,7 @@ describe("SQLite Integration Tests", () => {
       const result = await execute(db)(node).run();
       const list = unwrap(result);
       // Charlie and Diana have no posts.
-      assert.ok(list.length > 0, "should find users without posts");
+      expect(list.length > 0).toBeTruthy();
     });
   });
 
@@ -888,11 +886,11 @@ describe("SQLite Integration Tests", () => {
       );
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.ok(list.length >= 3, "should return all posts with row numbers");
+      expect(list.length >= 3).toBeTruthy();
 
       // Verify row numbers are assigned.
       const firstRow = toRaw(list.first().value);
-      assert.ok(firstRow["rn"] !== undefined, "row number should be present");
+      expect(firstRow["rn"] !== undefined).toBeTruthy();
     });
 
     it("rank() window function", async () => {
@@ -902,8 +900,8 @@ describe("SQLite Integration Tests", () => {
       );
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.ok(list.length >= 3);
-      assert.ok(toRaw(list.first().value)["viewRank"] !== undefined);
+      expect(list.length >= 3).toBeTruthy();
+      expect(toRaw(list.first().value)["viewRank"] !== undefined).toBeTruthy();
     });
 
     it("denseRank() window function", async () => {
@@ -913,8 +911,8 @@ describe("SQLite Integration Tests", () => {
       );
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.ok(list.length >= 3);
-      assert.ok(toRaw(list.first().value)["denseViewRank"] !== undefined);
+      expect(list.length >= 3).toBeTruthy();
+      expect(toRaw(list.first().value)["denseViewRank"] !== undefined).toBeTruthy();
     });
   });
 
@@ -938,14 +936,14 @@ describe("SQLite Integration Tests", () => {
 
       // Diff should produce CreateTable operations.
       const ops = diffSnapshots(emptySnapshot, currentSnapshot);
-      assert.ok(ops.length >= 2, "should have at least 2 CreateTable operations");
+      expect(ops.length >= 2).toBeTruthy();
 
       // Generate migration SQL.
       const migration = generateMigration(ops, dialect);
-      assert.ok(migration.up.length > 0, "up SQL should be non-empty");
-      assert.ok(migration.down.length > 0, "down SQL should be non-empty");
-      assert.ok(migration.up.includes("CREATE TABLE"), "up should contain CREATE TABLE");
-      assert.ok(migration.down.includes("DROP TABLE"), "down should contain DROP TABLE");
+      expect(migration.up.length > 0).toBeTruthy();
+      expect(migration.down.length > 0).toBeTruthy();
+      expect(migration.up.includes("CREATE TABLE")).toBeTruthy();
+      expect(migration.down.includes("DROP TABLE")).toBeTruthy();
     });
 
     it("generated migration SQL executes successfully against the real DB", async () => {
@@ -978,7 +976,7 @@ describe("SQLite Integration Tests", () => {
       const tableCheck = await execRaw(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='test_migration_table'",
       );
-      assert.equal(tableCheck.length, 1, "migration table should exist");
+      expect(tableCheck.length).toBe(1);
 
       // Execute the down migration (split by statement).
       for (const stmt of migration.down.split(";").filter(s => s.trim().length > 0)) {
@@ -989,7 +987,7 @@ describe("SQLite Integration Tests", () => {
       const tableGone = await execRaw(
         "SELECT name FROM sqlite_master WHERE type='table' AND name='test_migration_table'",
       );
-      assert.equal(tableGone.length, 0, "migration table should be dropped");
+      expect(tableGone.length).toBe(0);
     });
 
     it("applyMigration records migration state", async () => {
@@ -1003,15 +1001,15 @@ describe("SQLite Integration Tests", () => {
         batch: 1,
         transaction: true,
       }).run();
-      assert.equal(result.isOk, true, "applyMigration should succeed");
+      expect(result.isOk).toBe(true);
 
       // Check migration status.
       const statusResult = await getMigrationStatus(db).run();
       const status = unwrap(statusResult);
-      assert.ok(status.length > 0, "should have at least 1 migration recorded");
+      expect(status.length > 0).toBeTruthy();
 
       const found = status.find((r: Record<string, unknown>) => r["name"] === "001_test_migration");
-      assert.ok(found !== undefined, "our migration should be recorded");
+      expect(found !== undefined).toBeTruthy();
 
       // Clean up.
       await rawConn.query('DROP TABLE IF EXISTS "migration_test_tbl";', []);

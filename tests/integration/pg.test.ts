@@ -8,10 +8,8 @@
  * Uses node:test (describe, it, before, after) and node:assert/strict.
  */
 
-import { strict as assert } from "node:assert";
-import { after, before, describe, it } from "node:test";
-
 import { pipe, Schema, Task } from "@igorjs/pure-fx";
+import { afterAll, beforeAll, describe, expect, it } from "@igorjs/pure-test";
 
 import { transaction } from "../../src/connection/transaction.ts";
 import type {
@@ -136,7 +134,7 @@ const createTestClient = (conn: RawConnection): DatabaseClient => {
 // ---------------------------------------------------------------------------
 
 describe("PostgreSQL Integration Tests", () => {
-  before(async () => {
+  beforeAll(async () => {
     const driver = createPgDriver();
 
     // Attempt to connect. Skip the entire suite if PG is not available.
@@ -165,7 +163,7 @@ describe("PostgreSQL Integration Tests", () => {
     }
   });
 
-  after(async () => {
+  afterAll(async () => {
     if (!pgAvailable) return;
 
     for (const stmt of DROP_TABLES.split(";").filter(s => s.trim().length > 0)) {
@@ -183,27 +181,25 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("1. Connection & Setup", () => {
-    it("DatabaseClient has a working postgresql dialect", t => {
+    it("DatabaseClient has a working postgresql dialect", () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
-      assert.ok(db !== undefined);
-      assert.equal(db.dialect.name, "postgresql");
+      expect(db !== undefined).toBeTruthy();
+      expect(db.dialect.name).toBe("postgresql");
     });
 
-    it("ensureMigrationTable creates the state table", async t => {
+    it("ensureMigrationTable creates the state table", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await ensureMigrationTable(db).run();
-      assert.equal(result.isOk, true);
+      expect(result.isOk).toBe(true);
 
       const rows = await execRaw(
         "SELECT table_name FROM information_schema.tables WHERE table_name = '_pure_orm_migrations'",
       );
-      assert.equal(rows.length, 1);
+      expect(rows.length).toBe(1);
     });
   });
 
@@ -212,21 +208,19 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("2. Basic CRUD", () => {
-    it("insert() single row with returning", async t => {
+    it("insert() single row with returning", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const node = pipe(insert(Category, { name: "Tech" }), returning("id", "name"));
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
-      assert.equal(toRaw(list.first().value)["name"], "Tech");
+      expect(list.length).toBe(1);
+      expect(toRaw(list.first().value)["name"]).toBe("Tech");
     });
 
-    it("insertMany() multiple rows", async t => {
+    it("insertMany() multiple rows", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const node = pipe(
@@ -234,41 +228,37 @@ describe("PostgreSQL Integration Tests", () => {
         returning("id", "name"),
       );
       const result = await execute(db)(node).run();
-      assert.equal(unwrap(result).length, 2);
+      expect(unwrap(result).length).toBe(2);
     });
 
-    it("from() + execute() reads inserted rows", async t => {
+    it("from() + execute() reads inserted rows", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(from(Category)).run();
-      assert.ok(unwrap(result).length >= 3);
+      expect(unwrap(result).length >= 3).toBeTruthy();
     });
 
-    it("findOne() returns Some for matching row", async t => {
+    it("findOne() returns Some for matching row", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await findOne(db)(pipe(from(Category), where(eq("name", "Tech")))).run();
       const opt = unwrap(result);
-      assert.equal(opt.isSome, true);
-      if (opt.isSome) assert.equal(toRaw(opt.value)["name"], "Tech");
+      expect(opt.isSome).toBe(true);
+      if (opt.isSome) expect(toRaw(opt.value)["name"]).toBe("Tech");
     });
 
-    it("findOne() returns None for non-matching row", async t => {
+    it("findOne() returns None for non-matching row", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await findOne(db)(pipe(from(Category), where(eq("name", "NoSuch")))).run();
-      assert.equal(unwrap(result).isNone, true);
+      expect(unwrap(result).isNone).toBe(true);
     });
 
-    it("update() modifies rows", async t => {
+    it("update() modifies rows", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const node = pipe(
@@ -277,13 +267,12 @@ describe("PostgreSQL Integration Tests", () => {
         returning("id", "name"),
       );
       const result = await execute(db)(node).run();
-      assert.equal(unwrap(result).length, 1);
-      assert.equal(toRaw(unwrap(result).first().value)["name"], "Technology");
+      expect(unwrap(result).length).toBe(1);
+      expect(toRaw(unwrap(result).first().value)["name"]).toBe("Technology");
     });
 
-    it("hardRemove() physically deletes rows", async t => {
+    it("hardRemove() physically deletes rows", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       await execute(db)(insert(Category, { name: "Temp" })).run();
@@ -292,7 +281,7 @@ describe("PostgreSQL Integration Tests", () => {
       await execute(db)(node).run();
 
       const findResult = await findOne(db)(pipe(from(Category), where(eq("name", "Temp")))).run();
-      assert.equal(unwrap(findResult).isNone, true);
+      expect(unwrap(findResult).isNone).toBe(true);
     });
   });
 
@@ -301,7 +290,7 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("3. Query Builders", () => {
-    before(async () => {
+    beforeAll(async () => {
       if (!pgAvailable) return;
       await execute(db)(
         insert(User, { email: "alice@test.com", name: "Alice", age: 30, role: "admin" }),
@@ -317,154 +306,138 @@ describe("PostgreSQL Integration Tests", () => {
       ).run();
     });
 
-    it("where() with eq", async t => {
+    it("where() with eq", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), where(eq("name", "Alice")))).run();
-      assert.equal(unwrap(result).length, 1);
+      expect(unwrap(result).length).toBe(1);
     });
 
-    it("where() with ne", async t => {
+    it("where() with ne", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), where(ne("role", "admin")))).run();
-      assert.equal(unwrap(result).length, 2);
+      expect(unwrap(result).length).toBe(2);
     });
 
-    it("where() with gt", async t => {
+    it("where() with gt", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), where(gt("age", 30)))).run();
-      assert.equal(unwrap(result).length, 1);
+      expect(unwrap(result).length).toBe(1);
     });
 
-    it("where() with gte", async t => {
+    it("where() with gte", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), where(gte("age", 30)))).run();
-      assert.equal(unwrap(result).length, 2);
+      expect(unwrap(result).length).toBe(2);
     });
 
-    it("where() with lt", async t => {
+    it("where() with lt", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), where(lt("age", 28)))).run();
-      assert.equal(unwrap(result).length, 1);
+      expect(unwrap(result).length).toBe(1);
     });
 
-    it("where() with lte", async t => {
+    it("where() with lte", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), where(lte("age", 28)))).run();
-      assert.equal(unwrap(result).length, 2);
+      expect(unwrap(result).length).toBe(2);
     });
 
-    it("where() with like", async t => {
+    it("where() with like", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), where(like("name", "A%")))).run();
-      assert.equal(unwrap(result).length, 1);
+      expect(unwrap(result).length).toBe(1);
     });
 
-    it("where() with ilike (PG only)", async t => {
+    it("where() with ilike (PG only)", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), where(ilike("name", "alice%")))).run();
-      assert.equal(unwrap(result).length, 1);
+      expect(unwrap(result).length).toBe(1);
     });
 
-    it("where() with isNull", async t => {
+    it("where() with isNull", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(User), withDeleted(), where(isNull("deletedAt"))),
       ).run();
-      assert.ok(unwrap(result).length >= 4);
+      expect(unwrap(result).length >= 4).toBeTruthy();
     });
 
-    it("where() with isNotNull", async t => {
+    it("where() with isNotNull", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(User), withDeleted(), where(isNotNull("name"))),
       ).run();
-      assert.ok(unwrap(result).length >= 4);
+      expect(unwrap(result).length >= 4).toBeTruthy();
     });
 
-    it("where() with inArray", async t => {
+    it("where() with inArray", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(User), where(inArray("name", ["Alice", "Bob"]))),
       ).run();
-      assert.equal(unwrap(result).length, 2);
+      expect(unwrap(result).length).toBe(2);
     });
 
-    it("where() with between", async t => {
+    it("where() with between", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), where(between("age", 25, 30)))).run();
-      assert.equal(unwrap(result).length, 3);
+      expect(unwrap(result).length).toBe(3);
     });
 
-    it("where() with and()", async t => {
+    it("where() with and()", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(User), where(and(eq("role", "admin"), gt("age", 29)))),
       ).run();
-      assert.equal(unwrap(result).length, 1);
+      expect(unwrap(result).length).toBe(1);
     });
 
-    it("where() with or()", async t => {
+    it("where() with or()", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(User), where(or(eq("name", "Alice"), eq("name", "Bob")))),
       ).run();
-      assert.equal(unwrap(result).length, 2);
+      expect(unwrap(result).length).toBe(2);
     });
 
-    it("where() with not()", async t => {
+    it("where() with not()", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), where(not(eq("role", "admin"))))).run();
-      assert.equal(unwrap(result).length, 2);
+      expect(unwrap(result).length).toBe(2);
     });
 
-    it("orderBy() ascending", async t => {
+    it("orderBy() ascending", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), orderBy("name", "asc"))).run();
@@ -473,53 +446,49 @@ describe("PostgreSQL Integration Tests", () => {
         const item = list.at(i);
         return item.isSome ? toRaw(item.value)["name"] : null;
       });
-      assert.deepEqual(names, ["Alice", "Bob", "Charlie", "Diana"]);
+      expect(names).toEqual(["Alice", "Bob", "Charlie", "Diana"]);
     });
 
-    it("orderBy() descending", async t => {
+    it("orderBy() descending", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), orderBy("name", "desc"))).run();
-      assert.equal(toRaw(unwrap(result).first().value)["name"], "Diana");
+      expect(toRaw(unwrap(result).first().value)["name"]).toBe("Diana");
     });
 
-    it("limit()", async t => {
+    it("limit()", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(User), orderBy("name", "asc"), limit(2))).run();
-      assert.equal(unwrap(result).length, 2);
+      expect(unwrap(result).length).toBe(2);
     });
 
-    it("offset()", async t => {
+    it("offset()", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(User), orderBy("name", "asc"), limit(2), offset(2)),
       ).run();
       const list = unwrap(result);
-      assert.equal(list.length, 2);
-      assert.equal(toRaw(list.first().value)["name"], "Charlie");
+      expect(list.length).toBe(2);
+      expect(toRaw(list.first().value)["name"]).toBe("Charlie");
     });
 
-    it("select() specific columns", async t => {
+    it("select() specific columns", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(User), select("name", "email"), where(eq("name", "Alice"))),
       ).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
+      expect(list.length).toBe(1);
       const row = toRaw(list.first().value);
-      assert.equal(row["name"], "Alice");
-      assert.equal(row["email"], "alice@test.com");
+      expect(row["name"]).toBe("Alice");
+      expect(row["email"]).toBe("alice@test.com");
     });
   });
 
@@ -528,7 +497,7 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("4. Joins", () => {
-    before(async () => {
+    beforeAll(async () => {
       if (!pgAvailable) return;
 
       const aliceResult = await findOne(db)(pipe(from(User), where(eq("name", "Alice")))).run();
@@ -576,37 +545,34 @@ describe("PostgreSQL Integration Tests", () => {
       await execute(db)(insert(Profile, { bio: "TypeScript enthusiast", userId: aliceId })).run();
     });
 
-    it("join() INNER JOIN", async t => {
+    it("join() INNER JOIN", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(Post), join(User, on("authorId", "id")), where(eq("published", 1))),
       ).run();
-      assert.equal(unwrap(result).length, 2);
+      expect(unwrap(result).length).toBe(2);
     });
 
-    it("leftJoin() LEFT JOIN", async t => {
+    it("leftJoin() LEFT JOIN", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(User), leftJoin(Profile, on("id", "userId"))),
       ).run();
-      assert.ok(unwrap(result).length >= 4);
+      expect(unwrap(result).length >= 4).toBeTruthy();
     });
 
-    it("multiple joins in one query", async t => {
+    it("multiple joins in one query", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(Post), join(User, on("authorId", "id")), join(Category, on("categoryId", "id"))),
       ).run();
-      assert.ok(unwrap(result).length >= 3);
+      expect(unwrap(result).length >= 3).toBeTruthy();
     });
   });
 
@@ -615,56 +581,50 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("5. Aggregates", () => {
-    it("count()", async t => {
+    it("count()", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(Post), select(count("id").as("total")))).run();
-      assert.ok(Number(toRaw(unwrap(result).first().value)["total"]) >= 3);
+      expect(Number(toRaw(unwrap(result).first().value)["total"]) >= 3).toBeTruthy();
     });
 
-    it("sum()", async t => {
+    it("sum()", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(Post), select(sum("views").as("totalViews"))),
       ).run();
-      assert.ok(Number(toRaw(unwrap(result).first().value)["totalViews"]) >= 350);
+      expect(Number(toRaw(unwrap(result).first().value)["totalViews"]) >= 350).toBeTruthy();
     });
 
-    it("avg()", async t => {
+    it("avg()", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(Post), select(avg("views").as("avgViews")))).run();
-      assert.ok(Number(toRaw(unwrap(result).first().value)["avgViews"]) > 0);
+      expect(Number(toRaw(unwrap(result).first().value)["avgViews"]) > 0).toBeTruthy();
     });
 
-    it("min()", async t => {
+    it("min()", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(Post), select(min("views").as("minViews")))).run();
-      assert.equal(Number(toRaw(unwrap(result).first().value)["minViews"]), 0);
+      expect(Number(toRaw(unwrap(result).first().value)["minViews"])).toBe(0);
     });
 
-    it("max()", async t => {
+    it("max()", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(pipe(from(Post), select(max("views").as("maxViews")))).run();
-      assert.equal(Number(toRaw(unwrap(result).first().value)["maxViews"]), 250);
+      expect(Number(toRaw(unwrap(result).first().value)["maxViews"])).toBe(250);
     });
 
-    it("groupBy() + having()", async t => {
+    it("groupBy() + having()", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       // PostgreSQL does not support column aliases in HAVING; use raw SQL
@@ -675,14 +635,13 @@ describe("PostgreSQL Integration Tests", () => {
       );
       const result = await execute(db)(node).run();
       const list = unwrap(result);
-      assert.equal(list.length, 1);
+      expect(list.length).toBe(1);
       const row = toRaw(list.first().value);
-      assert.ok(Number(row["postCount"]) >= 2);
+      expect(Number(row["postCount"]) >= 2).toBeTruthy();
     });
 
-    it("aggregates with aliases", async t => {
+    it("aggregates with aliases", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
@@ -698,8 +657,8 @@ describe("PostgreSQL Integration Tests", () => {
         ),
       ).run();
       const row = toRaw(unwrap(result).first().value);
-      assert.ok(row["cnt"] !== undefined);
-      assert.ok(row["sumV"] !== undefined);
+      expect(row["cnt"] !== undefined).toBeTruthy();
+      expect(row["sumV"] !== undefined).toBeTruthy();
     });
   });
 
@@ -710,7 +669,7 @@ describe("PostgreSQL Integration Tests", () => {
   describe("6. Soft Deletes", () => {
     let softDeleteUserId: unknown;
 
-    before(async () => {
+    beforeAll(async () => {
       if (!pgAvailable) return;
       const res = await execute(db)(
         pipe(
@@ -721,67 +680,61 @@ describe("PostgreSQL Integration Tests", () => {
       softDeleteUserId = toRaw(unwrap(res).first().value)["id"];
     });
 
-    it("remove() sets deleted_at", async t => {
+    it("remove() sets deleted_at", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       await execute(db)(pipe(remove(User), where(eq("id", softDeleteUserId)))).run();
 
       const rows = await execRaw(`SELECT * FROM "users" WHERE "id" = ${softDeleteUserId}`);
-      assert.equal(rows.length, 1);
-      assert.ok((rows[0] as Record<string, unknown>)["deleted_at"] !== null);
+      expect(rows.length).toBe(1);
+      expect((rows[0] as Record<string, unknown>)["deleted_at"] !== null).toBeTruthy();
     });
 
-    it("default query filters deleted rows", async t => {
+    it("default query filters deleted rows", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await findOne(db)(pipe(from(User), where(eq("id", softDeleteUserId)))).run();
-      assert.equal(unwrap(result).isNone, true);
+      expect(unwrap(result).isNone).toBe(true);
     });
 
-    it("withDeleted() includes deleted rows", async t => {
+    it("withDeleted() includes deleted rows", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await findOne(db)(
         pipe(from(User), withDeleted(), where(eq("id", softDeleteUserId))),
       ).run();
-      assert.equal(unwrap(result).isSome, true);
+      expect(unwrap(result).isSome).toBe(true);
     });
 
-    it("onlyDeleted() shows only deleted rows", async t => {
+    it("onlyDeleted() shows only deleted rows", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await findOne(db)(
         pipe(from(User), onlyDeleted(), where(eq("id", softDeleteUserId))),
       ).run();
-      assert.equal(unwrap(result).isSome, true);
+      expect(unwrap(result).isSome).toBe(true);
     });
 
-    it("restore() clears deleted_at", async t => {
+    it("restore() clears deleted_at", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       await execute(db)(pipe(restore(User), where(eq("id", softDeleteUserId)))).run();
       const result = await findOne(db)(pipe(from(User), where(eq("id", softDeleteUserId)))).run();
-      assert.equal(unwrap(result).isSome, true);
+      expect(unwrap(result).isSome).toBe(true);
     });
 
-    it("hardRemove() physically deletes", async t => {
+    it("hardRemove() physically deletes", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       await execute(db)(pipe(hardRemove(User), where(eq("id", softDeleteUserId)))).run();
       const rows = await execRaw(`SELECT * FROM "users" WHERE "id" = ${softDeleteUserId}`);
-      assert.equal(rows.length, 0);
+      expect(rows.length).toBe(0);
     });
   });
 
@@ -790,41 +743,38 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("7. Transactions", () => {
-    it("successful transaction commits", async t => {
+    it("successful transaction commits", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await transaction(db, async tx => {
         await execute(tx)(insert(Tag, { label: "pg-committed" })).run();
         return "ok";
       }).run();
-      assert.equal(result.isOk, true);
+      expect(result.isOk).toBe(true);
       const findResult = await findOne(db)(
         pipe(from(Tag), where(eq("label", "pg-committed"))),
       ).run();
-      assert.equal(unwrap(findResult).isSome, true);
+      expect(unwrap(findResult).isSome).toBe(true);
     });
 
-    it("failed transaction rolls back", async t => {
+    it("failed transaction rolls back", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await transaction(db, async tx => {
         await execute(tx)(insert(Tag, { label: "pg-rollback" })).run();
         throw new Error("intentional");
       }).run();
-      assert.equal(result.isErr, true);
+      expect(result.isErr).toBe(true);
       const findResult = await findOne(db)(
         pipe(from(Tag), where(eq("label", "pg-rollback"))),
       ).run();
-      assert.equal(unwrap(findResult).isNone, true);
+      expect(unwrap(findResult).isNone).toBe(true);
     });
 
-    it("nested transaction (savepoint)", async t => {
+    it("nested transaction (savepoint)", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await transaction(db, async tx => {
@@ -833,18 +783,16 @@ describe("PostgreSQL Integration Tests", () => {
           await execute(inner)(insert(Tag, { label: "pg-inner" })).run();
           throw new Error("nested fail");
         }).run();
-        assert.equal(nested.isErr, true);
+        expect(nested.isErr).toBe(true);
         return "outer-done";
       }).run();
-      assert.equal(result.isOk, true);
-      assert.equal(
+      expect(result.isOk).toBe(true);
+      expect(
         unwrap(await findOne(db)(pipe(from(Tag), where(eq("label", "pg-outer")))).run()).isSome,
-        true,
-      );
-      assert.equal(
+      ).toBe(true);
+      expect(
         unwrap(await findOne(db)(pipe(from(Tag), where(eq("label", "pg-inner")))).run()).isNone,
-        true,
-      );
+      ).toBe(true);
     });
   });
 
@@ -853,24 +801,22 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("8. Upsert", () => {
-    it("onConflict DO NOTHING", async t => {
+    it("onConflict DO NOTHING", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       await execute(db)(insert(Tag, { label: "pg-unique" })).run();
 
       const node = pipe(insert(Tag, { label: "pg-unique" }), onConflict("label", "nothing"));
       const result = await execute(db)(node).run();
-      assert.equal(result.isOk, true);
+      expect(result.isOk).toBe(true);
 
       const all = await execute(db)(pipe(from(Tag), where(eq("label", "pg-unique")))).run();
-      assert.equal(unwrap(all).length, 1);
+      expect(unwrap(all).length).toBe(1);
     });
 
-    it("onConflict DO UPDATE SET", async t => {
+    it("onConflict DO UPDATE SET", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       await execute(db)(insert(Category, { name: "PG-Upsert" })).run();
@@ -881,7 +827,7 @@ describe("PostgreSQL Integration Tests", () => {
         returning("id", "name"),
       );
       const result = await execute(db)(node).run();
-      assert.equal(unwrap(result).length, 1);
+      expect(unwrap(result).length).toBe(1);
     });
   });
 
@@ -890,19 +836,17 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("9. Raw SQL", () => {
-    it("raw() with $1 placeholders", async t => {
+    it("raw() with $1 placeholders", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const node = raw('SELECT "name" FROM "categories" WHERE "name" = $1', ["Technology"]);
       const result = await execute(db)(node).run();
-      assert.equal(unwrap(result).length, 1);
+      expect(unwrap(result).length).toBe(1);
     });
 
-    it("raw() with multiple params", async t => {
+    it("raw() with multiple params", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const node = raw('SELECT "name" FROM "categories" WHERE "name" = $1 OR "name" = $2', [
@@ -910,7 +854,7 @@ describe("PostgreSQL Integration Tests", () => {
         "Science",
       ]);
       const result = await execute(db)(node).run();
-      assert.equal(unwrap(result).length, 2);
+      expect(unwrap(result).length).toBe(2);
     });
   });
 
@@ -919,9 +863,8 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("10. CTEs", () => {
-    it("withCte() compiles and executes correctly", async t => {
+    it("withCte() compiles and executes correctly", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const cteQuery = pipe(from(Post), where(eq("published", 1)));
@@ -932,7 +875,7 @@ describe("PostgreSQL Integration Tests", () => {
       );
       const result = await execute(db)(node).run();
       const row = toRaw(unwrap(result).first().value);
-      assert.ok(Number(row["total"]) >= 0);
+      expect(Number(row["total"]) >= 0).toBeTruthy();
     });
   });
 
@@ -941,51 +884,47 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("11. Subqueries", () => {
-    it("exists() in WHERE filters with a subquery", async t => {
+    it("exists() in WHERE filters with a subquery", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const subquery = pipe(from(Post), where(eq("published", 1)));
       const node = pipe(from(Category), where(exists(subquery)));
       const result = await execute(db)(node).run();
-      assert.ok(unwrap(result).length > 0);
+      expect(unwrap(result).length > 0).toBeTruthy();
     });
 
-    it("exists() correlated subquery via raw SQL", async t => {
+    it("exists() correlated subquery via raw SQL", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const node = raw(
         'SELECT * FROM "users" WHERE EXISTS (SELECT 1 FROM "posts" WHERE "posts"."author_id" = "users"."id") AND "users"."deleted_at" IS NULL',
       );
       const result = await execute(db)(node).run();
-      assert.ok(unwrap(result).length >= 2);
+      expect(unwrap(result).length >= 2).toBeTruthy();
     });
 
-    it("notExists() in WHERE filters with a subquery", async t => {
+    it("notExists() in WHERE filters with a subquery", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       // Use "views" (INTEGER) instead of "published" (BOOLEAN) to avoid PG type error.
       const subquery = pipe(from(Post), where(eq("views", 999)));
       const node = pipe(from(Category), where(notExists(subquery)));
       const result = await execute(db)(node).run();
-      assert.ok(unwrap(result).length > 0);
+      expect(unwrap(result).length > 0).toBeTruthy();
     });
 
-    it("notExists() correlated subquery via raw SQL", async t => {
+    it("notExists() correlated subquery via raw SQL", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const node = raw(
         'SELECT * FROM "users" WHERE NOT EXISTS (SELECT 1 FROM "posts" WHERE "posts"."author_id" = "users"."id") AND "users"."deleted_at" IS NULL',
       );
       const result = await execute(db)(node).run();
-      assert.ok(unwrap(result).length > 0);
+      expect(unwrap(result).length > 0).toBeTruthy();
     });
   });
 
@@ -994,9 +933,8 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("12. Window Functions", () => {
-    it("rowNumber() with partitionBy and orderBy", async t => {
+    it("rowNumber() with partitionBy and orderBy", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
@@ -1010,30 +948,28 @@ describe("PostgreSQL Integration Tests", () => {
         ),
       ).run();
       const list = unwrap(result);
-      assert.ok(list.length >= 3);
-      assert.ok(toRaw(list.first().value)["rn"] !== undefined);
+      expect(list.length >= 3).toBeTruthy();
+      expect(toRaw(list.first().value)["rn"] !== undefined).toBeTruthy();
     });
 
-    it("rank() window function", async t => {
+    it("rank() window function", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(Post), select("title", rank().orderBy("views", "desc").as("viewRank"))),
       ).run();
-      assert.ok(unwrap(result).length >= 3);
+      expect(unwrap(result).length >= 3).toBeTruthy();
     });
 
-    it("denseRank() window function", async t => {
+    it("denseRank() window function", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const result = await execute(db)(
         pipe(from(Post), select("title", denseRank().orderBy("views", "desc").as("denseViewRank"))),
       ).run();
-      assert.ok(unwrap(result).length >= 3);
+      expect(unwrap(result).length >= 3).toBeTruthy();
     });
   });
 
@@ -1042,9 +978,8 @@ describe("PostgreSQL Integration Tests", () => {
   // =========================================================================
 
   describe("13. Migrations", () => {
-    it("createSnapshot + diffSnapshots + generateMigration produces valid SQL", t => {
+    it("createSnapshot + diffSnapshots + generateMigration produces valid SQL", () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const dialect = createPostgresDialect();
@@ -1056,13 +991,12 @@ describe("PostgreSQL Integration Tests", () => {
       const currentSnapshot = createSnapshot([Category, Tag]);
       const ops = diffSnapshots(emptySnapshot, currentSnapshot);
       const migration = generateMigration(ops, dialect);
-      assert.ok(migration.up.includes("CREATE TABLE"));
-      assert.ok(migration.down.includes("DROP TABLE"));
+      expect(migration.up.includes("CREATE TABLE")).toBeTruthy();
+      expect(migration.down.includes("DROP TABLE")).toBeTruthy();
     });
 
-    it("generated migration SQL executes against the real DB", async t => {
+    it("generated migration SQL executes against the real DB", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       const dialect = createPostgresDialect();
@@ -1091,7 +1025,7 @@ describe("PostgreSQL Integration Tests", () => {
       const check = await execRaw(
         "SELECT table_name FROM information_schema.tables WHERE table_name = 'pg_test_migration'",
       );
-      assert.equal(check.length, 1);
+      expect(check.length).toBe(1);
 
       for (const stmt of migration.down.split(";").filter(s => s.trim().length > 0)) {
         await rawConn.query(`${stmt.trim()};`, []);
@@ -1100,12 +1034,11 @@ describe("PostgreSQL Integration Tests", () => {
       const gone = await execRaw(
         "SELECT table_name FROM information_schema.tables WHERE table_name = 'pg_test_migration'",
       );
-      assert.equal(gone.length, 0);
+      expect(gone.length).toBe(0);
     });
 
-    it("applyMigration records migration state", async t => {
+    it("applyMigration records migration state", async () => {
       if (!pgAvailable) {
-        t.skip("PG not available");
         return;
       }
       await ensureMigrationTable(db).run();
@@ -1117,12 +1050,12 @@ describe("PostgreSQL Integration Tests", () => {
         batch: 1,
         transaction: true,
       }).run();
-      assert.equal(result.isOk, true);
+      expect(result.isOk).toBe(true);
 
       const statusResult = await getMigrationStatus(db).run();
       const status = unwrap(statusResult);
       const found = status.find((r: Record<string, unknown>) => r["name"] === "001_pg_test");
-      assert.ok(found !== undefined);
+      expect(found !== undefined).toBeTruthy();
 
       await rawConn.query('DROP TABLE IF EXISTS "pg_migration_test_tbl";', []);
     });

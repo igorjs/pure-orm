@@ -5,9 +5,8 @@
  * their SQL output through both PostgreSQL and SQLite dialects.
  */
 
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
@@ -64,16 +63,16 @@ describe("on()", () => {
   it("creates a frozen JoinCondition", () => {
     const cond = on("authorId", "id");
 
-    assert.equal(cond.leftColumn, "authorId");
-    assert.equal(cond.rightColumn, "id");
-    assert.ok(Object.isFrozen(cond));
+    expect(cond.leftColumn).toBe("authorId");
+    expect(cond.rightColumn).toBe("id");
+    expect(Object.isFrozen(cond)).toBeTruthy();
   });
 
   it("preserves table-qualified column names", () => {
     const cond = on("Post.authorId", "User.id");
 
-    assert.equal(cond.leftColumn, "Post.authorId");
-    assert.equal(cond.rightColumn, "User.id");
+    expect(cond.leftColumn).toBe("Post.authorId");
+    expect(cond.rightColumn).toBe("User.id");
   });
 });
 
@@ -85,36 +84,36 @@ describe("join()", () => {
   it("appends an INNER JOIN clause to the SelectNode", () => {
     const node = join(User, on("authorId", "id"))(from(Post));
 
-    assert.equal(node.joins.length, 1);
-    assert.equal(node.joins[0].joinType, "inner");
-    assert.equal(node.joins[0].model.name, "users");
+    expect(node.joins.length).toBe(1);
+    expect(node.joins[0].joinType).toBe("inner");
+    expect(node.joins[0].model.name).toBe("users");
   });
 
   it("preserves all other SelectNode fields", () => {
     const base = from(Post);
     const node = join(User, on("authorId", "id"))(base);
 
-    assert.equal(node.tag, "Select");
-    assert.equal(node.model.name, "posts");
-    assert.equal(node.columns, "*");
-    assert.deepEqual(node.conditions, []);
-    assert.deepEqual(node.orderBy, []);
-    assert.equal(node.limit, null);
-    assert.equal(node.offset, null);
+    expect(node.tag).toBe("Select");
+    expect(node.model.name).toBe("posts");
+    expect(node.columns).toBe("*");
+    expect(node.conditions).toEqual([]);
+    expect(node.orderBy).toEqual([]);
+    expect(node.limit).toBe(null);
+    expect(node.offset).toBe(null);
   });
 
   it("returns a frozen SelectNode", () => {
     const node = join(User, on("authorId", "id"))(from(Post));
 
-    assert.ok(Object.isFrozen(node));
-    assert.ok(Object.isFrozen(node.joins));
+    expect(Object.isFrozen(node)).toBeTruthy();
+    expect(Object.isFrozen(node.joins)).toBeTruthy();
   });
 
   it("does NOT mutate the input node", () => {
     const base = from(Post);
     join(User, on("authorId", "id"))(base);
 
-    assert.equal(base.joins.length, 0);
+    expect(base.joins.length).toBe(0);
   });
 
   it("accumulates multiple joins", () => {
@@ -123,13 +122,13 @@ describe("join()", () => {
       on("users.roleId", "id"),
     )(leftJoin(Category, on("categoryId", "id"))(join(User, on("authorId", "id"))(from(Post))));
 
-    assert.equal(node.joins.length, 3);
-    assert.equal(node.joins[0].joinType, "inner");
-    assert.equal(node.joins[0].model.name, "users");
-    assert.equal(node.joins[1].joinType, "left");
-    assert.equal(node.joins[1].model.name, "categories");
-    assert.equal(node.joins[2].joinType, "full");
-    assert.equal(node.joins[2].model.name, "roles");
+    expect(node.joins.length).toBe(3);
+    expect(node.joins[0].joinType).toBe("inner");
+    expect(node.joins[0].model.name).toBe("users");
+    expect(node.joins[1].joinType).toBe("left");
+    expect(node.joins[1].model.name).toBe("categories");
+    expect(node.joins[2].joinType).toBe("full");
+    expect(node.joins[2].model.name).toBe("roles");
   });
 });
 
@@ -141,7 +140,7 @@ describe("leftJoin()", () => {
   it("creates a LEFT join clause", () => {
     const node = leftJoin(User, on("authorId", "id"))(from(Post));
 
-    assert.equal(node.joins[0].joinType, "left");
+    expect(node.joins[0].joinType).toBe("left");
   });
 });
 
@@ -149,7 +148,7 @@ describe("rightJoin()", () => {
   it("creates a RIGHT join clause", () => {
     const node = rightJoin(User, on("authorId", "id"))(from(Post));
 
-    assert.equal(node.joins[0].joinType, "right");
+    expect(node.joins[0].joinType).toBe("right");
   });
 });
 
@@ -157,7 +156,7 @@ describe("fullJoin()", () => {
   it("creates a FULL join clause", () => {
     const node = fullJoin(User, on("authorId", "id"))(from(Post));
 
-    assert.equal(node.joins[0].joinType, "full");
+    expect(node.joins[0].joinType).toBe("full");
   });
 });
 
@@ -170,32 +169,31 @@ describe("PostgreSQL JOIN compilation", () => {
     const node = join(User, on("authorId", "id"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "posts".*, "users".* FROM "posts" INNER JOIN "users" ON "posts"."author_id" = "users"."id"',
     );
-    assert.deepEqual(result.params, []);
+    expect(result.params).toEqual([]);
   });
 
   it("compiles LEFT JOIN", () => {
     const node = leftJoin(User, on("authorId", "id"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("LEFT JOIN"));
+    expect(result.sql.includes("LEFT JOIN")).toBeTruthy();
   });
 
   it("compiles RIGHT JOIN", () => {
     const node = rightJoin(User, on("authorId", "id"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("RIGHT JOIN"));
+    expect(result.sql.includes("RIGHT JOIN")).toBeTruthy();
   });
 
   it("compiles FULL JOIN", () => {
     const node = fullJoin(User, on("authorId", "id"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("FULL JOIN"));
+    expect(result.sql.includes("FULL JOIN")).toBeTruthy();
   });
 
   it("places JOIN between FROM and WHERE", () => {
@@ -206,8 +204,8 @@ describe("PostgreSQL JOIN compilation", () => {
     const joinPos = result.sql.indexOf("INNER JOIN");
     const wherePos = result.sql.indexOf("WHERE");
 
-    assert.ok(fromPos < joinPos, "JOIN should come after FROM");
-    assert.ok(joinPos < wherePos, "JOIN should come before WHERE");
+    expect(fromPos < joinPos).toBeTruthy();
+    expect(joinPos < wherePos).toBeTruthy();
   });
 
   it("compiles multiple joins in order", () => {
@@ -217,8 +215,7 @@ describe("PostgreSQL JOIN compilation", () => {
     )(join(User, on("authorId", "id"))(from(Post)));
     const result = pgDialect.compileSelect(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "posts".*, "users".*, "categories".* FROM "posts" ' +
         'INNER JOIN "users" ON "posts"."author_id" = "users"."id" ' +
         'LEFT JOIN "categories" ON "posts"."category_id" = "categories"."id"',
@@ -229,7 +226,7 @@ describe("PostgreSQL JOIN compilation", () => {
     const node = join(User, on("authorId", "id"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('"author_id"'), "Should resolve authorId to author_id");
+    expect(result.sql.includes('"author_id"')).toBeTruthy();
   });
 
   it("joins compose with where, orderBy, limit, offset", () => {
@@ -243,12 +240,12 @@ describe("PostgreSQL JOIN compilation", () => {
     );
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("INNER JOIN"));
-    assert.ok(result.sql.includes("WHERE"));
-    assert.ok(result.sql.includes("ORDER BY"));
-    assert.ok(result.sql.includes("LIMIT"));
-    assert.ok(result.sql.includes("OFFSET"));
-    assert.deepEqual(result.params, [true, 10, 5]);
+    expect(result.sql.includes("INNER JOIN")).toBeTruthy();
+    expect(result.sql.includes("WHERE")).toBeTruthy();
+    expect(result.sql.includes("ORDER BY")).toBeTruthy();
+    expect(result.sql.includes("LIMIT")).toBeTruthy();
+    expect(result.sql.includes("OFFSET")).toBeTruthy();
+    expect(result.params).toEqual([true, 10, 5]);
   });
 
   it("join with select() projects specific columns from main table only", () => {
@@ -256,8 +253,7 @@ describe("PostgreSQL JOIN compilation", () => {
     const result = pgDialect.compileSelect(node);
 
     // select() currently resolves columns from the main table only.
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "posts"."title", "posts"."body" FROM "posts" ' +
         'INNER JOIN "users" ON "posts"."author_id" = "users"."id"',
     );
@@ -271,29 +267,25 @@ describe("PostgreSQL JOIN compilation", () => {
     )(join(User, on("authorId", "id"))(from(Post)));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(
-      result.sql.includes('"users"."role_id" = "roles"."id"'),
-      "Should resolve users.roleId from the previously joined User model",
-    );
+    expect(result.sql.includes('"users"."role_id" = "roles"."id"')).toBeTruthy();
   });
 
   it("SELECT * with joins includes all joined tables", () => {
     const node = join(User, on("authorId", "id"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.startsWith('SELECT "posts".*, "users".*'));
+    expect(result.sql.startsWith('SELECT "posts".*, "users".*')).toBeTruthy();
   });
 
   it("handles join with no additional clauses", () => {
     const node = join(Category, on("categoryId", "id"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "posts".*, "categories".* FROM "posts" ' +
         'INNER JOIN "categories" ON "posts"."category_id" = "categories"."id"',
     );
-    assert.deepEqual(result.params, []);
+    expect(result.params).toEqual([]);
   });
 });
 
@@ -306,16 +298,16 @@ describe("SQLite JOIN compilation", () => {
     const node = where(eq("published", true))(join(User, on("authorId", "id"))(from(Post)));
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("INNER JOIN"));
-    assert.ok(result.sql.includes("?"), "SQLite should use ? placeholders");
-    assert.ok(!result.sql.includes("$"), "SQLite should not use $ placeholders");
+    expect(result.sql.includes("INNER JOIN")).toBeTruthy();
+    expect(result.sql.includes("?")).toBeTruthy();
+    expect(!result.sql.includes("$")).toBeTruthy();
   });
 
   it("compiles LEFT JOIN", () => {
     const node = leftJoin(User, on("authorId", "id"))(from(Post));
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("LEFT JOIN"));
+    expect(result.sql.includes("LEFT JOIN")).toBeTruthy();
   });
 
   it("compiles same SQL structure as PostgreSQL (except placeholders)", () => {
@@ -325,7 +317,7 @@ describe("SQLite JOIN compilation", () => {
     const sqliteResult = sqliteDialect.compileSelect(node);
 
     // Both should have the same SQL minus placeholder differences.
-    assert.equal(pgResult.sql, sqliteResult.sql);
+    expect(pgResult.sql).toBe(sqliteResult.sql);
   });
 
   it("compiles multiple joins in order", () => {
@@ -335,19 +327,19 @@ describe("SQLite JOIN compilation", () => {
     )(join(User, on("authorId", "id"))(from(Post)));
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("INNER JOIN"));
-    assert.ok(result.sql.includes("LEFT JOIN"));
+    expect(result.sql.includes("INNER JOIN")).toBeTruthy();
+    expect(result.sql.includes("LEFT JOIN")).toBeTruthy();
 
     const innerPos = result.sql.indexOf("INNER JOIN");
     const leftPos = result.sql.indexOf("LEFT JOIN");
-    assert.ok(innerPos < leftPos, "INNER JOIN should come before LEFT JOIN");
+    expect(innerPos < leftPos).toBeTruthy();
   });
 
   it("resolves camelCase to snake_case in ON clause", () => {
     const node = join(User, on("authorId", "id"))(from(Post));
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('"author_id"'));
+    expect(result.sql.includes('"author_id"')).toBeTruthy();
   });
 });
 
@@ -360,19 +352,19 @@ describe("JOIN edge cases", () => {
     const node = where(eq("name", "Alice"))(from(User));
 
     const pgResult = pgDialect.compileSelect(node);
-    assert.equal(pgResult.sql, 'SELECT "users".* FROM "users" WHERE "users"."name" = $1');
-    assert.deepEqual(pgResult.params, ["Alice"]);
+    expect(pgResult.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."name" = $1');
+    expect(pgResult.params).toEqual(["Alice"]);
 
     const sqliteResult = sqliteDialect.compileSelect(node);
-    assert.equal(sqliteResult.sql, 'SELECT "users".* FROM "users" WHERE "users"."name" = ?');
-    assert.deepEqual(sqliteResult.params, ["Alice"]);
+    expect(sqliteResult.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."name" = ?');
+    expect(sqliteResult.params).toEqual(["Alice"]);
   });
 
   it("from() initialises joins as an empty frozen array", () => {
     const node = from(Post);
 
-    assert.deepEqual(node.joins, []);
-    assert.ok(Object.isFrozen(node.joins));
+    expect(node.joins).toEqual([]);
+    expect(Object.isFrozen(node.joins)).toBeTruthy();
   });
 
   it("unqualified left column falls back to raw field name when not in metadata", () => {
@@ -381,13 +373,13 @@ describe("JOIN edge cases", () => {
     const result = pgDialect.compileSelect(node);
 
     // Falls back to using the raw field name.
-    assert.ok(result.sql.includes('"unknownField"'));
+    expect(result.sql.includes('"unknownField"')).toBeTruthy();
   });
 
   it("table-qualified left column with unknown table falls back to raw names", () => {
     const node = join(User, on("unknown.someField", "id"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('"unknown"."someField"'));
+    expect(result.sql.includes('"unknown"."someField"')).toBeTruthy();
   });
 });

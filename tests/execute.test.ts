@@ -6,10 +6,8 @@
  * simulate both success and failure scenarios.
  */
 
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
-
 import { Schema, Task } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 
 import type { DatabaseClient, RawConnection } from "../src/connection/types.ts";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
@@ -86,19 +84,19 @@ const createMockDb = (conn: RawConnection, hooks: Partial<QueryHooks> = {}): Dat
 
 describe("snakeToCamel()", () => {
   it("converts author_id to authorId", () => {
-    assert.equal(snakeToCamel("author_id"), "authorId");
+    expect(snakeToCamel("author_id")).toBe("authorId");
   });
 
   it("converts created_at to createdAt", () => {
-    assert.equal(snakeToCamel("created_at"), "createdAt");
+    expect(snakeToCamel("created_at")).toBe("createdAt");
   });
 
   it("leaves a plain word unchanged", () => {
-    assert.equal(snakeToCamel("name"), "name");
+    expect(snakeToCamel("name")).toBe("name");
   });
 
   it("handles multiple underscores", () => {
-    assert.equal(snakeToCamel("first_name_last"), "firstNameLast");
+    expect(snakeToCamel("first_name_last")).toBe("firstNameLast");
   });
 });
 
@@ -118,20 +116,20 @@ describe("mapRows()", () => {
 
   it("returns an empty List for an empty rows array", () => {
     const result = mapRows([], modelRef);
-    assert.equal(result.length, 0);
+    expect(result.length).toBe(0);
   });
 
   it("maps snake_case keys to camelCase using model metadata", () => {
     const rows = [{ id: "1", name: "Alice", email: "alice@example.com", created_at: "2024-01-01" }];
     const result = mapRows(rows, modelRef);
-    assert.equal(result.length, 1);
+    expect(result.length).toBe(1);
     // Use first() to get the Option<ImmutableRecord>, then toMutable() to inspect
     const first = result.first();
-    assert.equal(first.isSome, true);
+    expect(first.isSome).toBe(true);
     if (first.isSome) {
       const mutable = first.value.toMutable() as Record<string, unknown>;
-      assert.equal(mutable["createdAt"], "2024-01-01");
-      assert.equal(mutable["name"], "Alice");
+      expect(mutable["createdAt"]).toBe("2024-01-01");
+      expect(mutable["name"]).toBe("Alice");
     }
   });
 
@@ -139,10 +137,10 @@ describe("mapRows()", () => {
     const rows = [{ extra_field: "value" }];
     const result = mapRows(rows, modelRef);
     const first = result.first();
-    assert.equal(first.isSome, true);
+    expect(first.isSome).toBe(true);
     if (first.isSome) {
       const mutable = first.value.toMutable() as Record<string, unknown>;
-      assert.equal(mutable["extraField"], "value");
+      expect(mutable["extraField"]).toBe("value");
     }
   });
 
@@ -152,7 +150,7 @@ describe("mapRows()", () => {
       { id: "2", name: "Bob" },
     ];
     const result = mapRows(rows, modelRef);
-    assert.equal(result.length, 2);
+    expect(result.length).toBe(2);
   });
 });
 
@@ -176,16 +174,16 @@ describe("execute(): success path", () => {
     )(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 1);
+      expect(result.value.length).toBe(1);
       // Use first() to get the first record, then toMutable() to inspect it
       const first = result.value.first();
-      assert.equal(first.isSome, true);
+      expect(first.isSome).toBe(true);
       if (first.isSome) {
         const mutable = first.value.toMutable() as Record<string, unknown>;
-        assert.equal(mutable["name"], "Alice");
-        assert.equal(mutable["createdAt"], "2024-01-01");
+        expect(mutable["name"]).toBe("Alice");
+        expect(mutable["createdAt"]).toBe("2024-01-01");
       }
     }
   });
@@ -200,9 +198,9 @@ describe("execute(): success path", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 0);
+      expect(result.value.length).toBe(0);
     }
   });
 });
@@ -218,10 +216,10 @@ describe("execute(): failure path", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isErr, true);
+    expect(result.isErr).toBe(true);
     if (result.isErr) {
-      assert.equal(result.error.tag, "QueryError");
-      assert.ok(result.error.message.includes("failed"));
+      expect(result.error.tag).toBe("QueryError");
+      expect(result.error.message.includes("failed")).toBeTruthy();
     }
   });
 
@@ -235,7 +233,7 @@ describe("execute(): failure path", () => {
     await execute(db)(node).run();
 
     // Assert: release() must have been called in the finally block
-    assert.equal(released.value, true);
+    expect(released.value).toBe(true);
   });
 });
 
@@ -250,7 +248,7 @@ describe("execute(): connection always released on success", () => {
     await execute(db)(node).run();
 
     // Assert
-    assert.equal(released.value, true);
+    expect(released.value).toBe(true);
   });
 });
 
@@ -284,7 +282,7 @@ describe("execute(): lifecycle hooks", () => {
     await execute(db)(node).run();
 
     // Assert
-    assert.deepEqual(fired, ["beforeCompile", "afterCompile", "beforeExecute", "afterExecute"]);
+    expect(fired).toEqual(["beforeCompile", "afterCompile", "beforeExecute", "afterExecute"]);
   });
 
   it("fires afterExecute with the correct sql and rows on success", async () => {
@@ -304,11 +302,11 @@ describe("execute(): lifecycle hooks", () => {
     await execute(db)(node).run();
 
     // Assert
-    assert.ok(capturedEvent !== undefined);
+    expect(capturedEvent !== undefined).toBeTruthy();
     const event = capturedEvent as Record<string, unknown>;
-    assert.ok(typeof event["sql"] === "string");
-    assert.ok(Array.isArray(event["rows"]));
-    assert.equal((event["rows"] as unknown[]).length, 1);
+    expect(typeof event["sql"] === "string").toBeTruthy();
+    expect(Array.isArray(event["rows"])).toBeTruthy();
+    expect((event["rows"] as unknown[]).length).toBe(1);
   });
 });
 
@@ -330,13 +328,13 @@ describe("findOne(): success path", () => {
     const result = await findOne(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
       const opt = result.value;
-      assert.equal(opt.isSome, true);
+      expect(opt.isSome).toBe(true);
       if (opt.isSome) {
         const raw = opt.value.$raw as Record<string, unknown>;
-        assert.equal(raw["name"], "Alice");
+        expect(raw["name"]).toBe("Alice");
       }
     }
   });
@@ -351,9 +349,9 @@ describe("findOne(): success path", () => {
     const result = await findOne(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.isNone, true);
+      expect(result.value.isNone).toBe(true);
     }
   });
 
@@ -373,7 +371,7 @@ describe("findOne(): success path", () => {
     await findOne(db)(node).run();
 
     // Assert: LIMIT should appear in the compiled SQL
-    assert.ok(capturedSql.includes("LIMIT"), `Expected LIMIT in SQL, got: ${capturedSql}`);
+    expect(capturedSql.includes("LIMIT")).toBeTruthy();
   });
 
   it("does NOT override an existing limit", async () => {
@@ -394,7 +392,7 @@ describe("findOne(): success path", () => {
     // The key thing: findOne with node.limit=undefined should add LIMIT 1
     await findOne(db)(node).run();
 
-    assert.ok(capturedSql.includes("LIMIT"));
+    expect(capturedSql.includes("LIMIT")).toBeTruthy();
   });
 });
 
@@ -409,9 +407,9 @@ describe("findOne(): failure path", () => {
     const result = await findOne(db)(node).run();
 
     // Assert
-    assert.equal(result.isErr, true);
+    expect(result.isErr).toBe(true);
     if (result.isErr) {
-      assert.equal(result.error.tag, "QueryError");
+      expect(result.error.tag).toBe("QueryError");
     }
   });
 
@@ -425,6 +423,6 @@ describe("findOne(): failure path", () => {
     await findOne(db)(node).run();
 
     // Assert
-    assert.equal(released.value, true);
+    expect(released.value).toBe(true);
   });
 });

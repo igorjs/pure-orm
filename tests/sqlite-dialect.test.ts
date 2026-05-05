@@ -1,7 +1,5 @@
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
-
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 
 import { resolveDialect } from "../src/dialect/registry.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
@@ -60,20 +58,20 @@ const makeSelect = (overrides: Partial<SelectNode> = {}): SelectNode =>
 
 describe("SQLite quote()", () => {
   it("wraps an identifier in double-quotes", () => {
-    assert.equal(dialect.quote("users"), '"users"');
+    expect(dialect.quote("users")).toBe('"users"');
   });
 
   it("escapes embedded double-quotes by doubling them", () => {
-    assert.equal(dialect.quote('weird"name'), '"weird""name"');
+    expect(dialect.quote('weird"name')).toBe('"weird""name"');
   });
 
   it("handles identifiers with no special characters", () => {
-    assert.equal(dialect.quote("created_at"), '"created_at"');
+    expect(dialect.quote("created_at")).toBe('"created_at"');
   });
 
   it("handles an identifier that is already quoted-looking", () => {
     // The double-quote chars inside should be escaped.
-    assert.equal(dialect.quote('"foo"'), '"""foo"""');
+    expect(dialect.quote('"foo"')).toBe('"""foo"""');
   });
 });
 
@@ -83,19 +81,19 @@ describe("SQLite quote()", () => {
 
 describe("SQLite param()", () => {
   it("always returns '?' regardless of index 1", () => {
-    assert.equal(dialect.param(1), "?");
+    expect(dialect.param(1)).toBe("?");
   });
 
   it("always returns '?' regardless of index 2", () => {
-    assert.equal(dialect.param(2), "?");
+    expect(dialect.param(2)).toBe("?");
   });
 
   it("always returns '?' regardless of index 10", () => {
-    assert.equal(dialect.param(10), "?");
+    expect(dialect.param(10)).toBe("?");
   });
 
   it("always returns '?' regardless of index 0", () => {
-    assert.equal(dialect.param(0), "?");
+    expect(dialect.param(0)).toBe("?");
   });
 });
 
@@ -111,19 +109,19 @@ describe("SQLite mapFieldType()", () => {
   });
 
   it("maps string schema type to TEXT", () => {
-    assert.equal(dialect.mapFieldType("string", dummyConfig), "TEXT");
+    expect(dialect.mapFieldType("string", dummyConfig)).toBe("TEXT");
   });
 
   it("maps number schema type to REAL (not INTEGER like PostgreSQL)", () => {
-    assert.equal(dialect.mapFieldType("number", dummyConfig), "REAL");
+    expect(dialect.mapFieldType("number", dummyConfig)).toBe("REAL");
   });
 
   it("maps boolean schema type to INTEGER (SQLite has no BOOLEAN type)", () => {
-    assert.equal(dialect.mapFieldType("boolean", dummyConfig), "INTEGER");
+    expect(dialect.mapFieldType("boolean", dummyConfig)).toBe("INTEGER");
   });
 
   it("maps unknown schema types to TEXT as a fallback", () => {
-    assert.equal(dialect.mapFieldType("date", dummyConfig), "TEXT");
+    expect(dialect.mapFieldType("date", dummyConfig)).toBe("TEXT");
   });
 });
 
@@ -136,8 +134,8 @@ describe("SQLite compileSelect: SELECT *", () => {
     const node = makeSelect({ columns: "*" });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users"');
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe('SELECT "users".* FROM "users"');
+    expect(result.params).toEqual([]);
   });
 });
 
@@ -150,15 +148,15 @@ describe("SQLite compileSelect: specific columns", () => {
     const node = makeSelect({ columns: ["id", "name", "email"] });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users"."id", "users"."name", "users"."email" FROM "users"');
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe('SELECT "users"."id", "users"."name", "users"."email" FROM "users"');
+    expect(result.params).toEqual([]);
   });
 
   it("resolves camelCase field names to snake_case column names", () => {
     const node = makeSelect({ columns: ["createdAt"] });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users"."created_at" FROM "users"');
+    expect(result.sql).toBe('SELECT "users"."created_at" FROM "users"');
   });
 });
 
@@ -171,16 +169,16 @@ describe("SQLite compileSelect: WHERE eq", () => {
     const node = makeSelect({ conditions: [eq("role", "admin")] });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."role" = ?');
-    assert.deepEqual(result.params, ["admin"]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."role" = ?');
+    expect(result.params).toEqual(["admin"]);
   });
 
   it("uses ? for every parameter with no index suffix", () => {
     const node = makeSelect({ conditions: [eq("id", "u1")] });
     const result = dialect.compileSelect(node);
 
-    assert.ok(!result.sql.includes("$"), "SQL must not contain $ placeholders");
-    assert.ok(result.sql.includes("?"), "SQL must contain ? placeholder");
+    expect(!result.sql.includes("$")).toBeTruthy();
+    expect(result.sql.includes("?")).toBeTruthy();
   });
 });
 
@@ -193,8 +191,8 @@ describe("SQLite compileSelect: WHERE ne", () => {
     const node = makeSelect({ conditions: [ne("role", "banned")] });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."role" != ?');
-    assert.deepEqual(result.params, ["banned"]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."role" != ?');
+    expect(result.params).toEqual(["banned"]);
   });
 });
 
@@ -209,11 +207,10 @@ describe("SQLite compileSelect: WHERE and/or", () => {
     });
     const result = dialect.compileSelect(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE ("users"."role" = ? AND "users"."age" > ?)',
     );
-    assert.deepEqual(result.params, ["admin", 18]);
+    expect(result.params).toEqual(["admin", 18]);
   });
 
   it("joins conditions with OR inside parentheses", () => {
@@ -222,11 +219,10 @@ describe("SQLite compileSelect: WHERE and/or", () => {
     });
     const result = dialect.compileSelect(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE ("users"."role" = ? OR "users"."role" = ?)',
     );
-    assert.deepEqual(result.params, ["admin", "editor"]);
+    expect(result.params).toEqual(["admin", "editor"]);
   });
 
   it("supports nested and/or with correct param ordering", () => {
@@ -236,11 +232,10 @@ describe("SQLite compileSelect: WHERE and/or", () => {
     });
     const result = dialect.compileSelect(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE (("users"."role" = ? OR "users"."role" = ?) AND "users"."age" > ?)',
     );
-    assert.deepEqual(result.params, ["admin", "editor", 18]);
+    expect(result.params).toEqual(["admin", "editor", 18]);
   });
 
   it("multiple top-level conditions are joined with AND", () => {
@@ -249,11 +244,10 @@ describe("SQLite compileSelect: WHERE and/or", () => {
     });
     const result = dialect.compileSelect(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE "users"."role" = ? AND "users"."age" > ?',
     );
-    assert.deepEqual(result.params, ["admin", 18]);
+    expect(result.params).toEqual(["admin", 18]);
   });
 });
 
@@ -266,17 +260,17 @@ describe("SQLite compileSelect: ILIKE -> LIKE", () => {
     const node = makeSelect({ conditions: [ilike("name", "%alice%")] });
     const result = dialect.compileSelect(node);
 
-    assert.ok(!result.sql.includes("ILIKE"), `SQL must not contain ILIKE: ${result.sql}`);
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."name" LIKE ?');
-    assert.deepEqual(result.params, ["%alice%"]);
+    expect(!result.sql.includes("ILIKE")).toBeTruthy();
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."name" LIKE ?');
+    expect(result.params).toEqual(["%alice%"]);
   });
 
   it("compiles ilike on email column to LIKE with ? placeholder", () => {
     const node = makeSelect({ conditions: [ilike("email", "%@example.com")] });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."email" LIKE ?');
-    assert.deepEqual(result.params, ["%@example.com"]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."email" LIKE ?');
+    expect(result.params).toEqual(["%@example.com"]);
   });
 });
 
@@ -289,8 +283,8 @@ describe("SQLite compileSelect: inArray empty", () => {
     const node = makeSelect({ conditions: [inArray("role", [])] });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE FALSE');
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE FALSE');
+    expect(result.params).toEqual([]);
   });
 });
 
@@ -303,16 +297,16 @@ describe("SQLite compileSelect: inArray non-empty", () => {
     const node = makeSelect({ conditions: [inArray("role", ["admin", "editor"])] });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."role" IN (?, ?)');
-    assert.deepEqual(result.params, ["admin", "editor"]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."role" IN (?, ?)');
+    expect(result.params).toEqual(["admin", "editor"]);
   });
 
   it("produces IN (?, ?, ?) for three values", () => {
     const node = makeSelect({ conditions: [inArray("role", ["admin", "editor", "viewer"])] });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."role" IN (?, ?, ?)');
-    assert.deepEqual(result.params, ["admin", "editor", "viewer"]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."role" IN (?, ?, ?)');
+    expect(result.params).toEqual(["admin", "editor", "viewer"]);
   });
 });
 
@@ -325,23 +319,23 @@ describe("SQLite compileSelect: ORDER BY + LIMIT + OFFSET", () => {
     const node = makeSelect({ orderBy: [{ column: "name", direction: "asc" }] });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" ORDER BY "users"."name" ASC');
+    expect(result.sql).toBe('SELECT "users".* FROM "users" ORDER BY "users"."name" ASC');
   });
 
   it("adds LIMIT as a ? parameter (not interpolated)", () => {
     const node = makeSelect({ limit: 10 });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" LIMIT ?');
-    assert.deepEqual(result.params, [10]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" LIMIT ?');
+    expect(result.params).toEqual([10]);
   });
 
   it("adds OFFSET as a ? parameter (not interpolated)", () => {
     const node = makeSelect({ offset: 20 });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" OFFSET ?');
-    assert.deepEqual(result.params, [20]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" OFFSET ?');
+    expect(result.params).toEqual([20]);
   });
 
   it("produces ORDER BY ASC, LIMIT ?, OFFSET ? together", () => {
@@ -352,11 +346,10 @@ describe("SQLite compileSelect: ORDER BY + LIMIT + OFFSET", () => {
     });
     const result = dialect.compileSelect(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" ORDER BY "users"."name" ASC LIMIT ? OFFSET ?',
     );
-    assert.deepEqual(result.params, [10, 20]);
+    expect(result.params).toEqual([10, 20]);
   });
 });
 
@@ -369,8 +362,8 @@ describe("SQLite compileSelect: soft delete filter", () => {
     const node = makeSelect({ softDeleteFilter: true });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."deleted_at" IS NULL');
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."deleted_at" IS NULL');
+    expect(result.params).toEqual([]);
   });
 
   it("adds soft delete filter after existing conditions joined with AND", () => {
@@ -380,11 +373,10 @@ describe("SQLite compileSelect: soft delete filter", () => {
     });
     const result = dialect.compileSelect(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE "users"."role" = ? AND "users"."deleted_at" IS NULL',
     );
-    assert.deepEqual(result.params, ["admin"]);
+    expect(result.params).toEqual(["admin"]);
   });
 });
 
@@ -397,8 +389,8 @@ describe("SQLite compileSelect: isNull", () => {
     const node = makeSelect({ conditions: [isNull("deletedAt")] });
     const result = dialect.compileSelect(node);
 
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."deleted_at" IS NULL');
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."deleted_at" IS NULL');
+    expect(result.params).toEqual([]);
   });
 });
 
@@ -416,19 +408,18 @@ describe("SQLite compileSelect: parameter ordering", () => {
     });
     const result = dialect.compileSelect(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE "users"."role" = ? AND "users"."age" > ? LIMIT ? OFFSET ?',
     );
     // Params must be in the same order as the ? placeholders appear in the SQL.
-    assert.deepEqual(result.params, ["admin", 18, 5, 0]);
+    expect(result.params).toEqual(["admin", 18, 5, 0]);
   });
 
   it("inArray values appear in order in params", () => {
     const node = makeSelect({ conditions: [inArray("role", ["a", "b", "c"])] });
     const result = dialect.compileSelect(node);
 
-    assert.deepEqual(result.params, ["a", "b", "c"]);
+    expect(result.params).toEqual(["a", "b", "c"]);
   });
 
   it("nested and/or params are in left-to-right traversal order", () => {
@@ -438,7 +429,7 @@ describe("SQLite compileSelect: parameter ordering", () => {
     const result = dialect.compileSelect(node);
 
     // Params should be: "admin", "Alice", "Bob" — left to right depth-first.
-    assert.deepEqual(result.params, ["admin", "Alice", "Bob"]);
+    expect(result.params).toEqual(["admin", "Alice", "Bob"]);
   });
 });
 
@@ -450,20 +441,20 @@ describe("SQLite resolveDialect('sqlite')", () => {
   it("returns Ok for the pre-registered 'sqlite' dialect", () => {
     const result = resolveDialect("sqlite");
 
-    assert.equal(result.tag, "Ok");
-    assert.equal(result.tag === "Ok" && result.value.name, "sqlite");
+    expect(result.tag).toBe("Ok");
+    expect(result.tag === "Ok" && result.value.name).toBe("sqlite");
   });
 
   it("resolved dialect compiles ? placeholders not $N", () => {
     const result = resolveDialect("sqlite");
-    assert.equal(result.tag, "Ok");
+    expect(result.tag).toBe("Ok");
 
     if (result.tag === "Ok") {
       const node = makeSelect({ conditions: [eq("role", "admin")] });
       const compiled = result.value.compileSelect(node);
 
-      assert.ok(compiled.sql.includes("?"), "Should use ? placeholder");
-      assert.ok(!compiled.sql.includes("$"), "Should not use $ placeholder");
+      expect(compiled.sql.includes("?")).toBeTruthy();
+      expect(!compiled.sql.includes("$")).toBeTruthy();
     }
   });
 });

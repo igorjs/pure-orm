@@ -2,9 +2,8 @@
  * Tests for window function expressions and lazy relation loading.
  */
 
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
@@ -59,31 +58,31 @@ describe("rowNumber()", () => {
   it("creates a Window expression with fn ROW_NUMBER", () => {
     const expr = rowNumber();
 
-    assert.equal(expr.tag, "Window");
-    assert.equal(expr.fn, "ROW_NUMBER");
-    assert.deepEqual(expr.partitions, []);
-    assert.deepEqual(expr.orders, []);
-    assert.equal(expr.alias, null);
+    expect(expr.tag).toBe("Window");
+    expect(expr.fn).toBe("ROW_NUMBER");
+    expect(expr.partitions).toEqual([]);
+    expect(expr.orders).toEqual([]);
+    expect(expr.alias).toBe(null);
   });
 
   it(".partitionBy() adds partition columns", () => {
     const expr = rowNumber().partitionBy("authorId");
 
-    assert.deepEqual(expr.partitions, ["authorId"]);
+    expect(expr.partitions).toEqual(["authorId"]);
   });
 
   it(".orderBy() adds order clause", () => {
     const expr = rowNumber().orderBy("createdAt", "desc");
 
-    assert.equal(expr.orders.length, 1);
-    assert.equal(expr.orders[0].column, "createdAt");
-    assert.equal(expr.orders[0].direction, "desc");
+    expect(expr.orders.length).toBe(1);
+    expect(expr.orders[0].column).toBe("createdAt");
+    expect(expr.orders[0].direction).toBe("desc");
   });
 
   it(".as() sets alias", () => {
     const expr = rowNumber().as("rn");
 
-    assert.equal(expr.alias, "rn");
+    expect(expr.alias).toBe("rn");
   });
 
   it("methods chain immutably", () => {
@@ -92,29 +91,29 @@ describe("rowNumber()", () => {
     const withOrder = withPartition.orderBy("createdAt", "desc");
     const withAlias = withOrder.as("rank");
 
-    assert.deepEqual(base.partitions, []);
-    assert.deepEqual(withPartition.orders, []);
-    assert.equal(withOrder.alias, null);
-    assert.equal(withAlias.alias, "rank");
+    expect(base.partitions).toEqual([]);
+    expect(withPartition.orders).toEqual([]);
+    expect(withOrder.alias).toBe(null);
+    expect(withAlias.alias).toBe("rank");
   });
 
   it("is frozen at every step", () => {
-    assert.ok(Object.isFrozen(rowNumber()));
-    assert.ok(Object.isFrozen(rowNumber().partitionBy("x")));
-    assert.ok(Object.isFrozen(rowNumber().orderBy("x", "asc")));
-    assert.ok(Object.isFrozen(rowNumber().as("y")));
+    expect(Object.isFrozen(rowNumber())).toBeTruthy();
+    expect(Object.isFrozen(rowNumber().partitionBy("x"))).toBeTruthy();
+    expect(Object.isFrozen(rowNumber().orderBy("x", "asc"))).toBeTruthy();
+    expect(Object.isFrozen(rowNumber().as("y"))).toBeTruthy();
   });
 });
 
 describe("rank()", () => {
   it("creates RANK window function", () => {
-    assert.equal(rank().fn, "RANK");
+    expect(rank().fn).toBe("RANK");
   });
 });
 
 describe("denseRank()", () => {
   it("creates DENSE_RANK window function", () => {
-    assert.equal(denseRank().fn, "DENSE_RANK");
+    expect(denseRank().fn).toBe("DENSE_RANK");
   });
 });
 
@@ -127,8 +126,8 @@ describe("PostgreSQL window function compilation", () => {
     const node = select(rowNumber().as("rn"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("ROW_NUMBER() OVER ()"));
-    assert.ok(result.sql.includes('AS "rn"'));
+    expect(result.sql.includes("ROW_NUMBER() OVER ()")).toBeTruthy();
+    expect(result.sql.includes('AS "rn"')).toBeTruthy();
   });
 
   it("compiles PARTITION BY", () => {
@@ -137,31 +136,31 @@ describe("PostgreSQL window function compilation", () => {
     )(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('PARTITION BY "posts"."author_id"'));
-    assert.ok(result.sql.includes('ORDER BY "posts"."created_at" DESC'));
-    assert.ok(result.sql.includes('AS "rank"'));
+    expect(result.sql.includes('PARTITION BY "posts"."author_id"')).toBeTruthy();
+    expect(result.sql.includes('ORDER BY "posts"."created_at" DESC')).toBeTruthy();
+    expect(result.sql.includes('AS "rank"')).toBeTruthy();
   });
 
   it("compiles multiple partition columns", () => {
     const node = select(rowNumber().partitionBy("authorId", "title").as("rn"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('"author_id"'));
-    assert.ok(result.sql.includes('"title"'));
+    expect(result.sql.includes('"author_id"')).toBeTruthy();
+    expect(result.sql.includes('"title"')).toBeTruthy();
   });
 
   it("compiles RANK()", () => {
     const node = select(rank().orderBy("views", "desc").as("r"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("RANK() OVER"));
+    expect(result.sql.includes("RANK() OVER")).toBeTruthy();
   });
 
   it("compiles DENSE_RANK()", () => {
     const node = select(denseRank().orderBy("views", "desc").as("dr"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("DENSE_RANK() OVER"));
+    expect(result.sql.includes("DENSE_RANK() OVER")).toBeTruthy();
   });
 
   it("mixes window functions with regular columns", () => {
@@ -172,9 +171,9 @@ describe("PostgreSQL window function compilation", () => {
     )(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('"posts"."author_id"'));
-    assert.ok(result.sql.includes('"posts"."title"'));
-    assert.ok(result.sql.includes("ROW_NUMBER()"));
+    expect(result.sql.includes('"posts"."author_id"')).toBeTruthy();
+    expect(result.sql.includes('"posts"."title"')).toBeTruthy();
+    expect(result.sql.includes("ROW_NUMBER()")).toBeTruthy();
   });
 });
 
@@ -191,7 +190,7 @@ describe("SQLite window function compilation", () => {
     const pg = pgDialect.compileSelect(node);
     const sqlite = sqliteDialect.compileSelect(node);
 
-    assert.equal(pg.sql, sqlite.sql);
+    expect(pg.sql).toBe(sqlite.sql);
   });
 });
 
@@ -204,13 +203,13 @@ describe("lazy()", () => {
     const record = { id: "u-1", name: "Alice" };
     const node = lazy(User, record, "posts");
 
-    assert.equal(node.tag, "Select");
-    assert.equal(node.model.name, "posts");
-    assert.equal(node.conditions.length, 1);
-    assert.equal(node.conditions[0].tag, "Eq");
+    expect(node.tag).toBe("Select");
+    expect(node.model.name).toBe("posts");
+    expect(node.conditions.length).toBe(1);
+    expect(node.conditions[0].tag).toBe("Eq");
     if (node.conditions[0].tag === "Eq") {
-      assert.equal(node.conditions[0].column, "authorId");
-      assert.equal(node.conditions[0].value, "u-1");
+      expect(node.conditions[0].column).toBe("authorId");
+      expect(node.conditions[0].value).toBe("u-1");
     }
   });
 
@@ -218,11 +217,11 @@ describe("lazy()", () => {
     const record = { id: "u-1", name: "Alice" };
     const node = lazy(User, record, "profile");
 
-    assert.equal(node.model.name, "profiles");
-    assert.equal(node.conditions.length, 1);
+    expect(node.model.name).toBe("profiles");
+    expect(node.conditions.length).toBe(1);
     if (node.conditions[0].tag === "Eq") {
-      assert.equal(node.conditions[0].column, "userId");
-      assert.equal(node.conditions[0].value, "u-1");
+      expect(node.conditions[0].column).toBe("userId");
+      expect(node.conditions[0].value).toBe("u-1");
     }
   });
 
@@ -230,23 +229,23 @@ describe("lazy()", () => {
     const record = { id: "p-1", title: "Hello", authorId: "u-1" };
     const node = lazy(Post, record, "author");
 
-    assert.equal(node.model.name, "users");
+    expect(node.model.name).toBe("users");
     if (node.conditions[0].tag === "Eq") {
-      assert.equal(node.conditions[0].column, "id");
-      assert.equal(node.conditions[0].value, "u-1");
+      expect(node.conditions[0].column).toBe("id");
+      expect(node.conditions[0].value).toBe("u-1");
     }
   });
 
   it("throws for unknown relation", () => {
-    assert.throws(() => lazy(User, { id: "u-1" }, "nonexistent"), { message: /not found/ });
+    expect(() => lazy(User, { id: "u-1" }, "nonexistent")).toThrow();
   });
 
   it("compiles to correct SQL", () => {
     const node = lazy(User, { id: "u-1", name: "Alice" }, "posts");
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('"posts"'));
-    assert.ok(result.sql.includes('"author_id" = $1'));
-    assert.deepEqual(result.params, ["u-1"]);
+    expect(result.sql.includes('"posts"')).toBeTruthy();
+    expect(result.sql.includes('"author_id" = $1')).toBeTruthy();
+    expect(result.params).toEqual(["u-1"]);
   });
 });

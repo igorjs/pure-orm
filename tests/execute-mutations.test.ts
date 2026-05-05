@@ -7,10 +7,8 @@
  * simulate both success and failure scenarios.
  */
 
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
-
 import { Schema, Task } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 
 import type { DatabaseClient, RawConnection } from "../src/connection/types.ts";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
@@ -118,17 +116,17 @@ describe("execute(): InsertNode with RETURNING", () => {
     )(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 1);
+      expect(result.value.length).toBe(1);
       const first = result.value.first();
-      assert.equal(first.isSome, true);
+      expect(first.isSome).toBe(true);
       if (first.isSome) {
         const mutable = first.value.toMutable() as Record<string, unknown>;
-        assert.equal(mutable["id"], "u1");
-        assert.equal(mutable["name"], "Alice");
+        expect(mutable["id"]).toBe("u1");
+        expect(mutable["name"]).toBe("Alice");
         // snake_case -> camelCase via model metadata
-        assert.equal(mutable["createdAt"], "2024-01-01");
+        expect(mutable["createdAt"]).toBe("2024-01-01");
       }
     }
   });
@@ -143,9 +141,9 @@ describe("execute(): InsertNode with RETURNING", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 0);
+      expect(result.value.length).toBe(0);
     }
   });
 
@@ -165,9 +163,9 @@ describe("execute(): InsertNode with RETURNING", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 1);
+      expect(result.value.length).toBe(1);
     }
   });
 
@@ -190,9 +188,9 @@ describe("execute(): InsertNode with RETURNING", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 2);
+      expect(result.value.length).toBe(2);
     }
   });
 });
@@ -215,14 +213,14 @@ describe("execute(): UpdateNode", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 1);
+      expect(result.value.length).toBe(1);
       const first = result.value.first();
-      assert.equal(first.isSome, true);
+      expect(first.isSome).toBe(true);
       if (first.isSome) {
         const mutable = first.value.toMutable() as Record<string, unknown>;
-        assert.equal(mutable["name"], "Updated");
+        expect(mutable["name"]).toBe("Updated");
       }
     }
   });
@@ -237,9 +235,9 @@ describe("execute(): UpdateNode", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 0);
+      expect(result.value.length).toBe(0);
     }
   });
 });
@@ -262,9 +260,9 @@ describe("execute(): DeleteNode", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 1);
+      expect(result.value.length).toBe(1);
     }
   });
 
@@ -279,15 +277,15 @@ describe("execute(): DeleteNode", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 1);
+      expect(result.value.length).toBe(1);
       const first = result.value.first();
-      assert.equal(first.isSome, true);
+      expect(first.isSome).toBe(true);
       if (first.isSome) {
         const mutable = first.value.toMutable() as Record<string, unknown>;
         // snake_case key not in model → snakeToCamel fallback
-        assert.equal(mutable["authorId"], "u1");
+        expect(mutable["authorId"]).toBe("u1");
       }
     }
   });
@@ -302,9 +300,9 @@ describe("execute(): DeleteNode", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 0);
+      expect(result.value.length).toBe(0);
     }
   });
 });
@@ -329,14 +327,14 @@ describe("execute(): RawNode", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 1);
+      expect(result.value.length).toBe(1);
       const first = result.value.first();
-      assert.equal(first.isSome, true);
+      expect(first.isSome).toBe(true);
       if (first.isSome) {
         const mutable = first.value.toMutable() as Record<string, unknown>;
-        assert.equal(mutable["count"], "42");
+        expect(mutable["count"]).toBe("42");
       }
     }
   });
@@ -356,15 +354,15 @@ describe("execute(): RawNode", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
       const first = result.value.first();
-      assert.equal(first.isSome, true);
+      expect(first.isSome).toBe(true);
       if (first.isSome) {
         const mutable = first.value.toMutable() as Record<string, unknown>;
-        assert.equal(mutable["userId"], "u1");
-        assert.equal(mutable["createdAt"], "2024-01-01");
-        assert.equal(mutable["postCount"], 5);
+        expect(mutable["userId"]).toBe("u1");
+        expect(mutable["createdAt"]).toBe("2024-01-01");
+        expect(mutable["postCount"]).toBe(5);
       }
     }
   });
@@ -379,9 +377,9 @@ describe("execute(): RawNode", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.length, 0);
+      expect(result.value.length).toBe(0);
     }
   });
 });
@@ -406,15 +404,15 @@ describe("findOne(): InsertNode with RETURNING", () => {
     )(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
       const opt = result.value;
-      assert.equal(opt.isSome, true);
+      expect(opt.isSome).toBe(true);
       if (opt.isSome) {
         const mutable = opt.value.toMutable() as Record<string, unknown>;
-        assert.equal(mutable["id"], "u1");
-        assert.equal(mutable["name"], "Alice");
-        assert.equal(mutable["createdAt"], "2024-01-01");
+        expect(mutable["id"]).toBe("u1");
+        expect(mutable["name"]).toBe("Alice");
+        expect(mutable["createdAt"]).toBe("2024-01-01");
       }
     }
   });
@@ -429,9 +427,9 @@ describe("findOne(): InsertNode with RETURNING", () => {
     const result = await findOne(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.isNone, true);
+      expect(result.value.isNone).toBe(true);
     }
   });
 
@@ -448,13 +446,13 @@ describe("findOne(): InsertNode with RETURNING", () => {
     const result = await findOne(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
       const opt = result.value;
-      assert.equal(opt.isSome, true);
+      expect(opt.isSome).toBe(true);
       if (opt.isSome) {
         const mutable = opt.value.toMutable() as Record<string, unknown>;
-        assert.equal(mutable["name"], "Updated");
+        expect(mutable["name"]).toBe("Updated");
       }
     }
   });
@@ -469,9 +467,9 @@ describe("findOne(): InsertNode with RETURNING", () => {
     const result = await findOne(db)(node).run();
 
     // Assert
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.isNone, true);
+      expect(result.value.isNone).toBe(true);
     }
   });
 });
@@ -489,9 +487,9 @@ describe("compile(): InsertNode via compile()", () => {
     const result = compile(node);
 
     // Assert
-    assert.ok(result.sql.startsWith("INSERT INTO"));
-    assert.ok(result.sql.includes('"users"'));
-    assert.ok(result.params.length > 0);
+    expect(result.sql.startsWith("INSERT INTO")).toBeTruthy();
+    expect(result.sql.includes('"users"')).toBeTruthy();
+    expect(result.params.length > 0).toBeTruthy();
   });
 
   it("compiles an InsertNode with RETURNING *", () => {
@@ -502,7 +500,7 @@ describe("compile(): InsertNode via compile()", () => {
     const result = compile(node);
 
     // Assert
-    assert.ok(result.sql.includes("RETURNING"));
+    expect(result.sql.includes("RETURNING")).toBeTruthy();
   });
 });
 
@@ -515,10 +513,10 @@ describe("compile(): UpdateNode via compile()", () => {
     const result = compile(node);
 
     // Assert
-    assert.ok(result.sql.startsWith("UPDATE"));
-    assert.ok(result.sql.includes('"users"'));
-    assert.ok(result.sql.includes("WHERE"));
-    assert.ok(result.params.length > 0);
+    expect(result.sql.startsWith("UPDATE")).toBeTruthy();
+    expect(result.sql.includes('"users"')).toBeTruthy();
+    expect(result.sql.includes("WHERE")).toBeTruthy();
+    expect(result.params.length > 0).toBeTruthy();
   });
 });
 
@@ -531,8 +529,8 @@ describe("compile(): DeleteNode via compile()", () => {
     const result = compile(node);
 
     // Assert — soft delete emits an UPDATE, not a DELETE
-    assert.ok(result.sql.startsWith("UPDATE"));
-    assert.ok(result.sql.includes('"users"'));
+    expect(result.sql.startsWith("UPDATE")).toBeTruthy();
+    expect(result.sql.includes('"users"')).toBeTruthy();
   });
 
   it("compiles a hard-delete node to a DELETE SQL", () => {
@@ -543,8 +541,8 @@ describe("compile(): DeleteNode via compile()", () => {
     const result = compile(node);
 
     // Assert
-    assert.ok(result.sql.startsWith("DELETE FROM"));
-    assert.ok(result.sql.includes('"posts"'));
+    expect(result.sql.startsWith("DELETE FROM")).toBeTruthy();
+    expect(result.sql.includes('"posts"')).toBeTruthy();
   });
 });
 
@@ -557,8 +555,8 @@ describe("compile(): RawNode passes through", () => {
     const result = compile(node);
 
     // Assert
-    assert.equal(result.sql, "SELECT 1 + $1 AS val");
-    assert.deepEqual(result.params, [41]);
+    expect(result.sql).toBe("SELECT 1 + $1 AS val");
+    expect(result.params).toEqual([41]);
   });
 });
 
@@ -577,7 +575,7 @@ describe("Connection lifecycle: mutations", () => {
     await execute(db)(node).run();
 
     // Assert
-    assert.equal(released.value, true);
+    expect(released.value).toBe(true);
   });
 
   it("releases the connection after an InsertNode query throws", async () => {
@@ -590,8 +588,8 @@ describe("Connection lifecycle: mutations", () => {
     const result = await execute(db)(node).run();
 
     // Assert: Err returned AND connection released
-    assert.equal(result.isErr, true);
-    assert.equal(released.value, true);
+    expect(result.isErr).toBe(true);
+    expect(released.value).toBe(true);
   });
 
   it("releases the connection after a successful UpdateNode", async () => {
@@ -604,7 +602,7 @@ describe("Connection lifecycle: mutations", () => {
     await execute(db)(node).run();
 
     // Assert
-    assert.equal(released.value, true);
+    expect(released.value).toBe(true);
   });
 
   it("releases the connection after a successful DeleteNode", async () => {
@@ -617,7 +615,7 @@ describe("Connection lifecycle: mutations", () => {
     await execute(db)(node).run();
 
     // Assert
-    assert.equal(released.value, true);
+    expect(released.value).toBe(true);
   });
 
   it("releases the connection after a successful RawNode", async () => {
@@ -630,7 +628,7 @@ describe("Connection lifecycle: mutations", () => {
     await execute(db)(node).run();
 
     // Assert
-    assert.equal(released.value, true);
+    expect(released.value).toBe(true);
   });
 
   it("releases the connection after a RawNode query throws", async () => {
@@ -643,7 +641,7 @@ describe("Connection lifecycle: mutations", () => {
     const result = await execute(db)(node).run();
 
     // Assert
-    assert.equal(result.isErr, true);
-    assert.equal(released.value, true);
+    expect(result.isErr).toBe(true);
+    expect(released.value).toBe(true);
   });
 });

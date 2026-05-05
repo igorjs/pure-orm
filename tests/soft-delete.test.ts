@@ -7,9 +7,8 @@
  * both PostgreSQL and SQLite dialects.
  */
 
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
@@ -57,29 +56,29 @@ describe("deletedAt column injection", () => {
   it("adds deletedAt column when softDelete is true", () => {
     const col = User.$columns.find(c => c.name === "deletedAt");
 
-    assert.ok(col !== undefined, "Should have a deletedAt column");
-    assert.equal(col.columnName, "deleted_at");
+    expect(col !== undefined).toBeTruthy();
+    expect(col.columnName).toBe("deleted_at");
   });
 
   it("does NOT add deletedAt when softDelete is not set", () => {
     const col = HardUser.$columns.find(c => c.name === "deletedAt");
 
-    assert.equal(col, undefined);
+    expect(col).toBe(undefined);
   });
 
   it("deletedAt comes after timestamp columns when both are enabled", () => {
     const names = TimestampedUser.$columns.map(c => c.name);
 
-    assert.ok(names.includes("createdAt"), "Should have createdAt");
-    assert.ok(names.includes("updatedAt"), "Should have updatedAt");
-    assert.ok(names.includes("deletedAt"), "Should have deletedAt");
+    expect(names.includes("createdAt")).toBeTruthy();
+    expect(names.includes("updatedAt")).toBeTruthy();
+    expect(names.includes("deletedAt")).toBeTruthy();
 
     const createdIdx = names.indexOf("createdAt");
     const updatedIdx = names.indexOf("updatedAt");
     const deletedIdx = names.indexOf("deletedAt");
 
-    assert.ok(createdIdx < deletedIdx, "deletedAt should come after createdAt");
-    assert.ok(updatedIdx < deletedIdx, "deletedAt should come after updatedAt");
+    expect(createdIdx < deletedIdx).toBeTruthy();
+    expect(updatedIdx < deletedIdx).toBeTruthy();
   });
 });
 
@@ -90,58 +89,58 @@ describe("deletedAt column injection", () => {
 describe("withDeleted()", () => {
   it("disables the soft-delete filter on SelectNode", () => {
     const base = from(User);
-    assert.equal(base.softDeleteFilter, true);
+    expect(base.softDeleteFilter).toBe(true);
 
     const node = withDeleted()(base);
-    assert.equal(node.softDeleteFilter, false);
+    expect(node.softDeleteFilter).toBe(false);
   });
 
   it("does not mutate the input node", () => {
     const base = from(User);
     withDeleted()(base);
 
-    assert.equal(base.softDeleteFilter, true);
+    expect(base.softDeleteFilter).toBe(true);
   });
 
   it("returns a frozen SelectNode", () => {
     const node = withDeleted()(from(User));
 
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("preserves all other fields", () => {
     const base = from(User);
     const node = withDeleted()(base);
 
-    assert.equal(node.tag, base.tag);
-    assert.equal(node.model.name, base.model.name);
-    assert.equal(node.columns, base.columns);
-    assert.deepEqual(node.conditions, base.conditions);
-    assert.deepEqual(node.orderBy, base.orderBy);
+    expect(node.tag).toBe(base.tag);
+    expect(node.model.name).toBe(base.model.name);
+    expect(node.columns).toBe(base.columns);
+    expect(node.conditions).toEqual(base.conditions);
+    expect(node.orderBy).toEqual(base.orderBy);
   });
 
   it("PostgreSQL: removes the IS NULL filter from compiled SQL", () => {
     const withFilter = pgDialect.compileSelect(from(User));
     const withoutFilter = pgDialect.compileSelect(withDeleted()(from(User)));
 
-    assert.ok(withFilter.sql.includes("IS NULL"), "Default should have IS NULL");
-    assert.ok(!withoutFilter.sql.includes("IS NULL"), "withDeleted should remove IS NULL");
+    expect(withFilter.sql.includes("IS NULL")).toBeTruthy();
+    expect(!withoutFilter.sql.includes("IS NULL")).toBeTruthy();
   });
 
   it("SQLite: removes the IS NULL filter from compiled SQL", () => {
     const withFilter = sqliteDialect.compileSelect(from(User));
     const withoutFilter = sqliteDialect.compileSelect(withDeleted()(from(User)));
 
-    assert.ok(withFilter.sql.includes("IS NULL"));
-    assert.ok(!withoutFilter.sql.includes("IS NULL"));
+    expect(withFilter.sql.includes("IS NULL")).toBeTruthy();
+    expect(!withoutFilter.sql.includes("IS NULL")).toBeTruthy();
   });
 
   it("is idempotent (calling twice has same effect)", () => {
     const once = withDeleted()(from(User));
     const twice = withDeleted()(once);
 
-    assert.equal(once.softDeleteFilter, false);
-    assert.equal(twice.softDeleteFilter, false);
+    expect(once.softDeleteFilter).toBe(false);
+    expect(twice.softDeleteFilter).toBe(false);
   });
 });
 
@@ -153,18 +152,18 @@ describe("onlyDeleted()", () => {
   it("disables soft-delete filter and adds IS NOT NULL condition", () => {
     const node = onlyDeleted()(from(User));
 
-    assert.equal(node.softDeleteFilter, false);
-    assert.equal(node.conditions.length, 1);
-    assert.equal(node.conditions[0].tag, "IsNotNull");
+    expect(node.softDeleteFilter).toBe(false);
+    expect(node.conditions.length).toBe(1);
+    expect(node.conditions[0].tag).toBe("IsNotNull");
   });
 
   it("condition targets the deletedAt column", () => {
     const node = onlyDeleted()(from(User));
     const condition = node.conditions[0];
 
-    assert.equal(condition.tag, "IsNotNull");
+    expect(condition.tag).toBe("IsNotNull");
     if (condition.tag === "IsNotNull") {
-      assert.equal(condition.column, "deletedAt");
+      expect(condition.column).toBe("deletedAt");
     }
   });
 
@@ -172,37 +171,37 @@ describe("onlyDeleted()", () => {
     const base = from(User);
     onlyDeleted()(base);
 
-    assert.equal(base.softDeleteFilter, true);
-    assert.equal(base.conditions.length, 0);
+    expect(base.softDeleteFilter).toBe(true);
+    expect(base.conditions.length).toBe(0);
   });
 
   it("returns a frozen SelectNode", () => {
     const node = onlyDeleted()(from(User));
 
-    assert.ok(Object.isFrozen(node));
-    assert.ok(Object.isFrozen(node.conditions));
+    expect(Object.isFrozen(node)).toBeTruthy();
+    expect(Object.isFrozen(node.conditions)).toBeTruthy();
   });
 
   it("PostgreSQL: compiles to WHERE deleted_at IS NOT NULL", () => {
     const result = pgDialect.compileSelect(onlyDeleted()(from(User)));
 
-    assert.ok(result.sql.includes('"deleted_at" IS NOT NULL'));
-    assert.ok(!result.sql.includes("IS NULL "), "Should not have IS NULL (only IS NOT NULL)");
+    expect(result.sql.includes('"deleted_at" IS NOT NULL')).toBeTruthy();
+    expect(!result.sql.includes("IS NULL ")).toBeTruthy();
   });
 
   it("SQLite: compiles to WHERE deleted_at IS NOT NULL", () => {
     const result = sqliteDialect.compileSelect(onlyDeleted()(from(User)));
 
-    assert.ok(result.sql.includes('"deleted_at" IS NOT NULL'));
+    expect(result.sql.includes('"deleted_at" IS NOT NULL')).toBeTruthy();
   });
 
   it("composes with where() for additional filtering", () => {
     const node = where(eq("name", "Alice"))(onlyDeleted()(from(User)));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("IS NOT NULL"));
-    assert.ok(result.sql.includes('"name" = $1'));
-    assert.deepEqual(result.params, ["Alice"]);
+    expect(result.sql.includes("IS NOT NULL")).toBeTruthy();
+    expect(result.sql.includes('"name" = $1')).toBeTruthy();
+    expect(result.params).toEqual(["Alice"]);
   });
 });
 
@@ -214,70 +213,70 @@ describe("restore()", () => {
   it("creates an UpdateNode with tag 'Update'", () => {
     const node = restore(User);
 
-    assert.equal(node.tag, "Update");
+    expect(node.tag).toBe("Update");
   });
 
   it("sets deletedAt to null in the values", () => {
     const node = restore(User);
 
-    assert.equal(node.values.deletedAt, null);
+    expect(node.values.deletedAt).toBe(null);
   });
 
   it("includes IS NOT NULL condition to target only deleted rows", () => {
     const node = restore(User);
 
-    assert.equal(node.conditions.length, 1);
-    assert.equal(node.conditions[0].tag, "IsNotNull");
+    expect(node.conditions.length).toBe(1);
+    expect(node.conditions[0].tag).toBe("IsNotNull");
     if (node.conditions[0].tag === "IsNotNull") {
-      assert.equal(node.conditions[0].column, "deletedAt");
+      expect(node.conditions[0].column).toBe("deletedAt");
     }
   });
 
   it("softDeleteFilter is false (targets deleted rows, not non-deleted)", () => {
     const node = restore(User);
 
-    assert.equal(node.softDeleteFilter, false);
+    expect(node.softDeleteFilter).toBe(false);
   });
 
   it("returning is null by default", () => {
     const node = restore(User);
 
-    assert.equal(node.returning, null);
+    expect(node.returning).toBe(null);
   });
 
   it("is frozen", () => {
     const node = restore(User);
 
-    assert.ok(Object.isFrozen(node));
-    assert.ok(Object.isFrozen(node.values));
-    assert.ok(Object.isFrozen(node.conditions));
+    expect(Object.isFrozen(node)).toBeTruthy();
+    expect(Object.isFrozen(node.values)).toBeTruthy();
+    expect(Object.isFrozen(node.conditions)).toBeTruthy();
   });
 
   it("composes with where() for specific row targeting", () => {
     const node = where(eq("id", "abc"))(restore(User));
 
-    assert.equal(node.conditions.length, 2);
-    assert.equal(node.conditions[0].tag, "IsNotNull");
-    assert.equal(node.conditions[1].tag, "Eq");
+    expect(node.conditions.length).toBe(2);
+    expect(node.conditions[0].tag).toBe("IsNotNull");
+    expect(node.conditions[1].tag).toBe("Eq");
   });
 
   it("PostgreSQL: compiles to UPDATE SET deleted_at = NULL with IS NOT NULL", () => {
     const node = where(eq("id", "user-1"))(restore(User));
     const result = pgDialect.compileUpdate(node);
 
-    assert.ok(result.sql.includes('SET "deleted_at" = $1'));
-    assert.ok(result.sql.includes('"deleted_at" IS NOT NULL'));
-    assert.ok(result.sql.includes('"id" = $2'));
-    assert.deepEqual(result.params, [null, "user-1"]);
+    expect(result.sql.includes('SET "deleted_at" = $1')).toBeTruthy();
+    expect(result.sql.includes('"deleted_at" IS NOT NULL')).toBeTruthy();
+    expect(result.sql.includes('"id" = $2')).toBeTruthy();
+    expect(result.params).toEqual([null, "user-1"]);
   });
 
   it("SQLite: compiles to UPDATE SET deleted_at = ? with IS NOT NULL", () => {
     const node = where(eq("id", "user-1"))(restore(User));
     const result = sqliteDialect.compileUpdate(node);
 
-    assert.ok(result.sql.includes('SET "deleted_at" = ?'));
-    assert.ok(result.sql.includes('"deleted_at" IS NOT NULL'));
-    assert.deepEqual(result.params, [null, "user-1"]);
+    expect(result.sql.includes('SET "deleted_at" = ?')).toBeTruthy();
+    expect(result.sql.includes('"deleted_at" IS NOT NULL')).toBeTruthy();
+    expect(result.params).toEqual([null, "user-1"]);
   });
 });
 
@@ -289,24 +288,24 @@ describe("default soft-delete behaviour", () => {
   it("from() on soft-delete model sets softDeleteFilter: true", () => {
     const node = from(User);
 
-    assert.equal(node.softDeleteFilter, true);
+    expect(node.softDeleteFilter).toBe(true);
   });
 
   it("from() on non-soft-delete model sets softDeleteFilter: false", () => {
     const node = from(HardUser);
 
-    assert.equal(node.softDeleteFilter, false);
+    expect(node.softDeleteFilter).toBe(false);
   });
 
   it("PostgreSQL: auto-adds WHERE deleted_at IS NULL for soft-delete models", () => {
     const result = pgDialect.compileSelect(from(User));
 
-    assert.ok(result.sql.includes('"deleted_at" IS NULL'));
+    expect(result.sql.includes('"deleted_at" IS NULL')).toBeTruthy();
   });
 
   it("PostgreSQL: no filter for non-soft-delete models", () => {
     const result = pgDialect.compileSelect(from(HardUser));
 
-    assert.ok(!result.sql.includes("deleted_at"));
+    expect(!result.sql.includes("deleted_at")).toBeTruthy();
   });
 });

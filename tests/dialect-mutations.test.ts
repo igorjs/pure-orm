@@ -13,10 +13,8 @@
  *  - Cross-dialect differences (param style, NOW() vs datetime('now'))
  */
 
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
-
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
@@ -117,8 +115,8 @@ describe("PG compileInsert: single row", () => {
     const node = makeInsert();
     const result = pg.compileInsert(node);
 
-    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES ($1, $2)`);
-    assert.deepEqual(result.params, ["alice@example.com", "Alice"]);
+    expect(result.sql).toBe(`INSERT INTO "users" ("email", "name") VALUES ($1, $2)`);
+    expect(result.params).toEqual(["alice@example.com", "Alice"]);
   });
 });
 
@@ -132,8 +130,8 @@ describe("PG compileInsert: multiple rows", () => {
     });
     const result = pg.compileInsert(node);
 
-    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES ($1, $2), ($3, $4)`);
-    assert.deepEqual(result.params, ["a@example.com", "Alice", "b@example.com", "Bob"]);
+    expect(result.sql).toBe(`INSERT INTO "users" ("email", "name") VALUES ($1, $2), ($3, $4)`);
+    expect(result.params).toEqual(["a@example.com", "Alice", "b@example.com", "Bob"]);
   });
 });
 
@@ -142,8 +140,8 @@ describe("PG compileInsert: RETURNING *", () => {
     const node = makeInsert({ returning: "*" });
     const result = pg.compileInsert(node);
 
-    assert.ok(result.sql.endsWith("RETURNING *"), `unexpected SQL: ${result.sql}`);
-    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES ($1, $2) RETURNING *`);
+    expect(result.sql.endsWith("RETURNING *")).toBeTruthy();
+    expect(result.sql).toBe(`INSERT INTO "users" ("email", "name") VALUES ($1, $2) RETURNING *`);
   });
 });
 
@@ -152,8 +150,7 @@ describe("PG compileInsert: RETURNING specific columns", () => {
     const node = makeInsert({ returning: ["id", "createdAt"] });
     const result = pg.compileInsert(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `INSERT INTO "users" ("email", "name") VALUES ($1, $2) RETURNING "id", "created_at"`,
     );
   });
@@ -169,8 +166,7 @@ describe("PG compileInsert: ON CONFLICT DO NOTHING", () => {
     });
     const result = pg.compileInsert(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `INSERT INTO "users" ("email", "name") VALUES ($1, $2) ON CONFLICT ("email") DO NOTHING`,
     );
   });
@@ -186,8 +182,7 @@ describe("PG compileInsert: ON CONFLICT DO UPDATE SET", () => {
     });
     const result = pg.compileInsert(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `INSERT INTO "users" ("email", "name") VALUES ($1, $2) ON CONFLICT ("email") DO UPDATE SET "name" = EXCLUDED."name"`,
     );
   });
@@ -201,8 +196,8 @@ describe("PG compileInsert: camelCase column resolution", () => {
     });
     const result = pg.compileInsert(node);
 
-    assert.equal(result.sql, `INSERT INTO "posts" ("author_id", "title") VALUES ($1, $2)`);
-    assert.deepEqual(result.params, ["u1", "Hello"]);
+    expect(result.sql).toBe(`INSERT INTO "posts" ("author_id", "title") VALUES ($1, $2)`);
+    expect(result.params).toEqual(["u1", "Hello"]);
   });
 });
 
@@ -217,8 +212,7 @@ describe("PG compileInsert: ON CONFLICT + RETURNING together", () => {
     });
     const result = pg.compileInsert(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `INSERT INTO "users" ("email", "name") VALUES ($1, $2) ON CONFLICT ("email") DO NOTHING RETURNING *`,
     );
   });
@@ -233,8 +227,8 @@ describe("SQLite compileInsert: single row", () => {
     const node = makeInsert();
     const result = sqlite.compileInsert(node);
 
-    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES (?, ?)`);
-    assert.deepEqual(result.params, ["alice@example.com", "Alice"]);
+    expect(result.sql).toBe(`INSERT INTO "users" ("email", "name") VALUES (?, ?)`);
+    expect(result.params).toEqual(["alice@example.com", "Alice"]);
   });
 });
 
@@ -248,8 +242,8 @@ describe("SQLite compileInsert: multiple rows", () => {
     });
     const result = sqlite.compileInsert(node);
 
-    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES (?, ?), (?, ?)`);
-    assert.deepEqual(result.params, ["a@example.com", "Alice", "b@example.com", "Bob"]);
+    expect(result.sql).toBe(`INSERT INTO "users" ("email", "name") VALUES (?, ?), (?, ?)`);
+    expect(result.params).toEqual(["a@example.com", "Alice", "b@example.com", "Bob"]);
   });
 });
 
@@ -258,7 +252,7 @@ describe("SQLite compileInsert: RETURNING *", () => {
     const node = makeInsert({ returning: "*" });
     const result = sqlite.compileInsert(node);
 
-    assert.equal(result.sql, `INSERT INTO "users" ("email", "name") VALUES (?, ?) RETURNING *`);
+    expect(result.sql).toBe(`INSERT INTO "users" ("email", "name") VALUES (?, ?) RETURNING *`);
   });
 });
 
@@ -272,8 +266,7 @@ describe("SQLite compileInsert: ON CONFLICT DO NOTHING", () => {
     });
     const result = sqlite.compileInsert(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `INSERT INTO "users" ("email", "name") VALUES (?, ?) ON CONFLICT ("email") DO NOTHING`,
     );
   });
@@ -288,8 +281,8 @@ describe("PG compileUpdate: basic SET", () => {
     const node = makeUpdate({ values: Object.freeze({ name: "Alice" }) });
     const result = pg.compileUpdate(node);
 
-    assert.equal(result.sql, `UPDATE "users" SET "name" = $1`);
-    assert.deepEqual(result.params, ["Alice"]);
+    expect(result.sql).toBe(`UPDATE "users" SET "name" = $1`);
+    expect(result.params).toEqual(["Alice"]);
   });
 });
 
@@ -300,8 +293,8 @@ describe("PG compileUpdate: multiple SET columns", () => {
     });
     const result = pg.compileUpdate(node);
 
-    assert.equal(result.sql, `UPDATE "users" SET "name" = $1, "email" = $2`);
-    assert.deepEqual(result.params, ["Alice", "alice@example.com"]);
+    expect(result.sql).toBe(`UPDATE "users" SET "name" = $1, "email" = $2`);
+    expect(result.params).toEqual(["Alice", "alice@example.com"]);
   });
 });
 
@@ -313,8 +306,8 @@ describe("PG compileUpdate: with WHERE condition", () => {
     });
     const result = pg.compileUpdate(node);
 
-    assert.equal(result.sql, `UPDATE "users" SET "name" = $1 WHERE "users"."id" = $2`);
-    assert.deepEqual(result.params, ["Alice", "u1"]);
+    expect(result.sql).toBe(`UPDATE "users" SET "name" = $1 WHERE "users"."id" = $2`);
+    expect(result.params).toEqual(["Alice", "u1"]);
   });
 });
 
@@ -327,11 +320,10 @@ describe("PG compileUpdate: with softDeleteFilter", () => {
     });
     const result = pg.compileUpdate(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `UPDATE "users" SET "name" = $1 WHERE "users"."id" = $2 AND "users"."deleted_at" IS NULL`,
     );
-    assert.deepEqual(result.params, ["Alice", "u1"]);
+    expect(result.params).toEqual(["Alice", "u1"]);
   });
 });
 
@@ -343,7 +335,7 @@ describe("PG compileUpdate: softDeleteFilter only (no explicit conditions)", () 
     });
     const result = pg.compileUpdate(node);
 
-    assert.equal(result.sql, `UPDATE "users" SET "name" = $1 WHERE "users"."deleted_at" IS NULL`);
+    expect(result.sql).toBe(`UPDATE "users" SET "name" = $1 WHERE "users"."deleted_at" IS NULL`);
   });
 });
 
@@ -356,8 +348,7 @@ describe("PG compileUpdate: with RETURNING", () => {
     });
     const result = pg.compileUpdate(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `UPDATE "users" SET "name" = $1 WHERE "users"."id" = $2 RETURNING "id", "name"`,
     );
   });
@@ -374,8 +365,8 @@ describe("PG compileUpdate: camelCase column resolution in SET", () => {
     );
     const result = pg.compileUpdate(node);
 
-    assert.equal(result.sql, `UPDATE "posts" SET "author_id" = $1 WHERE "posts"."id" = $2`);
-    assert.deepEqual(result.params, ["u2", "p1"]);
+    expect(result.sql).toBe(`UPDATE "posts" SET "author_id" = $1 WHERE "posts"."id" = $2`);
+    expect(result.params).toEqual(["u2", "p1"]);
   });
 });
 
@@ -388,8 +379,8 @@ describe("SQLite compileUpdate: basic SET", () => {
     const node = makeUpdate({ values: Object.freeze({ name: "Alice" }) });
     const result = sqlite.compileUpdate(node);
 
-    assert.equal(result.sql, `UPDATE "users" SET "name" = ?`);
-    assert.deepEqual(result.params, ["Alice"]);
+    expect(result.sql).toBe(`UPDATE "users" SET "name" = ?`);
+    expect(result.params).toEqual(["Alice"]);
   });
 });
 
@@ -401,8 +392,8 @@ describe("SQLite compileUpdate: with WHERE condition", () => {
     });
     const result = sqlite.compileUpdate(node);
 
-    assert.equal(result.sql, `UPDATE "users" SET "name" = ? WHERE "users"."id" = ?`);
-    assert.deepEqual(result.params, ["Alice", "u1"]);
+    expect(result.sql).toBe(`UPDATE "users" SET "name" = ? WHERE "users"."id" = ?`);
+    expect(result.params).toEqual(["Alice", "u1"]);
   });
 });
 
@@ -414,7 +405,7 @@ describe("SQLite compileUpdate: with RETURNING", () => {
     });
     const result = sqlite.compileUpdate(node);
 
-    assert.equal(result.sql, `UPDATE "users" SET "name" = ? RETURNING *`);
+    expect(result.sql).toBe(`UPDATE "users" SET "name" = ? RETURNING *`);
   });
 });
 
@@ -430,8 +421,8 @@ describe("PG compileDelete (hard): basic", () => {
     });
     const result = pg.compileDelete(node);
 
-    assert.equal(result.sql, `DELETE FROM "users" WHERE "users"."id" = $1`);
-    assert.deepEqual(result.params, ["u1"]);
+    expect(result.sql).toBe(`DELETE FROM "users" WHERE "users"."id" = $1`);
+    expect(result.params).toEqual(["u1"]);
   });
 });
 
@@ -440,8 +431,8 @@ describe("PG compileDelete (hard): no WHERE", () => {
     const node = makeDelete({ isSoftDelete: false });
     const result = pg.compileDelete(node);
 
-    assert.equal(result.sql, `DELETE FROM "users"`);
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe(`DELETE FROM "users"`);
+    expect(result.params).toEqual([]);
   });
 });
 
@@ -454,7 +445,7 @@ describe("PG compileDelete (hard): with RETURNING", () => {
     });
     const result = pg.compileDelete(node);
 
-    assert.equal(result.sql, `DELETE FROM "users" WHERE "users"."id" = $1 RETURNING "id"`);
+    expect(result.sql).toBe(`DELETE FROM "users" WHERE "users"."id" = $1 RETURNING "id"`);
   });
 });
 
@@ -471,8 +462,8 @@ describe("PG compileDelete (soft): basic", () => {
     });
     const result = pg.compileDelete(node);
 
-    assert.equal(result.sql, `UPDATE "users" SET "deleted_at" = NOW() WHERE "users"."id" = $1`);
-    assert.deepEqual(result.params, ["u1"]);
+    expect(result.sql).toBe(`UPDATE "users" SET "deleted_at" = NOW() WHERE "users"."id" = $1`);
+    expect(result.params).toEqual(["u1"]);
   });
 });
 
@@ -481,8 +472,8 @@ describe("PG compileDelete (soft): no WHERE", () => {
     const node = makeDelete({ isSoftDelete: true, softDeleteFilter: false });
     const result = pg.compileDelete(node);
 
-    assert.equal(result.sql, `UPDATE "users" SET "deleted_at" = NOW()`);
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe(`UPDATE "users" SET "deleted_at" = NOW()`);
+    expect(result.params).toEqual([]);
   });
 });
 
@@ -495,8 +486,7 @@ describe("PG compileDelete (soft): with softDeleteFilter", () => {
     });
     const result = pg.compileDelete(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `UPDATE "users" SET "deleted_at" = NOW() WHERE "users"."id" = $1 AND "users"."deleted_at" IS NULL`,
     );
   });
@@ -512,8 +502,7 @@ describe("PG compileDelete (soft): with RETURNING", () => {
     });
     const result = pg.compileDelete(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `UPDATE "users" SET "deleted_at" = NOW() WHERE "users"."id" = $1 RETURNING *`,
     );
   });
@@ -531,8 +520,8 @@ describe("SQLite compileDelete (hard): basic", () => {
     });
     const result = sqlite.compileDelete(node);
 
-    assert.equal(result.sql, `DELETE FROM "users" WHERE "users"."id" = ?`);
-    assert.deepEqual(result.params, ["u1"]);
+    expect(result.sql).toBe(`DELETE FROM "users" WHERE "users"."id" = ?`);
+    expect(result.params).toEqual(["u1"]);
   });
 });
 
@@ -545,7 +534,7 @@ describe("SQLite compileDelete (hard): with RETURNING", () => {
     });
     const result = sqlite.compileDelete(node);
 
-    assert.equal(result.sql, `DELETE FROM "users" WHERE "users"."id" = ? RETURNING "id"`);
+    expect(result.sql).toBe(`DELETE FROM "users" WHERE "users"."id" = ? RETURNING "id"`);
   });
 });
 
@@ -562,11 +551,10 @@ describe("SQLite compileDelete (soft): uses datetime('now') not NOW()", () => {
     });
     const result = sqlite.compileDelete(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `UPDATE "users" SET "deleted_at" = datetime('now') WHERE "users"."id" = ?`,
     );
-    assert.deepEqual(result.params, ["u1"]);
+    expect(result.params).toEqual(["u1"]);
   });
 });
 
@@ -579,8 +567,7 @@ describe("SQLite compileDelete (soft): with softDeleteFilter", () => {
     });
     const result = sqlite.compileDelete(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `UPDATE "users" SET "deleted_at" = datetime('now') WHERE "users"."id" = ? AND "users"."deleted_at" IS NULL`,
     );
   });
@@ -596,8 +583,7 @@ describe("SQLite compileDelete (soft): with RETURNING", () => {
     });
     const result = sqlite.compileDelete(node);
 
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       `UPDATE "users" SET "deleted_at" = datetime('now') WHERE "users"."id" = ? RETURNING *`,
     );
   });
@@ -614,13 +600,13 @@ describe("cross-dialect: INSERT param style", () => {
     const sqliteResult = sqlite.compileInsert(node);
 
     // Same params
-    assert.deepEqual(pgResult.params, sqliteResult.params);
+    expect(pgResult.params).toEqual(sqliteResult.params);
 
     // Different placeholders
-    assert.ok(pgResult.sql.includes("$1"), `PG SQL should use $1: ${pgResult.sql}`);
-    assert.ok(pgResult.sql.includes("$2"), `PG SQL should use $2: ${pgResult.sql}`);
-    assert.ok(!sqliteResult.sql.includes("$"), `SQLite SQL must not use $N: ${sqliteResult.sql}`);
-    assert.ok(sqliteResult.sql.includes("?"), `SQLite SQL should use ?: ${sqliteResult.sql}`);
+    expect(pgResult.sql.includes("$1")).toBeTruthy();
+    expect(pgResult.sql.includes("$2")).toBeTruthy();
+    expect(!sqliteResult.sql.includes("$")).toBeTruthy();
+    expect(sqliteResult.sql.includes("?")).toBeTruthy();
   });
 });
 
@@ -634,11 +620,8 @@ describe("cross-dialect: soft delete timestamp expression", () => {
     const pgResult = pg.compileDelete(node);
     const sqliteResult = sqlite.compileDelete(node);
 
-    assert.ok(pgResult.sql.includes("NOW()"), `PG should use NOW(): ${pgResult.sql}`);
-    assert.ok(
-      sqliteResult.sql.includes("datetime('now')"),
-      `SQLite should use datetime('now'): ${sqliteResult.sql}`,
-    );
+    expect(pgResult.sql.includes("NOW()")).toBeTruthy();
+    expect(sqliteResult.sql.includes("datetime('now')")).toBeTruthy();
   });
 });
 
@@ -651,14 +634,10 @@ describe("cross-dialect: UPDATE param style", () => {
     const pgResult = pg.compileUpdate(node);
     const sqliteResult = sqlite.compileUpdate(node);
 
-    assert.deepEqual(pgResult.params, sqliteResult.params);
-    assert.ok(pgResult.sql.includes("$1"));
-    assert.ok(!sqliteResult.sql.includes("$"));
-    assert.equal(
-      sqliteResult.sql.split("?").length - 1,
-      2,
-      "SQLite SQL should have exactly 2 ? placeholders",
-    );
+    expect(pgResult.params).toEqual(sqliteResult.params);
+    expect(pgResult.sql.includes("$1")).toBeTruthy();
+    expect(!sqliteResult.sql.includes("$")).toBeTruthy();
+    expect(sqliteResult.sql.split("?").length - 1).toBe(2);
   });
 });
 
@@ -669,37 +648,37 @@ describe("cross-dialect: UPDATE param style", () => {
 describe("compileInsert returns frozen CompiledQuery", () => {
   it("result is frozen for PG", () => {
     const result = pg.compileInsert(makeInsert());
-    assert.ok(Object.isFrozen(result));
-    assert.ok(Object.isFrozen(result.params));
+    expect(Object.isFrozen(result)).toBeTruthy();
+    expect(Object.isFrozen(result.params)).toBeTruthy();
   });
 
   it("result is frozen for SQLite", () => {
     const result = sqlite.compileInsert(makeInsert());
-    assert.ok(Object.isFrozen(result));
-    assert.ok(Object.isFrozen(result.params));
+    expect(Object.isFrozen(result)).toBeTruthy();
+    expect(Object.isFrozen(result.params)).toBeTruthy();
   });
 });
 
 describe("compileUpdate returns frozen CompiledQuery", () => {
   it("result is frozen for PG", () => {
     const result = pg.compileUpdate(makeUpdate());
-    assert.ok(Object.isFrozen(result));
+    expect(Object.isFrozen(result)).toBeTruthy();
   });
 
   it("result is frozen for SQLite", () => {
     const result = sqlite.compileUpdate(makeUpdate());
-    assert.ok(Object.isFrozen(result));
+    expect(Object.isFrozen(result)).toBeTruthy();
   });
 });
 
 describe("compileDelete returns frozen CompiledQuery", () => {
   it("result is frozen for PG", () => {
     const result = pg.compileDelete(makeDelete());
-    assert.ok(Object.isFrozen(result));
+    expect(Object.isFrozen(result)).toBeTruthy();
   });
 
   it("result is frozen for SQLite", () => {
     const result = sqlite.compileDelete(makeDelete());
-    assert.ok(Object.isFrozen(result));
+    expect(Object.isFrozen(result)).toBeTruthy();
   });
 });

@@ -2,9 +2,8 @@
  * Tests for CTEs (cte()) and subquery conditions (exists, notExists).
  */
 
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
@@ -45,38 +44,38 @@ describe("cte()", () => {
     const subquery = from(Post);
     const node = cte("active_posts", subquery)(from(User));
 
-    assert.equal(node.ctes.length, 1);
-    assert.equal(node.ctes[0].name, "active_posts");
-    assert.equal(node.ctes[0].query.model.name, "posts");
+    expect(node.ctes.length).toBe(1);
+    expect(node.ctes[0].name).toBe("active_posts");
+    expect(node.ctes[0].query.model.name).toBe("posts");
   });
 
   it("accumulates multiple CTEs", () => {
     const node = cte("cte2", from(User))(cte("cte1", from(Post))(from(User)));
 
-    assert.equal(node.ctes.length, 2);
-    assert.equal(node.ctes[0].name, "cte1");
-    assert.equal(node.ctes[1].name, "cte2");
+    expect(node.ctes.length).toBe(2);
+    expect(node.ctes[0].name).toBe("cte1");
+    expect(node.ctes[1].name).toBe("cte2");
   });
 
   it("does not mutate the input node", () => {
     const base = from(User);
     cte("x", from(Post))(base);
 
-    assert.equal(base.ctes.length, 0);
+    expect(base.ctes.length).toBe(0);
   });
 
   it("returns a frozen SelectNode", () => {
     const node = cte("x", from(Post))(from(User));
 
-    assert.ok(Object.isFrozen(node));
-    assert.ok(Object.isFrozen(node.ctes));
+    expect(Object.isFrozen(node)).toBeTruthy();
+    expect(Object.isFrozen(node.ctes)).toBeTruthy();
   });
 
   it("from() initialises ctes as empty frozen array", () => {
     const node = from(User);
 
-    assert.deepEqual(node.ctes, []);
-    assert.ok(Object.isFrozen(node.ctes));
+    expect(node.ctes).toEqual([]);
+    expect(Object.isFrozen(node.ctes)).toBeTruthy();
   });
 });
 
@@ -90,9 +89,9 @@ describe("PostgreSQL CTE compilation", () => {
     const node = cte("active_posts", subquery)(from(User));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.startsWith("WITH"));
-    assert.ok(result.sql.includes('"active_posts" AS'));
-    assert.ok(result.sql.includes('SELECT "users".*'));
+    expect(result.sql.startsWith("WITH")).toBeTruthy();
+    expect(result.sql.includes('"active_posts" AS')).toBeTruthy();
+    expect(result.sql.includes('SELECT "users".*')).toBeTruthy();
   });
 
   it("renumbers CTE params for PostgreSQL", () => {
@@ -101,9 +100,9 @@ describe("PostgreSQL CTE compilation", () => {
     const result = pgDialect.compileSelect(node);
 
     // CTE param is $1 (published=true), outer WHERE is $2 (name=Alice)
-    assert.ok(result.sql.includes("$1"));
-    assert.ok(result.sql.includes("$2"));
-    assert.deepEqual(result.params, [true, "Alice"]);
+    expect(result.sql.includes("$1")).toBeTruthy();
+    expect(result.sql.includes("$2")).toBeTruthy();
+    expect(result.params).toEqual([true, "Alice"]);
   });
 
   it("compiles multiple CTEs separated by commas", () => {
@@ -112,16 +111,16 @@ describe("PostgreSQL CTE compilation", () => {
     const node = cte("b", cte2)(cte("a", cte1)(from(User)));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.startsWith("WITH"));
-    assert.ok(result.sql.includes('"a" AS'));
-    assert.ok(result.sql.includes('"b" AS'));
+    expect(result.sql.startsWith("WITH")).toBeTruthy();
+    expect(result.sql.includes('"a" AS')).toBeTruthy();
+    expect(result.sql.includes('"b" AS')).toBeTruthy();
   });
 
   it("no CTEs produces normal SQL (regression)", () => {
     const result = pgDialect.compileSelect(from(User));
 
-    assert.ok(!result.sql.includes("WITH"));
-    assert.ok(result.sql.startsWith('SELECT "users".*'));
+    expect(!result.sql.includes("WITH")).toBeTruthy();
+    expect(result.sql.startsWith('SELECT "users".*')).toBeTruthy();
   });
 });
 
@@ -135,9 +134,9 @@ describe("SQLite CTE compilation", () => {
     const node = cte("active_posts", subquery)(from(User));
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.startsWith("WITH"));
-    assert.ok(result.sql.includes("?"));
-    assert.deepEqual(result.params, [true]);
+    expect(result.sql.startsWith("WITH")).toBeTruthy();
+    expect(result.sql.includes("?")).toBeTruthy();
+    expect(result.params).toEqual([true]);
   });
 });
 
@@ -150,11 +149,11 @@ describe("exists()", () => {
     const subquery = from(Post);
     const cond = exists(subquery);
 
-    assert.equal(cond.tag, "Exists");
+    expect(cond.tag).toBe("Exists");
   });
 
   it("is frozen", () => {
-    assert.ok(Object.isFrozen(exists(from(Post))));
+    expect(Object.isFrozen(exists(from(Post)))).toBeTruthy();
   });
 });
 
@@ -162,11 +161,11 @@ describe("notExists()", () => {
   it("creates a NotExists condition node", () => {
     const cond = notExists(from(Post));
 
-    assert.equal(cond.tag, "NotExists");
+    expect(cond.tag).toBe("NotExists");
   });
 
   it("is frozen", () => {
-    assert.ok(Object.isFrozen(notExists(from(Post))));
+    expect(Object.isFrozen(notExists(from(Post)))).toBeTruthy();
   });
 });
 
@@ -180,8 +179,8 @@ describe("PostgreSQL EXISTS compilation", () => {
     const node = where(exists(subquery))(from(User));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("EXISTS (SELECT"));
-    assert.ok(result.sql.includes('"posts"'));
+    expect(result.sql.includes("EXISTS (SELECT")).toBeTruthy();
+    expect(result.sql.includes('"posts"')).toBeTruthy();
   });
 
   it("renumbers params in EXISTS subquery", () => {
@@ -190,9 +189,9 @@ describe("PostgreSQL EXISTS compilation", () => {
     const result = pgDialect.compileSelect(node);
 
     // Outer: name = $1, EXISTS subquery: published = $2
-    assert.deepEqual(result.params, ["Alice", true]);
-    assert.ok(result.sql.includes("$1"));
-    assert.ok(result.sql.includes("$2"));
+    expect(result.params).toEqual(["Alice", true]);
+    expect(result.sql.includes("$1")).toBeTruthy();
+    expect(result.sql.includes("$2")).toBeTruthy();
   });
 
   it("compiles NOT EXISTS", () => {
@@ -200,7 +199,7 @@ describe("PostgreSQL EXISTS compilation", () => {
     const node = where(notExists(subquery))(from(User));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("NOT EXISTS (SELECT"));
+    expect(result.sql.includes("NOT EXISTS (SELECT")).toBeTruthy();
   });
 });
 
@@ -214,9 +213,9 @@ describe("SQLite EXISTS compilation", () => {
     const node = where(exists(subquery))(from(User));
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("EXISTS (SELECT"));
-    assert.ok(result.sql.includes("?"));
-    assert.deepEqual(result.params, [true]);
+    expect(result.sql.includes("EXISTS (SELECT")).toBeTruthy();
+    expect(result.sql.includes("?")).toBeTruthy();
+    expect(result.params).toEqual([true]);
   });
 
   it("compiles NOT EXISTS", () => {
@@ -224,7 +223,7 @@ describe("SQLite EXISTS compilation", () => {
     const node = where(notExists(subquery))(from(User));
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("NOT EXISTS (SELECT"));
+    expect(result.sql.includes("NOT EXISTS (SELECT")).toBeTruthy();
   });
 });
 
@@ -240,7 +239,7 @@ describe("CTE + EXISTS composition", () => {
     const node = where(postExists)(cte("active", activePosts)(from(User)));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.startsWith("WITH"));
-    assert.ok(result.sql.includes("EXISTS"));
+    expect(result.sql.startsWith("WITH")).toBeTruthy();
+    expect(result.sql.includes("EXISTS")).toBeTruthy();
   });
 });

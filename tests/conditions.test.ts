@@ -1,6 +1,4 @@
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
-
+import { describe, expect, it } from "@igorjs/pure-test";
 import {
   and,
   between,
@@ -31,9 +29,9 @@ describe("condition functions", () => {
       const node = eq(column, value);
 
       // Assert
-      assert.equal(node.tag, "Eq");
-      assert.equal(node.tag === "Eq" && node.column, column);
-      assert.equal(node.tag === "Eq" && node.value, value);
+      expect(node.tag).toBe("Eq");
+      expect(node.tag === "Eq" && node.column).toBe(column);
+      expect(node.tag === "Eq" && node.value).toBe(value);
     });
 
     it("is frozen", () => {
@@ -41,7 +39,7 @@ describe("condition functions", () => {
       const node = eq("name", "alice");
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -55,9 +53,9 @@ describe("condition functions", () => {
       const node = ne(column, value);
 
       // Assert
-      assert.equal(node.tag, "Ne");
-      assert.equal(node.tag === "Ne" && node.column, column);
-      assert.equal(node.tag === "Ne" && node.value, value);
+      expect(node.tag).toBe("Ne");
+      expect(node.tag === "Ne" && node.column).toBe(column);
+      expect(node.tag === "Ne" && node.value).toBe(value);
     });
 
     it("is frozen", () => {
@@ -65,7 +63,7 @@ describe("condition functions", () => {
       const node = ne("status", "inactive");
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -79,9 +77,9 @@ describe("condition functions", () => {
       const node = gt(column, value);
 
       // Assert
-      assert.equal(node.tag, "Gt");
-      assert.equal(node.tag === "Gt" && node.column, column);
-      assert.equal(node.tag === "Gt" && node.value, value);
+      expect(node.tag).toBe("Gt");
+      expect(node.tag === "Gt" && node.column).toBe(column);
+      expect(node.tag === "Gt" && node.value).toBe(value);
     });
 
     it("is frozen", () => {
@@ -89,7 +87,7 @@ describe("condition functions", () => {
       const node = gt("age", 18);
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -103,9 +101,9 @@ describe("condition functions", () => {
       const node = gte(column, value);
 
       // Assert
-      assert.equal(node.tag, "Gte");
-      assert.equal(node.tag === "Gte" && node.column, column);
-      assert.equal(node.tag === "Gte" && node.value, value);
+      expect(node.tag).toBe("Gte");
+      expect(node.tag === "Gte" && node.column).toBe(column);
+      expect(node.tag === "Gte" && node.value).toBe(value);
     });
 
     it("is frozen", () => {
@@ -113,7 +111,7 @@ describe("condition functions", () => {
       const node = gte("score", 100);
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -127,9 +125,9 @@ describe("condition functions", () => {
       const node = lt(column, value);
 
       // Assert
-      assert.equal(node.tag, "Lt");
-      assert.equal(node.tag === "Lt" && node.column, column);
-      assert.equal(node.tag === "Lt" && node.value, value);
+      expect(node.tag).toBe("Lt");
+      expect(node.tag === "Lt" && node.column).toBe(column);
+      expect(node.tag === "Lt" && node.value).toBe(value);
     });
 
     it("is frozen", () => {
@@ -137,7 +135,7 @@ describe("condition functions", () => {
       const node = lt("price", 50.0);
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -151,9 +149,9 @@ describe("condition functions", () => {
       const node = lte(column, value);
 
       // Assert
-      assert.equal(node.tag, "Lte");
-      assert.equal(node.tag === "Lte" && node.column, column);
-      assert.equal(node.tag === "Lte" && node.value, value);
+      expect(node.tag).toBe("Lte");
+      expect(node.tag === "Lte" && node.column).toBe(column);
+      expect(node.tag === "Lte" && node.value).toBe(value);
     });
 
     it("is frozen", () => {
@@ -161,7 +159,7 @@ describe("condition functions", () => {
       const node = lte("quantity", 10);
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -175,9 +173,9 @@ describe("condition functions", () => {
       const node = like(column, pattern);
 
       // Assert
-      assert.equal(node.tag, "Like");
-      assert.equal(node.tag === "Like" && node.column, column);
-      assert.equal(node.tag === "Like" && node.pattern, pattern);
+      expect(node.tag).toBe("Like");
+      expect(node.tag === "Like" && node.column).toBe(column);
+      expect(node.tag === "Like" && node.pattern).toBe(pattern);
     });
 
     it("is frozen", () => {
@@ -185,7 +183,7 @@ describe("condition functions", () => {
       const node = like("email", "%@example.com");
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -199,9 +197,9 @@ describe("condition functions", () => {
       const node = ilike(column, pattern);
 
       // Assert
-      assert.equal(node.tag, "ILike");
-      assert.equal(node.tag === "ILike" && node.column, column);
-      assert.equal(node.tag === "ILike" && node.pattern, pattern);
+      expect(node.tag).toBe("ILike");
+      expect(node.tag === "ILike" && node.column).toBe(column);
+      expect(node.tag === "ILike" && node.pattern).toBe(pattern);
     });
 
     it("is frozen", () => {
@@ -209,7 +207,7 @@ describe("condition functions", () => {
       const node = ilike("name", "%alice%");
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -222,8 +220,8 @@ describe("condition functions", () => {
       const node = isNull(column);
 
       // Assert
-      assert.equal(node.tag, "IsNull");
-      assert.equal(node.tag === "IsNull" && node.column, column);
+      expect(node.tag).toBe("IsNull");
+      expect(node.tag === "IsNull" && node.column).toBe(column);
     });
 
     it("is frozen", () => {
@@ -231,7 +229,7 @@ describe("condition functions", () => {
       const node = isNull("deleted_at");
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -244,8 +242,8 @@ describe("condition functions", () => {
       const node = isNotNull(column);
 
       // Assert
-      assert.equal(node.tag, "IsNotNull");
-      assert.equal(node.tag === "IsNotNull" && node.column, column);
+      expect(node.tag).toBe("IsNotNull");
+      expect(node.tag === "IsNotNull" && node.column).toBe(column);
     });
 
     it("is frozen", () => {
@@ -253,7 +251,7 @@ describe("condition functions", () => {
       const node = isNotNull("verified_at");
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -267,9 +265,9 @@ describe("condition functions", () => {
       const node = inArray(column, values);
 
       // Assert
-      assert.equal(node.tag, "InArray");
-      assert.equal(node.tag === "InArray" && node.column, column);
-      assert.deepEqual(node.tag === "InArray" && node.values, ["admin", "editor"]);
+      expect(node.tag).toBe("InArray");
+      expect(node.tag === "InArray" && node.column).toBe(column);
+      expect(node.tag === "InArray" && node.values).toEqual(["admin", "editor"]);
     });
 
     it("the node itself is frozen", () => {
@@ -277,7 +275,7 @@ describe("condition functions", () => {
       const node = inArray("role", ["admin"]);
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
 
     it("the values array on the node is frozen", () => {
@@ -288,7 +286,7 @@ describe("condition functions", () => {
       const node = inArray("col", source);
 
       // Assert
-      assert.ok(node.tag === "InArray" && Object.isFrozen(node.values));
+      expect(node.tag === "InArray" && Object.isFrozen(node.values)).toBeTruthy();
     });
 
     it("freezes a copy so mutating the source array does not affect the node", () => {
@@ -300,8 +298,8 @@ describe("condition functions", () => {
       source.push("z");
 
       // Assert
-      assert.equal(node.tag, "InArray");
-      assert.equal(node.tag === "InArray" ? node.values.length : -1, 2);
+      expect(node.tag).toBe("InArray");
+      expect(node.tag === "InArray" ? node.values.length : -1).toBe(2);
     });
   });
 
@@ -316,10 +314,10 @@ describe("condition functions", () => {
       const node = between(column, low, high);
 
       // Assert
-      assert.equal(node.tag, "Between");
-      assert.equal(node.tag === "Between" && node.column, column);
-      assert.equal(node.tag === "Between" && node.low, low);
-      assert.equal(node.tag === "Between" && node.high, high);
+      expect(node.tag).toBe("Between");
+      expect(node.tag === "Between" && node.column).toBe(column);
+      expect(node.tag === "Between" && node.low).toBe(low);
+      expect(node.tag === "Between" && node.high).toBe(high);
     });
 
     it("is frozen", () => {
@@ -327,7 +325,7 @@ describe("condition functions", () => {
       const node = between("age", 18, 65);
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -340,8 +338,8 @@ describe("condition functions", () => {
       const node = not(inner);
 
       // Assert
-      assert.equal(node.tag, "Not");
-      assert.deepEqual(node.tag === "Not" && node.condition, inner);
+      expect(node.tag).toBe("Not");
+      expect(node.tag === "Not" && node.condition).toEqual(inner);
     });
 
     it("is frozen", () => {
@@ -349,7 +347,7 @@ describe("condition functions", () => {
       const node = not(eq("active", false));
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -364,11 +362,11 @@ describe("condition functions", () => {
       const node = and(c1, c2, c3);
 
       // Assert
-      assert.equal(node.tag, "And");
-      assert.equal(node.tag === "And" ? node.conditions.length : -1, 3);
-      assert.deepEqual(node.tag === "And" ? node.conditions[0] : null, c1);
-      assert.deepEqual(node.tag === "And" ? node.conditions[1] : null, c2);
-      assert.deepEqual(node.tag === "And" ? node.conditions[2] : null, c3);
+      expect(node.tag).toBe("And");
+      expect(node.tag === "And" ? node.conditions.length : -1).toBe(3);
+      expect(node.tag === "And" ? node.conditions[0] : null).toEqual(c1);
+      expect(node.tag === "And" ? node.conditions[1] : null).toEqual(c2);
+      expect(node.tag === "And" ? node.conditions[2] : null).toEqual(c3);
     });
 
     it("accepts two conditions", () => {
@@ -380,8 +378,8 @@ describe("condition functions", () => {
       const node = and(c1, c2);
 
       // Assert
-      assert.equal(node.tag, "And");
-      assert.equal(node.tag === "And" ? node.conditions.length : -1, 2);
+      expect(node.tag).toBe("And");
+      expect(node.tag === "And" ? node.conditions.length : -1).toBe(2);
     });
 
     it("is frozen", () => {
@@ -389,7 +387,7 @@ describe("condition functions", () => {
       const node = and(eq("x", 1), eq("y", 2));
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -403,10 +401,10 @@ describe("condition functions", () => {
       const node = or(c1, c2);
 
       // Assert
-      assert.equal(node.tag, "Or");
-      assert.equal(node.tag === "Or" ? node.conditions.length : -1, 2);
-      assert.deepEqual(node.tag === "Or" ? node.conditions[0] : null, c1);
-      assert.deepEqual(node.tag === "Or" ? node.conditions[1] : null, c2);
+      expect(node.tag).toBe("Or");
+      expect(node.tag === "Or" ? node.conditions.length : -1).toBe(2);
+      expect(node.tag === "Or" ? node.conditions[0] : null).toEqual(c1);
+      expect(node.tag === "Or" ? node.conditions[1] : null).toEqual(c2);
     });
 
     it("accepts three or more conditions", () => {
@@ -419,8 +417,8 @@ describe("condition functions", () => {
       const node = or(c1, c2, c3);
 
       // Assert
-      assert.equal(node.tag, "Or");
-      assert.equal(node.tag === "Or" ? node.conditions.length : -1, 3);
+      expect(node.tag).toBe("Or");
+      expect(node.tag === "Or" ? node.conditions.length : -1).toBe(3);
     });
 
     it("is frozen", () => {
@@ -428,7 +426,7 @@ describe("condition functions", () => {
       const node = or(eq("a", 1), eq("b", 2));
 
       // Assert
-      assert.ok(Object.isFrozen(node));
+      expect(Object.isFrozen(node)).toBeTruthy();
     });
   });
 
@@ -442,10 +440,10 @@ describe("condition functions", () => {
       const node = or(activeAndAdult, isAdmin);
 
       // Assert
-      assert.equal(node.tag, "Or");
-      assert.equal(node.tag === "Or" ? node.conditions.length : -1, 2);
-      assert.equal(node.tag === "Or" ? node.conditions[0].tag : null, "And");
-      assert.equal(node.tag === "Or" ? node.conditions[1].tag : null, "Eq");
+      expect(node.tag).toBe("Or");
+      expect(node.tag === "Or" ? node.conditions.length : -1).toBe(2);
+      expect(node.tag === "Or" ? node.conditions[0].tag : null).toBe("And");
+      expect(node.tag === "Or" ? node.conditions[1].tag : null).toBe("Eq");
     });
 
     it("supports not wrapping a compound condition", () => {
@@ -456,8 +454,8 @@ describe("condition functions", () => {
       const node = not(inner);
 
       // Assert
-      assert.equal(node.tag, "Not");
-      assert.equal(node.tag === "Not" && node.condition.tag, "Or");
+      expect(node.tag).toBe("Not");
+      expect(node.tag === "Not" && node.condition.tag).toBe("Or");
     });
   });
 
@@ -503,7 +501,7 @@ describe("condition functions", () => {
           case "Or":
             reached = true;
         }
-        assert.ok(reached, `tag ${node.tag} was not handled`);
+        expect(reached).toBeTruthy();
       }
     });
   });

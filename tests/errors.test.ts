@@ -1,5 +1,4 @@
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "@igorjs/pure-test";
 import type { DbError } from "../src/errors/errors.ts";
 import {
   connectionError,
@@ -20,8 +19,8 @@ describe("DbError constructors", () => {
       const err = connectionError(message);
 
       // Assert
-      assert.equal(err.tag, "ConnectionError");
-      assert.equal(err.message, "connection timeout");
+      expect(err.tag).toBe("ConnectionError");
+      expect(err.message).toBe("connection timeout");
     });
 
     it("includes cause when provided", () => {
@@ -32,7 +31,7 @@ describe("DbError constructors", () => {
       const err = connectionError("failed", cause);
 
       // Assert
-      assert.equal(err.cause, cause);
+      expect(err.cause).toBe(cause);
     });
 
     it("omits cause property when not provided", () => {
@@ -40,7 +39,7 @@ describe("DbError constructors", () => {
       const err = connectionError("timeout");
 
       // Assert
-      assert.equal("cause" in err, false);
+      expect("cause" in err).toBe(false);
     });
   });
 
@@ -54,9 +53,9 @@ describe("DbError constructors", () => {
       const err = queryError("query failed", sql, params);
 
       // Assert
-      assert.equal(err.tag, "QueryError");
-      assert.equal(err.sql, sql);
-      assert.deepEqual(err.params, ["u_123"]);
+      expect(err.tag).toBe("QueryError");
+      expect(err.sql).toBe(sql);
+      expect(err.params).toEqual(["u_123"]);
     });
 
     it("freezes the params array", () => {
@@ -64,7 +63,7 @@ describe("DbError constructors", () => {
       const err = queryError("fail", "SELECT 1", ["a", "b"]);
 
       // Assert
-      assert.ok(Object.isFrozen(err.params));
+      expect(Object.isFrozen(err.params)).toBeTruthy();
     });
   });
 
@@ -74,9 +73,9 @@ describe("DbError constructors", () => {
       const err = validationError("invalid email", "email", "not-an-email");
 
       // Assert
-      assert.equal(err.tag, "ValidationError");
-      assert.equal(err.field, "email");
-      assert.equal(err.value, "not-an-email");
+      expect(err.tag).toBe("ValidationError");
+      expect(err.field).toBe("email");
+      expect(err.value).toBe("not-an-email");
     });
 
     it("omits field and value when not provided", () => {
@@ -84,8 +83,8 @@ describe("DbError constructors", () => {
       const err = validationError("invalid input");
 
       // Assert
-      assert.equal("field" in err, false);
-      assert.equal("value" in err, false);
+      expect("field" in err).toBe(false);
+      expect("value" in err).toBe(false);
     });
   });
 
@@ -95,8 +94,8 @@ describe("DbError constructors", () => {
       const err = migrationError("checksum mismatch", "0001_add_users");
 
       // Assert
-      assert.equal(err.tag, "MigrationError");
-      assert.equal(err.migration, "0001_add_users");
+      expect(err.tag).toBe("MigrationError");
+      expect(err.migration).toBe("0001_add_users");
     });
   });
 
@@ -106,8 +105,8 @@ describe("DbError constructors", () => {
       const err = transactionError("deadlock detected");
 
       // Assert
-      assert.equal(err.tag, "TransactionError");
-      assert.equal(err.message, "deadlock detected");
+      expect(err.tag).toBe("TransactionError");
+      expect(err.message).toBe("deadlock detected");
     });
   });
 
@@ -117,9 +116,9 @@ describe("DbError constructors", () => {
       const err = constraintError("duplicate key", "users_email_unique", "users");
 
       // Assert
-      assert.equal(err.tag, "ConstraintError");
-      assert.equal(err.constraint, "users_email_unique");
-      assert.equal(err.table, "users");
+      expect(err.tag).toBe("ConstraintError");
+      expect(err.constraint).toBe("users_email_unique");
+      expect(err.table).toBe("users");
     });
   });
 
@@ -137,7 +136,7 @@ describe("DbError constructors", () => {
 
       // Assert
       for (const err of errors) {
-        assert.ok(Object.isFrozen(err), `${err.tag} should be frozen`);
+        expect(Object.isFrozen(err)).toBeTruthy();
       }
     });
   });
@@ -166,7 +165,7 @@ describe("DbError constructors", () => {
       })();
 
       // Assert
-      assert.equal(result, "connection");
+      expect(result).toBe("connection");
     });
   });
 });

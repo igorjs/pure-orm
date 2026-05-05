@@ -1,6 +1,4 @@
-import { strict as assert } from "node:assert";
-import { afterEach, beforeEach, describe, it } from "node:test";
-
+import { afterEach, beforeEach, describe, expect, it } from "@igorjs/pure-test";
 import { dispatchHook } from "../src/logging/hooks.ts";
 import { createConsoleLogger, createNoopLogger } from "../src/logging/logger.ts";
 import { startTimer } from "../src/logging/timing.ts";
@@ -47,7 +45,7 @@ describe("createConsoleLogger", () => {
 
       // Assert
       spy.restore();
-      assert.equal(spy.calls.length, 0);
+      expect(spy.calls.length).toBe(0);
     });
 
     it("does not log info messages when level is warn", () => {
@@ -60,7 +58,7 @@ describe("createConsoleLogger", () => {
 
       // Assert
       spy.restore();
-      assert.equal(spy.calls.length, 0);
+      expect(spy.calls.length).toBe(0);
     });
 
     it("logs warn messages when level is warn", () => {
@@ -73,7 +71,7 @@ describe("createConsoleLogger", () => {
 
       // Assert
       spy.restore();
-      assert.equal(spy.calls.length, 1);
+      expect(spy.calls.length).toBe(1);
     });
 
     it("logs error messages when level is warn", () => {
@@ -86,7 +84,7 @@ describe("createConsoleLogger", () => {
 
       // Assert
       spy.restore();
-      assert.equal(spy.calls.length, 1);
+      expect(spy.calls.length).toBe(1);
     });
 
     it("logs debug messages when level is debug", () => {
@@ -99,7 +97,7 @@ describe("createConsoleLogger", () => {
 
       // Assert
       spy.restore();
-      assert.equal(spy.calls.length, 1);
+      expect(spy.calls.length).toBe(1);
     });
 
     it("suppresses all output when level is silent", () => {
@@ -119,9 +117,9 @@ describe("createConsoleLogger", () => {
       infoSpy.restore();
       warnSpy.restore();
       errorSpy.restore();
-      assert.equal(infoSpy.calls.length, 0);
-      assert.equal(warnSpy.calls.length, 0);
-      assert.equal(errorSpy.calls.length, 0);
+      expect(infoSpy.calls.length).toBe(0);
+      expect(warnSpy.calls.length).toBe(0);
+      expect(errorSpy.calls.length).toBe(0);
     });
   });
 
@@ -136,7 +134,7 @@ describe("createConsoleLogger", () => {
 
       // Assert
       spy.restore();
-      assert.ok(spy.calls[0]?.[0]?.startsWith("[pure-orm]"), "expected [pure-orm] prefix");
+      expect(spy.calls[0]?.[0]?.startsWith("[pure-orm]")).toBeTruthy();
     });
 
     it("prefixes info messages with [pure-orm]", () => {
@@ -149,7 +147,7 @@ describe("createConsoleLogger", () => {
 
       // Assert
       spy.restore();
-      assert.ok(spy.calls[0]?.[0]?.startsWith("[pure-orm]"));
+      expect(spy.calls[0]?.[0]?.startsWith("[pure-orm]")).toBeTruthy();
     });
 
     it("prefixes warn messages with [pure-orm]", () => {
@@ -162,7 +160,7 @@ describe("createConsoleLogger", () => {
 
       // Assert
       spy.restore();
-      assert.ok(spy.calls[0]?.[0]?.startsWith("[pure-orm]"));
+      expect(spy.calls[0]?.[0]?.startsWith("[pure-orm]")).toBeTruthy();
     });
 
     it("prefixes error messages with [pure-orm]", () => {
@@ -175,7 +173,7 @@ describe("createConsoleLogger", () => {
 
       // Assert
       spy.restore();
-      assert.ok(spy.calls[0]?.[0]?.startsWith("[pure-orm]"));
+      expect(spy.calls[0]?.[0]?.startsWith("[pure-orm]")).toBeTruthy();
     });
 
     it("includes the message text after the prefix", () => {
@@ -188,7 +186,7 @@ describe("createConsoleLogger", () => {
 
       // Assert
       spy.restore();
-      assert.ok(spy.calls[0]?.[0]?.includes("my message"));
+      expect(spy.calls[0]?.[0]?.includes("my message")).toBeTruthy();
     });
   });
 
@@ -207,9 +205,9 @@ describe("createConsoleLogger", () => {
       infoSpy.restore();
       warnSpy.restore();
       errorSpy.restore();
-      assert.equal(infoSpy.calls.length, 1);
-      assert.equal(warnSpy.calls.length, 0);
-      assert.equal(errorSpy.calls.length, 0);
+      expect(infoSpy.calls.length).toBe(1);
+      expect(warnSpy.calls.length).toBe(0);
+      expect(errorSpy.calls.length).toBe(0);
     });
 
     it("info uses console.info", () => {
@@ -224,8 +222,8 @@ describe("createConsoleLogger", () => {
       // Assert
       infoSpy.restore();
       warnSpy.restore();
-      assert.equal(infoSpy.calls.length, 1);
-      assert.equal(warnSpy.calls.length, 0);
+      expect(infoSpy.calls.length).toBe(1);
+      expect(warnSpy.calls.length).toBe(0);
     });
 
     it("warn uses console.warn", () => {
@@ -242,9 +240,9 @@ describe("createConsoleLogger", () => {
       infoSpy.restore();
       warnSpy.restore();
       errorSpy.restore();
-      assert.equal(infoSpy.calls.length, 0);
-      assert.equal(warnSpy.calls.length, 1);
-      assert.equal(errorSpy.calls.length, 0);
+      expect(infoSpy.calls.length).toBe(0);
+      expect(warnSpy.calls.length).toBe(1);
+      expect(errorSpy.calls.length).toBe(0);
     });
 
     it("error uses console.error", () => {
@@ -261,9 +259,9 @@ describe("createConsoleLogger", () => {
       infoSpy.restore();
       warnSpy.restore();
       errorSpy.restore();
-      assert.equal(infoSpy.calls.length, 0);
-      assert.equal(warnSpy.calls.length, 0);
-      assert.equal(errorSpy.calls.length, 1);
+      expect(infoSpy.calls.length).toBe(0);
+      expect(warnSpy.calls.length).toBe(0);
+      expect(errorSpy.calls.length).toBe(1);
     });
   });
 });
@@ -300,9 +298,9 @@ describe("createNoopLogger", () => {
     logger.error("e");
 
     // Assert
-    assert.equal(infoSpy.calls.length, 0);
-    assert.equal(warnSpy.calls.length, 0);
-    assert.equal(errorSpy.calls.length, 0);
+    expect(infoSpy.calls.length).toBe(0);
+    expect(warnSpy.calls.length).toBe(0);
+    expect(errorSpy.calls.length).toBe(0);
   });
 
   it("returns undefined for all method calls", () => {
@@ -310,12 +308,12 @@ describe("createNoopLogger", () => {
     const logger = createNoopLogger();
 
     // Act / Assert — verify the methods are callable without throwing
-    assert.doesNotThrow(() => {
+    expect(() => {
       logger.debug("d");
       logger.info("i");
       logger.warn("w");
       logger.error("e");
-    });
+    }).not.toThrow();
   });
 });
 
@@ -337,7 +335,7 @@ describe("dispatchHook", () => {
     dispatchHook(hooks, "onConnectionAcquire", 42);
 
     // Assert
-    assert.deepEqual(calls, [42]);
+    expect(calls).toEqual([42]);
   });
 
   it("does nothing when the hook is not defined", () => {
@@ -345,9 +343,9 @@ describe("dispatchHook", () => {
     const hooks: Partial<QueryHooks> = {};
 
     // Act / Assert — must not throw
-    assert.doesNotThrow(() => {
+    expect(() => {
       dispatchHook(hooks, "onConnectionRelease");
-    });
+    }).not.toThrow();
   });
 
   it("catches and does not rethrow errors thrown by a hook", () => {
@@ -360,9 +358,9 @@ describe("dispatchHook", () => {
     const errorSpy = spyOn("error");
 
     // Act / Assert
-    assert.doesNotThrow(() => {
+    expect(() => {
       dispatchHook(hooks, "onConnectionRelease");
-    });
+    }).not.toThrow();
 
     errorSpy.restore();
   });
@@ -381,7 +379,7 @@ describe("dispatchHook", () => {
 
     // Assert
     errorSpy.restore();
-    assert.equal(errorSpy.calls.length, 1);
+    expect(errorSpy.calls.length).toBe(1);
   });
 
   it("calls afterExecute with a full QueryEvent", () => {
@@ -397,9 +395,9 @@ describe("dispatchHook", () => {
     dispatchHook(hooks, "afterExecute", { sql: "SELECT 1", params: [], durationMs: 5 });
 
     // Assert
-    assert.equal(received.length, 1);
-    assert.equal(received[0]?.sql, "SELECT 1");
-    assert.equal(received[0]?.durationMs, 5);
+    expect(received.length).toBe(1);
+    expect(received[0]?.sql).toBe("SELECT 1");
+    expect(received[0]?.durationMs).toBe(5);
   });
 });
 
@@ -413,7 +411,7 @@ describe("startTimer", () => {
     const elapsed = startTimer();
 
     // Assert
-    assert.equal(typeof elapsed, "function");
+    expect(typeof elapsed).toBe("function");
   });
 
   it("returns a non-negative number immediately", () => {
@@ -424,7 +422,7 @@ describe("startTimer", () => {
     const ms = elapsed();
 
     // Assert
-    assert.ok(ms >= 0, `expected >= 0, got ${ms}`);
+    expect(ms >= 0).toBeTruthy();
   });
 
   it("measures elapsed time approximately", async () => {
@@ -436,8 +434,8 @@ describe("startTimer", () => {
     const ms = elapsed();
 
     // Assert — allow generous tolerance for CI jitter
-    assert.ok(ms >= 10, `expected at least 10 ms, got ${ms}`);
-    assert.ok(ms < 200, `expected less than 200 ms, got ${ms}`);
+    expect(ms >= 10).toBeTruthy();
+    expect(ms < 200).toBeTruthy();
   });
 
   it("each call to the returned function returns increasing values", async () => {
@@ -450,6 +448,6 @@ describe("startTimer", () => {
     const second = elapsed();
 
     // Assert
-    assert.ok(second >= first, `expected second (${second}) >= first (${first})`);
+    expect(second >= first).toBeTruthy();
   });
 });

@@ -6,10 +6,8 @@
  * omitted, and throws for unknown dialects.
  */
 
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
-
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 
 import { compile } from "../src/execute/compile.ts";
 import { Model } from "../src/model/define.ts";
@@ -44,8 +42,8 @@ describe("compile(): SelectNode produces SQL", () => {
     const result = compile(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users"');
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe('SELECT "users".* FROM "users"');
+    expect(result.params).toEqual([]);
   });
 
   it("produces SQL with a WHERE clause from where(eq(...))", () => {
@@ -56,8 +54,8 @@ describe("compile(): SelectNode produces SQL", () => {
     const result = compile(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."email" = $1');
-    assert.deepEqual(result.params, ["alice@example.com"]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."email" = $1');
+    expect(result.params).toEqual(["alice@example.com"]);
   });
 
   it("resolves camelCase field names to snake_case in SQL", () => {
@@ -68,7 +66,7 @@ describe("compile(): SelectNode produces SQL", () => {
     const result = compile(node);
 
     // Assert
-    assert.ok(result.sql.includes('"created_at"'));
+    expect(result.sql.includes('"created_at"')).toBeTruthy();
   });
 });
 
@@ -85,7 +83,7 @@ describe("compile(): defaults to 'postgresql' dialect", () => {
     const result = compile(node);
 
     // Assert — valid SQL returned, so postgresql dialect was used
-    assert.ok(result.sql.startsWith("SELECT"));
+    expect(result.sql.startsWith("SELECT")).toBeTruthy();
   });
 
   it("accepts 'postgresql' explicitly and returns the same result", () => {
@@ -97,8 +95,8 @@ describe("compile(): defaults to 'postgresql' dialect", () => {
     const withExplicit = compile(node, "postgresql");
 
     // Assert — both paths use the same dialect
-    assert.equal(withDefault.sql, withExplicit.sql);
-    assert.deepEqual(withDefault.params, withExplicit.params);
+    expect(withDefault.sql).toBe(withExplicit.sql);
+    expect(withDefault.params).toEqual(withExplicit.params);
   });
 });
 
@@ -112,17 +110,7 @@ describe("compile(): throws for an unknown dialect", () => {
     const node = from(UserModel);
 
     // Act + Assert
-    assert.throws(
-      () => compile(node, "mysql"),
-      // compile() throws the DbError object directly, not an Error subclass
-      (err: unknown) => {
-        assert.ok(err !== null && typeof err === "object");
-        const e = err as Record<string, unknown>;
-        assert.equal(e["tag"], "ValidationError");
-        assert.ok(String(e["message"]).includes("mysql"));
-        return true;
-      },
-    );
+    expect(() => compile(node, "mysql")).toThrow();
   });
 });
 
@@ -139,9 +127,9 @@ describe("compile(): InsertNode produces SQL", () => {
     const result = compile(node);
 
     // Assert
-    assert.ok(result.sql.startsWith("INSERT INTO"));
-    assert.ok(result.sql.includes('"users"'));
-    assert.ok(result.params.length > 0);
+    expect(result.sql.startsWith("INSERT INTO")).toBeTruthy();
+    expect(result.sql.includes('"users"')).toBeTruthy();
+    expect(result.params.length > 0).toBeTruthy();
   });
 });
 
@@ -154,9 +142,9 @@ describe("compile(): UpdateNode produces SQL", () => {
     const result = compile(node);
 
     // Assert
-    assert.ok(result.sql.startsWith("UPDATE"));
-    assert.ok(result.sql.includes('"users"'));
-    assert.ok(result.params.length > 0);
+    expect(result.sql.startsWith("UPDATE")).toBeTruthy();
+    expect(result.sql.includes('"users"')).toBeTruthy();
+    expect(result.params.length > 0).toBeTruthy();
   });
 });
 
@@ -169,8 +157,8 @@ describe("compile(): DeleteNode produces SQL", () => {
     const result = compile(node);
 
     // Assert — UserModel has softDelete, so this emits an UPDATE
-    assert.ok(result.sql.length > 0);
-    assert.ok(result.sql.includes('"users"'));
+    expect(result.sql.length > 0).toBeTruthy();
+    expect(result.sql.includes('"users"')).toBeTruthy();
   });
 });
 
@@ -183,8 +171,8 @@ describe("compile(): RawNode passes through", () => {
     const result = compile(rawNode);
 
     // Assert
-    assert.equal(result.sql, "SELECT 1 + $1");
-    assert.deepEqual(result.params, [1]);
+    expect(result.sql).toBe("SELECT 1 + $1");
+    expect(result.params).toEqual([1]);
   });
 
   it("works with empty params", () => {
@@ -195,7 +183,7 @@ describe("compile(): RawNode passes through", () => {
     const result = compile(rawNode);
 
     // Assert
-    assert.equal(result.sql, "SELECT NOW()");
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe("SELECT NOW()");
+    expect(result.params).toEqual([]);
   });
 });

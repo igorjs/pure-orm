@@ -6,10 +6,8 @@
  * BEGIN / COMMIT / ROLLBACK / SAVEPOINT semantics are correct.
  */
 
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
-
 import { Task } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 import type { TransactionClient } from "../src/connection/transaction.ts";
 import { isTransactionClient, transaction } from "../src/connection/transaction.ts";
 import type { DatabaseClient, RawConnection } from "../src/connection/types.ts";
@@ -75,8 +73,8 @@ describe("transaction(): basic success path", () => {
 
     const result = await transaction(db, async () => "ok").run();
 
-    assert.equal(result.isOk, true);
-    assert.deepEqual(conn.statements, ["BEGIN", "COMMIT"]);
+    expect(result.isOk).toBe(true);
+    expect(conn.statements).toEqual(["BEGIN", "COMMIT"]);
   });
 
   it("returns the value produced by fn", async () => {
@@ -85,9 +83,9 @@ describe("transaction(): basic success path", () => {
 
     const result = await transaction(db, async () => 42).run();
 
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value, 42);
+      expect(result.value).toBe(42);
     }
   });
 });
@@ -105,8 +103,8 @@ describe("transaction(): rollback on thrown error", () => {
       throw new Error("something went wrong");
     }).run();
 
-    assert.equal(result.isErr, true);
-    assert.deepEqual(conn.statements, ["BEGIN", "ROLLBACK"]);
+    expect(result.isErr).toBe(true);
+    expect(conn.statements).toEqual(["BEGIN", "ROLLBACK"]);
   });
 
   it("returns Err(TransactionError) when fn throws", async () => {
@@ -117,9 +115,9 @@ describe("transaction(): rollback on thrown error", () => {
       throw new Error("boom");
     }).run();
 
-    assert.equal(result.isErr, true);
+    expect(result.isErr).toBe(true);
     if (result.isErr) {
-      assert.equal(result.error.tag, "TransactionError");
+      expect(result.error.tag).toBe("TransactionError");
     }
   });
 });
@@ -137,8 +135,8 @@ describe("transaction(): fn returning Err result still commits", () => {
     // Error semantics inside the fn are the caller's responsibility.
     const result = await transaction(db, async () => ({ tag: "failure" })).run();
 
-    assert.equal(result.isOk, true);
-    assert.deepEqual(conn.statements, ["BEGIN", "COMMIT"]);
+    expect(result.isOk).toBe(true);
+    expect(conn.statements).toEqual(["BEGIN", "COMMIT"]);
   });
 });
 
@@ -155,10 +153,10 @@ describe("transaction(): nested savepoint on success", () => {
       return transaction(outerTx, async () => "nested").run();
     }).run();
 
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     // The outer transaction is at depth 1, so the nested savepoint is sp_2
     // (depth = outerTx._transactionDepth + 1 = 1 + 1 = 2).
-    assert.deepEqual(conn.statements, [
+    expect(conn.statements).toEqual([
       "BEGIN",
       "SAVEPOINT sp_2",
       "RELEASE SAVEPOINT sp_2",
@@ -185,10 +183,10 @@ describe("transaction(): nested savepoint rollback", () => {
       return "outer ok";
     }).run();
 
-    assert.equal(result.isOk, true);
+    expect(result.isOk).toBe(true);
     // The outer transaction is at depth 1, so the nested savepoint is sp_2
     // (depth = outerTx._transactionDepth + 1 = 1 + 1 = 2).
-    assert.deepEqual(conn.statements, [
+    expect(conn.statements).toEqual([
       "BEGIN",
       "SAVEPOINT sp_2",
       "ROLLBACK TO SAVEPOINT sp_2",
@@ -208,12 +206,12 @@ describe("transaction(): nested savepoint rollback", () => {
       return "outer ok";
     }).run();
 
-    assert.ok(
+    expect(
       nestedResult !== null &&
         typeof nestedResult === "object" &&
         "isErr" in nestedResult &&
         (nestedResult as { isErr: boolean }).isErr === true,
-    );
+    ).toBeTruthy();
   });
 });
 
@@ -228,7 +226,7 @@ describe("transaction(): isolation level", () => {
 
     await transaction(db, async () => undefined, { isolationLevel: "serializable" }).run();
 
-    assert.equal(conn.statements[0], "BEGIN ISOLATION LEVEL SERIALIZABLE");
+    expect(conn.statements[0]).toBe("BEGIN ISOLATION LEVEL SERIALIZABLE");
   });
 
   it("appends ISOLATION LEVEL REPEATABLE READ to BEGIN", async () => {
@@ -237,7 +235,7 @@ describe("transaction(): isolation level", () => {
 
     await transaction(db, async () => undefined, { isolationLevel: "repeatable read" }).run();
 
-    assert.equal(conn.statements[0], "BEGIN ISOLATION LEVEL REPEATABLE READ");
+    expect(conn.statements[0]).toBe("BEGIN ISOLATION LEVEL REPEATABLE READ");
   });
 
   it("appends ISOLATION LEVEL READ COMMITTED to BEGIN", async () => {
@@ -246,7 +244,7 @@ describe("transaction(): isolation level", () => {
 
     await transaction(db, async () => undefined, { isolationLevel: "read committed" }).run();
 
-    assert.equal(conn.statements[0], "BEGIN ISOLATION LEVEL READ COMMITTED");
+    expect(conn.statements[0]).toBe("BEGIN ISOLATION LEVEL READ COMMITTED");
   });
 });
 
@@ -261,7 +259,7 @@ describe("transaction(): read only", () => {
 
     await transaction(db, async () => undefined, { readOnly: true }).run();
 
-    assert.equal(conn.statements[0], "BEGIN READ ONLY");
+    expect(conn.statements[0]).toBe("BEGIN READ ONLY");
   });
 });
 
@@ -279,7 +277,7 @@ describe("transaction(): combined isolation level + read only", () => {
       readOnly: true,
     }).run();
 
-    assert.equal(conn.statements[0], "BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+    expect(conn.statements[0]).toBe("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
   });
 });
 
@@ -294,7 +292,7 @@ describe("transaction(): connection release", () => {
 
     await transaction(db, async () => "done").run();
 
-    assert.equal(released.value, true);
+    expect(released.value).toBe(true);
   });
 
   it("releases connection even when fn throws", async () => {
@@ -305,7 +303,7 @@ describe("transaction(): connection release", () => {
       throw new Error("failure");
     }).run();
 
-    assert.equal(released.value, true);
+    expect(released.value).toBe(true);
   });
 });
 
@@ -318,7 +316,7 @@ describe("isTransactionClient()", () => {
     const conn = createMockConnection();
     const { db } = createMockDb(conn);
 
-    assert.equal(isTransactionClient(db), false);
+    expect(isTransactionClient(db)).toBe(false);
   });
 
   it("returns true for a TransactionClient passed to fn", async () => {
@@ -330,8 +328,8 @@ describe("isTransactionClient()", () => {
       capturedTx = tx;
     }).run();
 
-    assert.ok(capturedTx !== null);
-    assert.equal(isTransactionClient(capturedTx), true);
+    expect(capturedTx !== null).toBeTruthy();
+    expect(isTransactionClient(capturedTx)).toBe(true);
   });
 });
 
@@ -347,14 +345,14 @@ describe("TransactionClient pool", () => {
     let acquiredConn: RawConnection | null = null;
     await transaction(db, async tx => {
       const r = await tx.pool.acquire().run();
-      assert.equal(r.isOk, true);
+      expect(r.isOk).toBe(true);
       if (r.isOk) {
         acquiredConn = r.value;
       }
     }).run();
 
     // The connection acquired via tx.pool must be the same mock connection.
-    assert.strictEqual(acquiredConn, conn);
+    expect(acquiredConn).toBe(conn);
   });
 
   it("release() is a no-op — does not affect the underlying connection", async () => {
@@ -364,9 +362,9 @@ describe("TransactionClient pool", () => {
     await transaction(db, async tx => {
       // Manually call release on the tx pool — should be a no-op.
       const r = await tx.pool.release(conn).run();
-      assert.equal(r.isOk, true);
+      expect(r.isOk).toBe(true);
       // The outer pool.release tracker must NOT have been triggered.
-      assert.equal(released.value, false);
+      expect(released.value).toBe(false);
     }).run();
   });
 
@@ -384,7 +382,7 @@ describe("TransactionClient pool", () => {
       }).run();
     }).run();
 
-    assert.equal(outerDepth, 1);
-    assert.equal(innerDepth, 2);
+    expect(outerDepth).toBe(1);
+    expect(innerDepth).toBe(2);
   });
 });

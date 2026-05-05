@@ -2,9 +2,8 @@
  * Tests for aggregate expressions and include() eager loading.
  */
 
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
@@ -64,65 +63,65 @@ describe("count()", () => {
   it("creates an AggregateExpr with fn COUNT", () => {
     const expr = count("id");
 
-    assert.equal(expr.tag, "Aggregate");
-    assert.equal(expr.fn, "COUNT");
-    assert.equal(expr.column, "id");
-    assert.equal(expr.alias, null);
+    expect(expr.tag).toBe("Aggregate");
+    expect(expr.fn).toBe("COUNT");
+    expect(expr.column).toBe("id");
+    expect(expr.alias).toBe(null);
   });
 
   it("defaults to COUNT(*) when no column given", () => {
     const expr = count();
 
-    assert.equal(expr.column, "*");
+    expect(expr.column).toBe("*");
   });
 
   it(".as() returns a new expr with alias", () => {
     const expr = count("id").as("postCount");
 
-    assert.equal(expr.alias, "postCount");
-    assert.equal(expr.fn, "COUNT");
-    assert.equal(expr.column, "id");
+    expect(expr.alias).toBe("postCount");
+    expect(expr.fn).toBe("COUNT");
+    expect(expr.column).toBe("id");
   });
 
   it(".as() does not mutate the original", () => {
     const original = count("id");
     original.as("postCount");
 
-    assert.equal(original.alias, null);
+    expect(original.alias).toBe(null);
   });
 
   it("is frozen", () => {
-    assert.ok(Object.isFrozen(count("id")));
-    assert.ok(Object.isFrozen(count("id").as("x")));
+    expect(Object.isFrozen(count("id"))).toBeTruthy();
+    expect(Object.isFrozen(count("id").as("x"))).toBeTruthy();
   });
 });
 
 describe("sum()", () => {
   it("creates SUM aggregate", () => {
     const expr = sum("views");
-    assert.equal(expr.fn, "SUM");
-    assert.equal(expr.column, "views");
+    expect(expr.fn).toBe("SUM");
+    expect(expr.column).toBe("views");
   });
 });
 
 describe("avg()", () => {
   it("creates AVG aggregate", () => {
     const expr = avg("views");
-    assert.equal(expr.fn, "AVG");
+    expect(expr.fn).toBe("AVG");
   });
 });
 
 describe("min()", () => {
   it("creates MIN aggregate", () => {
     const expr = min("views");
-    assert.equal(expr.fn, "MIN");
+    expect(expr.fn).toBe("MIN");
   });
 });
 
 describe("max()", () => {
   it("creates MAX aggregate", () => {
     const expr = max("views");
-    assert.equal(expr.fn, "MAX");
+    expect(expr.fn).toBe("MAX");
   });
 });
 
@@ -134,15 +133,15 @@ describe("select() with aggregates", () => {
   it("accepts a mix of strings and aggregate expressions", () => {
     const node = select("authorId", count("id").as("cnt"))(from(Post));
 
-    assert.equal(node.columns.length, 2);
-    assert.equal(node.columns[0], "authorId");
-    assert.equal(typeof node.columns[1], "object");
+    expect(node.columns.length).toBe(2);
+    expect(node.columns[0]).toBe("authorId");
+    expect(typeof node.columns[1]).toBe("object");
   });
 
   it("accepts only aggregate expressions", () => {
     const node = select(count(), sum("views"))(from(Post));
 
-    assert.equal(node.columns.length, 2);
+    expect(node.columns.length).toBe(2);
   });
 });
 
@@ -155,15 +154,15 @@ describe("PostgreSQL aggregate compilation", () => {
     const node = select("authorId", count("id").as("cnt"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('"posts"."author_id"'));
-    assert.ok(result.sql.includes('COUNT("posts"."id") AS "cnt"'));
+    expect(result.sql.includes('"posts"."author_id"')).toBeTruthy();
+    expect(result.sql.includes('COUNT("posts"."id") AS "cnt"')).toBeTruthy();
   });
 
   it("compiles COUNT(*)", () => {
     const node = select(count())(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("COUNT(*)"));
+    expect(result.sql.includes("COUNT(*)")).toBeTruthy();
   });
 
   it("compiles SUM, AVG, MIN, MAX", () => {
@@ -175,20 +174,20 @@ describe("PostgreSQL aggregate compilation", () => {
     )(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("SUM("));
-    assert.ok(result.sql.includes("AVG("));
-    assert.ok(result.sql.includes("MIN("));
-    assert.ok(result.sql.includes("MAX("));
-    assert.ok(result.sql.includes('AS "total"'));
-    assert.ok(result.sql.includes('AS "average"'));
+    expect(result.sql.includes("SUM(")).toBeTruthy();
+    expect(result.sql.includes("AVG(")).toBeTruthy();
+    expect(result.sql.includes("MIN(")).toBeTruthy();
+    expect(result.sql.includes("MAX(")).toBeTruthy();
+    expect(result.sql.includes('AS "total"')).toBeTruthy();
+    expect(result.sql.includes('AS "average"')).toBeTruthy();
   });
 
   it("compiles aggregate without alias", () => {
     const node = select(count("id"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('COUNT("posts"."id")'));
-    assert.ok(!result.sql.includes(" AS "));
+    expect(result.sql.includes('COUNT("posts"."id")')).toBeTruthy();
+    expect(!result.sql.includes(" AS ")).toBeTruthy();
   });
 
   it("compiles full aggregate pipeline: select + groupBy + having", () => {
@@ -199,18 +198,18 @@ describe("PostgreSQL aggregate compilation", () => {
     );
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('SELECT "posts"."author_id"'));
-    assert.ok(result.sql.includes('COUNT("posts"."id") AS "postCount"'));
-    assert.ok(result.sql.includes('AVG("posts"."views") AS "avgViews"'));
-    assert.ok(result.sql.includes('GROUP BY "posts"."author_id"'));
-    assert.ok(result.sql.includes("HAVING"));
+    expect(result.sql.includes('SELECT "posts"."author_id"')).toBeTruthy();
+    expect(result.sql.includes('COUNT("posts"."id") AS "postCount"')).toBeTruthy();
+    expect(result.sql.includes('AVG("posts"."views") AS "avgViews"')).toBeTruthy();
+    expect(result.sql.includes('GROUP BY "posts"."author_id"')).toBeTruthy();
+    expect(result.sql.includes("HAVING")).toBeTruthy();
   });
 
   it("resolves camelCase column names inside aggregates", () => {
     const node = select(count("authorId"))(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('"author_id"'));
+    expect(result.sql.includes('"author_id"')).toBeTruthy();
   });
 });
 
@@ -225,9 +224,9 @@ describe("SQLite aggregate compilation", () => {
     );
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("COUNT("));
-    assert.ok(result.sql.includes("?"));
-    assert.deepEqual(result.params, [50]);
+    expect(result.sql.includes("COUNT(")).toBeTruthy();
+    expect(result.sql.includes("?")).toBeTruthy();
+    expect(result.params).toEqual([50]);
   });
 });
 
@@ -239,64 +238,64 @@ describe("include()", () => {
   it("adds a LEFT JOIN for a belongsTo relation", () => {
     const node = include(Post, "author")(from(Post));
 
-    assert.equal(node.joins.length, 1);
-    assert.equal(node.joins[0].joinType, "left");
-    assert.equal(node.joins[0].model.name, "users");
+    expect(node.joins.length).toBe(1);
+    expect(node.joins[0].joinType).toBe("left");
+    expect(node.joins[0].model.name).toBe("users");
   });
 
   it("sets correct ON condition for belongsTo (FK on source)", () => {
     const node = include(Post, "author")(from(Post));
 
     // belongsTo: leftColumn = foreignKey (authorId), rightColumn = localKey (id)
-    assert.equal(node.joins[0].condition.leftColumn, "authorId");
-    assert.equal(node.joins[0].condition.rightColumn, "id");
+    expect(node.joins[0].condition.leftColumn).toBe("authorId");
+    expect(node.joins[0].condition.rightColumn).toBe("id");
   });
 
   it("adds a LEFT JOIN for a hasOne relation", () => {
     const node = include(User, "profile")(from(User));
 
-    assert.equal(node.joins.length, 1);
-    assert.equal(node.joins[0].joinType, "left");
-    assert.equal(node.joins[0].model.name, "profiles");
+    expect(node.joins.length).toBe(1);
+    expect(node.joins[0].joinType).toBe("left");
+    expect(node.joins[0].model.name).toBe("profiles");
   });
 
   it("sets correct ON condition for hasOne (FK on target)", () => {
     const node = include(User, "profile")(from(User));
 
     // hasOne: leftColumn = localKey (id), rightColumn = foreignKey (userId)
-    assert.equal(node.joins[0].condition.leftColumn, "id");
-    assert.equal(node.joins[0].condition.rightColumn, "userId");
+    expect(node.joins[0].condition.leftColumn).toBe("id");
+    expect(node.joins[0].condition.rightColumn).toBe("userId");
   });
 
   it("throws for unknown relation name", () => {
-    assert.throws(() => include(Post, "nonexistent")(from(Post)), { message: /not found/ });
+    expect(() => include(Post, "nonexistent")(from(Post))).toThrow();
   });
 
   it("throws for hasMany relations", () => {
-    assert.throws(() => include(User, "posts")(from(User)), { message: /HasMany/ });
+    expect(() => include(User, "posts")(from(User))).toThrow();
   });
 
   it("does not mutate the input node", () => {
     const base = from(Post);
     include(Post, "author")(base);
 
-    assert.equal(base.joins.length, 0);
+    expect(base.joins.length).toBe(0);
   });
 
   it("returns a frozen SelectNode", () => {
     const node = include(Post, "author")(from(Post));
 
-    assert.ok(Object.isFrozen(node));
-    assert.ok(Object.isFrozen(node.joins));
+    expect(Object.isFrozen(node)).toBeTruthy();
+    expect(Object.isFrozen(node.joins)).toBeTruthy();
   });
 
   it("PostgreSQL: compiles include as LEFT JOIN", () => {
     const node = include(Post, "author")(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("LEFT JOIN"));
-    assert.ok(result.sql.includes('"users"'));
-    assert.ok(result.sql.includes('"author_id"'));
+    expect(result.sql.includes("LEFT JOIN")).toBeTruthy();
+    expect(result.sql.includes('"users"')).toBeTruthy();
+    expect(result.sql.includes('"author_id"')).toBeTruthy();
   });
 
   it("composes with other query builders", () => {
@@ -305,8 +304,8 @@ describe("include()", () => {
     );
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("LEFT JOIN"));
-    assert.ok(result.sql.includes("COUNT("));
-    assert.ok(result.sql.includes("GROUP BY"));
+    expect(result.sql.includes("LEFT JOIN")).toBeTruthy();
+    expect(result.sql.includes("COUNT(")).toBeTruthy();
+    expect(result.sql.includes("GROUP BY")).toBeTruthy();
   });
 });

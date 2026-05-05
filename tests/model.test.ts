@@ -1,7 +1,5 @@
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
-
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 
 import { camelToSnake, Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";
@@ -15,7 +13,7 @@ import type { ColumnMetadata } from "../src/model/types.ts";
 describe("camelToSnake", () => {
   it("leaves a single lowercase word unchanged", () => {
     // Arrange / Act / Assert
-    assert.equal(camelToSnake("id"), "id");
+    expect(camelToSnake("id")).toBe("id");
   });
 
   it("converts simple camelCase to snake_case", () => {
@@ -26,7 +24,7 @@ describe("camelToSnake", () => {
     const result = camelToSnake(input);
 
     // Assert
-    assert.equal(result, "author_id");
+    expect(result).toBe("author_id");
   });
 
   it("converts PascalCase to snake_case", () => {
@@ -37,7 +35,7 @@ describe("camelToSnake", () => {
     const result = camelToSnake(input);
 
     // Assert
-    assert.equal(result, "created_at");
+    expect(result).toBe("created_at");
   });
 
   it("handles consecutive uppercase letters (acronym prefix)", () => {
@@ -48,7 +46,7 @@ describe("camelToSnake", () => {
     const result = camelToSnake(input);
 
     // Assert
-    assert.equal(result, "html_parser");
+    expect(result).toBe("html_parser");
   });
 
   it("handles trailing acronym (parseURL)", () => {
@@ -59,7 +57,7 @@ describe("camelToSnake", () => {
     const result = camelToSnake(input);
 
     // Assert
-    assert.equal(result, "parse_url");
+    expect(result).toBe("parse_url");
   });
 
   it("passes through already-snake_case strings unchanged", () => {
@@ -70,7 +68,7 @@ describe("camelToSnake", () => {
     const result = camelToSnake(input);
 
     // Assert
-    assert.equal(result, "user_profile_id");
+    expect(result).toBe("user_profile_id");
   });
 
   it("converts multi-segment camelCase", () => {
@@ -81,7 +79,7 @@ describe("camelToSnake", () => {
     const result = camelToSnake(input);
 
     // Assert
-    assert.equal(result, "updated_at");
+    expect(result).toBe("updated_at");
   });
 });
 
@@ -95,8 +93,8 @@ describe("Field()", () => {
     const f = Field(Schema.string);
 
     // Assert
-    assert.equal(f._tag, "FieldDef");
-    assert.ok(Object.isFrozen(f));
+    expect(f._tag).toBe("FieldDef");
+    expect(Object.isFrozen(f)).toBeTruthy();
   });
 
   it("stores the provided schema", () => {
@@ -107,7 +105,7 @@ describe("Field()", () => {
     const f = Field(schema);
 
     // Assert
-    assert.strictEqual(f.schema, schema);
+    expect(f.schema).toBe(schema);
   });
 
   it("sets _hasDefault to false when no config is provided", () => {
@@ -115,7 +113,7 @@ describe("Field()", () => {
     const f = Field(Schema.string);
 
     // Assert
-    assert.equal(f._hasDefault, false);
+    expect(f._hasDefault).toBe(false);
   });
 
   it("sets _hasDefault to false when config has no default", () => {
@@ -123,7 +121,7 @@ describe("Field()", () => {
     const f = Field(Schema.string, { primaryKey: true });
 
     // Assert
-    assert.equal(f._hasDefault, false);
+    expect(f._hasDefault).toBe(false);
   });
 
   it("sets _hasDefault to true when config includes a default", () => {
@@ -131,7 +129,7 @@ describe("Field()", () => {
     const f = Field(Schema.string, { default: "uuid" });
 
     // Assert
-    assert.equal(f._hasDefault, true);
+    expect(f._hasDefault).toBe(true);
   });
 
   it("sets _hasDefault to true when config includes primaryKey and default", () => {
@@ -139,7 +137,7 @@ describe("Field()", () => {
     const f = Field(Schema.string, { primaryKey: true, default: "uuid" });
 
     // Assert
-    assert.equal(f._hasDefault, true);
+    expect(f._hasDefault).toBe(true);
   });
 
   it("stores an empty frozen config object when no config is provided", () => {
@@ -147,8 +145,8 @@ describe("Field()", () => {
     const f = Field(Schema.boolean);
 
     // Assert
-    assert.deepEqual(f.config, {});
-    assert.ok(Object.isFrozen(f.config));
+    expect(f.config).toEqual({});
+    expect(Object.isFrozen(f.config)).toBeTruthy();
   });
 
   it("stores and freezes the provided config", () => {
@@ -159,9 +157,9 @@ describe("Field()", () => {
     const f = Field(Schema.string, config);
 
     // Assert
-    assert.equal(f.config.unique, true);
-    assert.equal(f.config.index, true);
-    assert.ok(Object.isFrozen(f.config));
+    expect(f.config.unique).toBe(true);
+    expect(f.config.index).toBe(true);
+    expect(Object.isFrozen(f.config)).toBeTruthy();
   });
 
   it("stores a custom columnName in config", () => {
@@ -169,7 +167,7 @@ describe("Field()", () => {
     const f = Field(Schema.string, { columnName: "user_name" });
 
     // Assert
-    assert.equal(f.config.columnName, "user_name");
+    expect(f.config.columnName).toBe("user_name");
   });
 });
 
@@ -188,11 +186,11 @@ describe("injectTimestampColumns()", () => {
     const result = injectTimestampColumns(base);
 
     // Assert
-    assert.equal(result.length, 3);
-    assert.equal(result[1]?.name, "createdAt");
-    assert.equal(result[1]?.columnName, "created_at");
-    assert.equal(result[2]?.name, "updatedAt");
-    assert.equal(result[2]?.columnName, "updated_at");
+    expect(result.length).toBe(3);
+    expect(result[1]?.name).toBe("createdAt");
+    expect(result[1]?.columnName).toBe("created_at");
+    expect(result[2]?.name).toBe("updatedAt");
+    expect(result[2]?.columnName).toBe("updated_at");
   });
 
   it("does not mutate the original array", () => {
@@ -203,8 +201,8 @@ describe("injectTimestampColumns()", () => {
     const result = injectTimestampColumns(base);
 
     // Assert
-    assert.equal(base.length, 0);
-    assert.equal(result.length, 2);
+    expect(base.length).toBe(0);
+    expect(result.length).toBe(2);
   });
 
   it("returns a frozen array", () => {
@@ -212,7 +210,7 @@ describe("injectTimestampColumns()", () => {
     const result = injectTimestampColumns([]);
 
     // Assert
-    assert.ok(Object.isFrozen(result));
+    expect(Object.isFrozen(result)).toBeTruthy();
   });
 
   it("timestamp column configs are frozen", () => {
@@ -221,8 +219,8 @@ describe("injectTimestampColumns()", () => {
 
     // Assert
     for (const col of result) {
-      assert.ok(Object.isFrozen(col));
-      assert.ok(Object.isFrozen(col.config));
+      expect(Object.isFrozen(col)).toBeTruthy();
+      expect(Object.isFrozen(col.config)).toBeTruthy();
     }
   });
 });
@@ -239,7 +237,7 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.equal(UserModel.$name, "users");
+    expect(UserModel.$name).toBe("users");
   });
 
   it("builds $columns from field definitions with auto snake_case names", () => {
@@ -254,7 +252,7 @@ describe("Model()", () => {
 
     // Assert
     const colNames = PostModel.$columns.map(c => c.columnName);
-    assert.deepEqual(colNames, ["id", "author_id", "created_at"]);
+    expect(colNames).toEqual(["id", "author_id", "created_at"]);
   });
 
   it("respects a custom columnName override in FieldConfig", () => {
@@ -266,7 +264,7 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.equal(MyModel.$columns[0]?.columnName, "display_name");
+    expect(MyModel.$columns[0]?.columnName).toBe("display_name");
   });
 
   it("stores field name as column.name (camelCase)", () => {
@@ -276,7 +274,7 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.equal(MyModel.$columns[0]?.name, "authorId");
+    expect(MyModel.$columns[0]?.name).toBe("authorId");
   });
 
   it("exposes a $schema that validates input", () => {
@@ -292,7 +290,7 @@ describe("Model()", () => {
     const result = UserModel.$schema.parse({ id: "u1", age: 30 });
 
     // Assert
-    assert.ok(result.isOk);
+    expect(result.isOk).toBeTruthy();
   });
 
   it("$schema rejects invalid input", () => {
@@ -308,7 +306,7 @@ describe("Model()", () => {
     const result = UserModel.$schema.parse({ id: 42, age: "not-a-number" });
 
     // Assert
-    assert.ok(result.isErr);
+    expect(result.isErr).toBeTruthy();
   });
 
   it("does not inject timestamp columns when options.timestamps is absent", () => {
@@ -318,7 +316,7 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.equal(MyModel.$columns.length, 1);
+    expect(MyModel.$columns.length).toBe(1);
   });
 
   it("does not inject timestamp columns when options.timestamps is false", () => {
@@ -329,7 +327,7 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.equal(MyModel.$columns.length, 1);
+    expect(MyModel.$columns.length).toBe(1);
   });
 
   it("injects timestamp columns when options.timestamps is true", () => {
@@ -340,9 +338,9 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.equal(MyModel.$columns.length, 3);
+    expect(MyModel.$columns.length).toBe(3);
     const names = MyModel.$columns.map(c => c.columnName);
-    assert.deepEqual(names, ["id", "created_at", "updated_at"]);
+    expect(names).toEqual(["id", "created_at", "updated_at"]);
   });
 
   it("stores $options correctly", () => {
@@ -353,8 +351,8 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.equal(MyModel.$options.timestamps, true);
-    assert.equal(MyModel.$options.softDelete, false);
+    expect(MyModel.$options.timestamps).toBe(true);
+    expect(MyModel.$options.softDelete).toBe(false);
   });
 
   it("$options defaults to an empty object when not provided", () => {
@@ -364,7 +362,7 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.deepEqual(MyModel.$options, {});
+    expect(MyModel.$options).toEqual({});
   });
 
   it("the returned Model object is frozen", () => {
@@ -374,7 +372,7 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.ok(Object.isFrozen(MyModel));
+    expect(Object.isFrozen(MyModel)).toBeTruthy();
   });
 
   it("$columns is a frozen array", () => {
@@ -384,7 +382,7 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.ok(Object.isFrozen(MyModel.$columns));
+    expect(Object.isFrozen(MyModel.$columns)).toBeTruthy();
   });
 
   it("$options is frozen", () => {
@@ -395,7 +393,7 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.ok(Object.isFrozen(MyModel.$options));
+    expect(Object.isFrozen(MyModel.$options)).toBeTruthy();
   });
 
   it("each ColumnMetadata entry is frozen", () => {
@@ -409,7 +407,7 @@ describe("Model()", () => {
 
     // Assert
     for (const col of MyModel.$columns) {
-      assert.ok(Object.isFrozen(col), `column '${col.name}' should be frozen`);
+      expect(Object.isFrozen(col)).toBeTruthy();
     }
   });
 
@@ -422,6 +420,6 @@ describe("Model()", () => {
     });
 
     // Assert
-    assert.ok(Object.isFrozen(MyModel.$columns[0]?.config));
+    expect(Object.isFrozen(MyModel.$columns[0]?.config)).toBeTruthy();
   });
 });

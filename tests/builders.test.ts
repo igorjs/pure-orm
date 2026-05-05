@@ -1,7 +1,5 @@
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
-
 import { pipe, Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 
 import { Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";
@@ -40,7 +38,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.equal(node.tag, "Select");
+    expect(node.tag).toBe("Select");
   });
 
   it("embeds model name in the node", () => {
@@ -48,7 +46,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.equal(node.model.name, "users");
+    expect(node.model.name).toBe("users");
   });
 
   it("embeds model columns in the node", () => {
@@ -56,7 +54,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.deepEqual(node.model.columns, TestUser.$columns);
+    expect(node.model.columns).toEqual(TestUser.$columns);
   });
 
   it("embeds model options in the node", () => {
@@ -64,7 +62,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.deepEqual(node.model.options, TestUser.$options);
+    expect(node.model.options).toEqual(TestUser.$options);
   });
 
   it("sets columns to '*' by default", () => {
@@ -72,7 +70,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.equal(node.columns, "*");
+    expect(node.columns).toBe("*");
   });
 
   it("starts with an empty conditions array", () => {
@@ -80,7 +78,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.equal(node.conditions.length, 0);
+    expect(node.conditions.length).toBe(0);
   });
 
   it("starts with an empty orderBy array", () => {
@@ -88,7 +86,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.equal(node.orderBy.length, 0);
+    expect(node.orderBy.length).toBe(0);
   });
 
   it("starts with limit null", () => {
@@ -96,7 +94,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.equal(node.limit, null);
+    expect(node.limit).toBe(null);
   });
 
   it("starts with offset null", () => {
@@ -104,7 +102,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.equal(node.offset, null);
+    expect(node.offset).toBe(null);
   });
 
   it("sets softDeleteFilter to true when model has softDelete: true", () => {
@@ -112,7 +110,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.equal(node.softDeleteFilter, true);
+    expect(node.softDeleteFilter).toBe(true);
   });
 
   it("sets softDeleteFilter to false when model has no softDelete option", () => {
@@ -120,7 +118,7 @@ describe("from()", () => {
     const node = from(TestPost);
 
     // Assert
-    assert.equal(node.softDeleteFilter, false);
+    expect(node.softDeleteFilter).toBe(false);
   });
 
   it("sets softDeleteFilter to false when model has softDelete: false", () => {
@@ -134,7 +132,7 @@ describe("from()", () => {
     const node = from(Model2);
 
     // Assert
-    assert.equal(node.softDeleteFilter, false);
+    expect(node.softDeleteFilter).toBe(false);
   });
 
   it("returns a frozen SelectNode", () => {
@@ -142,7 +140,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("conditions array on the returned node is frozen", () => {
@@ -150,7 +148,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.ok(Object.isFrozen(node.conditions));
+    expect(Object.isFrozen(node.conditions)).toBeTruthy();
   });
 
   it("orderBy array on the returned node is frozen", () => {
@@ -158,7 +156,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.ok(Object.isFrozen(node.orderBy));
+    expect(Object.isFrozen(node.orderBy)).toBeTruthy();
   });
 
   it("model ref on the returned node is frozen", () => {
@@ -166,7 +164,7 @@ describe("from()", () => {
     const node = from(TestUser);
 
     // Assert
-    assert.ok(Object.isFrozen(node.model));
+    expect(Object.isFrozen(node.model)).toBeTruthy();
   });
 });
 
@@ -183,7 +181,7 @@ describe("select()", () => {
     const node = select("id", "email")(initial);
 
     // Assert
-    assert.deepEqual(node.columns, ["id", "email"]);
+    expect(node.columns).toEqual(["id", "email"]);
   });
 
   it("replaces an earlier select() call (last write wins)", () => {
@@ -194,7 +192,7 @@ describe("select()", () => {
     const after2 = select("email", "name")(after1);
 
     // Assert
-    assert.deepEqual(after2.columns, ["email", "name"]);
+    expect(after2.columns).toEqual(["email", "name"]);
   });
 
   it("preserves all other fields on the node", () => {
@@ -205,12 +203,12 @@ describe("select()", () => {
     const node = select("id")(initial);
 
     // Assert
-    assert.equal(node.tag, initial.tag);
-    assert.deepEqual(node.conditions, initial.conditions);
-    assert.deepEqual(node.orderBy, initial.orderBy);
-    assert.equal(node.limit, initial.limit);
-    assert.equal(node.offset, initial.offset);
-    assert.equal(node.softDeleteFilter, initial.softDeleteFilter);
+    expect(node.tag).toBe(initial.tag);
+    expect(node.conditions).toEqual(initial.conditions);
+    expect(node.orderBy).toEqual(initial.orderBy);
+    expect(node.limit).toBe(initial.limit);
+    expect(node.offset).toBe(initial.offset);
+    expect(node.softDeleteFilter).toBe(initial.softDeleteFilter);
   });
 
   it("returns a frozen SelectNode", () => {
@@ -218,7 +216,7 @@ describe("select()", () => {
     const node = select("id")(from(TestUser));
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("does NOT mutate the input node", () => {
@@ -230,7 +228,7 @@ describe("select()", () => {
     select("id", "email")(initial);
 
     // Assert
-    assert.equal(initial.columns, columnsBefore);
+    expect(initial.columns).toBe(columnsBefore);
   });
 });
 
@@ -248,8 +246,8 @@ describe("where()", () => {
     const node = where(condition)(initial);
 
     // Assert
-    assert.equal(node.conditions.length, 1);
-    assert.deepEqual(node.conditions[0], condition);
+    expect(node.conditions.length).toBe(1);
+    expect(node.conditions[0]).toEqual(condition);
   });
 
   it("accumulates conditions across multiple where() calls (AND semantics)", () => {
@@ -261,9 +259,9 @@ describe("where()", () => {
     const node = where(c2)(where(c1)(from(TestUser)));
 
     // Assert
-    assert.equal(node.conditions.length, 2);
-    assert.deepEqual(node.conditions[0], c1);
-    assert.deepEqual(node.conditions[1], c2);
+    expect(node.conditions.length).toBe(2);
+    expect(node.conditions[0]).toEqual(c1);
+    expect(node.conditions[1]).toEqual(c2);
   });
 
   it("preserves all other fields on the node", () => {
@@ -274,11 +272,11 @@ describe("where()", () => {
     const node = where(eq("id", "x"))(initial);
 
     // Assert
-    assert.equal(node.tag, initial.tag);
-    assert.equal(node.columns, initial.columns);
-    assert.deepEqual(node.orderBy, initial.orderBy);
-    assert.equal(node.limit, initial.limit);
-    assert.equal(node.offset, initial.offset);
+    expect(node.tag).toBe(initial.tag);
+    expect(node.columns).toBe(initial.columns);
+    expect(node.orderBy).toEqual(initial.orderBy);
+    expect(node.limit).toBe(initial.limit);
+    expect(node.offset).toBe(initial.offset);
   });
 
   it("returns a frozen SelectNode", () => {
@@ -286,7 +284,7 @@ describe("where()", () => {
     const node = where(eq("id", "x"))(from(TestUser));
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("conditions array on returned node is frozen", () => {
@@ -294,7 +292,7 @@ describe("where()", () => {
     const node = where(eq("id", "x"))(from(TestUser));
 
     // Assert
-    assert.ok(Object.isFrozen(node.conditions));
+    expect(Object.isFrozen(node.conditions)).toBeTruthy();
   });
 
   it("does NOT mutate the input node", () => {
@@ -306,7 +304,7 @@ describe("where()", () => {
     where(eq("id", "x"))(initial);
 
     // Assert
-    assert.equal(initial.conditions.length, conditionsBefore);
+    expect(initial.conditions.length).toBe(conditionsBefore);
   });
 });
 
@@ -323,9 +321,9 @@ describe("orderBy()", () => {
     const node = orderBy("name", "asc")(initial);
 
     // Assert
-    assert.equal(node.orderBy.length, 1);
-    assert.equal(node.orderBy[0]?.column, "name");
-    assert.equal(node.orderBy[0]?.direction, "asc");
+    expect(node.orderBy.length).toBe(1);
+    expect(node.orderBy[0]?.column).toBe("name");
+    expect(node.orderBy[0]?.direction).toBe("asc");
   });
 
   it("accumulates clauses across multiple orderBy() calls", () => {
@@ -333,11 +331,11 @@ describe("orderBy()", () => {
     const node = orderBy("email", "desc")(orderBy("name", "asc")(from(TestUser)));
 
     // Assert
-    assert.equal(node.orderBy.length, 2);
-    assert.equal(node.orderBy[0]?.column, "name");
-    assert.equal(node.orderBy[0]?.direction, "asc");
-    assert.equal(node.orderBy[1]?.column, "email");
-    assert.equal(node.orderBy[1]?.direction, "desc");
+    expect(node.orderBy.length).toBe(2);
+    expect(node.orderBy[0]?.column).toBe("name");
+    expect(node.orderBy[0]?.direction).toBe("asc");
+    expect(node.orderBy[1]?.column).toBe("email");
+    expect(node.orderBy[1]?.direction).toBe("desc");
   });
 
   it("preserves all other fields on the node", () => {
@@ -348,11 +346,11 @@ describe("orderBy()", () => {
     const node = orderBy("name", "asc")(initial);
 
     // Assert
-    assert.equal(node.tag, initial.tag);
-    assert.equal(node.columns, initial.columns);
-    assert.deepEqual(node.conditions, initial.conditions);
-    assert.equal(node.limit, initial.limit);
-    assert.equal(node.offset, initial.offset);
+    expect(node.tag).toBe(initial.tag);
+    expect(node.columns).toBe(initial.columns);
+    expect(node.conditions).toEqual(initial.conditions);
+    expect(node.limit).toBe(initial.limit);
+    expect(node.offset).toBe(initial.offset);
   });
 
   it("returns a frozen SelectNode", () => {
@@ -360,7 +358,7 @@ describe("orderBy()", () => {
     const node = orderBy("name", "asc")(from(TestUser));
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("orderBy array on returned node is frozen", () => {
@@ -368,7 +366,7 @@ describe("orderBy()", () => {
     const node = orderBy("name", "asc")(from(TestUser));
 
     // Assert
-    assert.ok(Object.isFrozen(node.orderBy));
+    expect(Object.isFrozen(node.orderBy)).toBeTruthy();
   });
 
   it("does NOT mutate the input node", () => {
@@ -380,7 +378,7 @@ describe("orderBy()", () => {
     orderBy("name", "asc")(initial);
 
     // Assert
-    assert.equal(initial.orderBy.length, lengthBefore);
+    expect(initial.orderBy.length).toBe(lengthBefore);
   });
 });
 
@@ -394,7 +392,7 @@ describe("limit()", () => {
     const node = limit(10)(from(TestUser));
 
     // Assert
-    assert.equal(node.limit, 10);
+    expect(node.limit).toBe(10);
   });
 
   it("overwrites a previously set limit (last call wins)", () => {
@@ -402,7 +400,7 @@ describe("limit()", () => {
     const node = limit(5)(limit(100)(from(TestUser)));
 
     // Assert
-    assert.equal(node.limit, 5);
+    expect(node.limit).toBe(5);
   });
 
   it("preserves all other fields on the node", () => {
@@ -413,11 +411,11 @@ describe("limit()", () => {
     const node = limit(10)(initial);
 
     // Assert
-    assert.equal(node.tag, initial.tag);
-    assert.equal(node.columns, initial.columns);
-    assert.deepEqual(node.conditions, initial.conditions);
-    assert.deepEqual(node.orderBy, initial.orderBy);
-    assert.equal(node.offset, initial.offset);
+    expect(node.tag).toBe(initial.tag);
+    expect(node.columns).toBe(initial.columns);
+    expect(node.conditions).toEqual(initial.conditions);
+    expect(node.orderBy).toEqual(initial.orderBy);
+    expect(node.offset).toBe(initial.offset);
   });
 
   it("returns a frozen SelectNode", () => {
@@ -425,7 +423,7 @@ describe("limit()", () => {
     const node = limit(10)(from(TestUser));
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("does NOT mutate the input node", () => {
@@ -436,7 +434,7 @@ describe("limit()", () => {
     limit(10)(initial);
 
     // Assert
-    assert.equal(initial.limit, null);
+    expect(initial.limit).toBe(null);
   });
 });
 
@@ -450,7 +448,7 @@ describe("offset()", () => {
     const node = offset(20)(from(TestUser));
 
     // Assert
-    assert.equal(node.offset, 20);
+    expect(node.offset).toBe(20);
   });
 
   it("overwrites a previously set offset (last call wins)", () => {
@@ -458,7 +456,7 @@ describe("offset()", () => {
     const node = offset(40)(offset(0)(from(TestUser)));
 
     // Assert
-    assert.equal(node.offset, 40);
+    expect(node.offset).toBe(40);
   });
 
   it("preserves all other fields on the node", () => {
@@ -469,11 +467,11 @@ describe("offset()", () => {
     const node = offset(20)(initial);
 
     // Assert
-    assert.equal(node.tag, initial.tag);
-    assert.equal(node.columns, initial.columns);
-    assert.deepEqual(node.conditions, initial.conditions);
-    assert.deepEqual(node.orderBy, initial.orderBy);
-    assert.equal(node.limit, initial.limit);
+    expect(node.tag).toBe(initial.tag);
+    expect(node.columns).toBe(initial.columns);
+    expect(node.conditions).toEqual(initial.conditions);
+    expect(node.orderBy).toEqual(initial.orderBy);
+    expect(node.limit).toBe(initial.limit);
   });
 
   it("returns a frozen SelectNode", () => {
@@ -481,7 +479,7 @@ describe("offset()", () => {
     const node = offset(20)(from(TestUser));
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("does NOT mutate the input node", () => {
@@ -492,7 +490,7 @@ describe("offset()", () => {
     offset(20)(initial);
 
     // Assert
-    assert.equal(initial.offset, null);
+    expect(initial.offset).toBe(null);
   });
 });
 
@@ -511,14 +509,14 @@ describe("pipe() composition", () => {
     );
 
     // Assert
-    assert.equal(node.tag, "Select");
-    assert.equal(node.model.name, "users");
-    assert.equal(node.conditions.length, 1);
-    assert.equal(node.conditions[0]?.tag, "Eq");
-    assert.equal(node.orderBy.length, 1);
-    assert.equal(node.orderBy[0]?.column, "name");
-    assert.equal(node.orderBy[0]?.direction, "asc");
-    assert.equal(node.limit, 10);
+    expect(node.tag).toBe("Select");
+    expect(node.model.name).toBe("users");
+    expect(node.conditions.length).toBe(1);
+    expect(node.conditions[0]?.tag).toBe("Eq");
+    expect(node.orderBy.length).toBe(1);
+    expect(node.orderBy[0]?.column).toBe("name");
+    expect(node.orderBy[0]?.direction).toBe("asc");
+    expect(node.limit).toBe(10);
   });
 
   it("accumulates multiple where() conditions through pipe()", () => {
@@ -530,9 +528,9 @@ describe("pipe() composition", () => {
     );
 
     // Assert
-    assert.equal(node.conditions.length, 2);
-    assert.equal(node.conditions[0]?.tag, "Eq");
-    assert.equal(node.conditions[1]?.tag, "Gt");
+    expect(node.conditions.length).toBe(2);
+    expect(node.conditions[0]?.tag).toBe("Eq");
+    expect(node.conditions[1]?.tag).toBe("Gt");
   });
 
   it("accumulates multiple orderBy() clauses through pipe()", () => {
@@ -540,9 +538,9 @@ describe("pipe() composition", () => {
     const node = pipe(from(TestUser), orderBy("name", "asc"), orderBy("email", "desc"));
 
     // Assert
-    assert.equal(node.orderBy.length, 2);
-    assert.equal(node.orderBy[0]?.column, "name");
-    assert.equal(node.orderBy[1]?.column, "email");
+    expect(node.orderBy.length).toBe(2);
+    expect(node.orderBy[0]?.column).toBe("name");
+    expect(node.orderBy[1]?.column).toBe("email");
   });
 
   it("composes select(), where(), orderBy(), limit(), and offset() together", () => {
@@ -557,11 +555,11 @@ describe("pipe() composition", () => {
     );
 
     // Assert
-    assert.deepEqual(node.columns, ["id", "email", "name"]);
-    assert.equal(node.conditions.length, 1);
-    assert.equal(node.orderBy.length, 1);
-    assert.equal(node.limit, 5);
-    assert.equal(node.offset, 10);
+    expect(node.columns).toEqual(["id", "email", "name"]);
+    expect(node.conditions.length).toBe(1);
+    expect(node.orderBy.length).toBe(1);
+    expect(node.limit).toBe(5);
+    expect(node.offset).toBe(10);
   });
 
   it("final composed node is frozen", () => {
@@ -569,7 +567,7 @@ describe("pipe() composition", () => {
     const node = pipe(from(TestUser), where(eq("id", "x")), orderBy("name", "asc"), limit(10));
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("intermediate nodes are not mutated by subsequent pipeline steps", () => {
@@ -581,8 +579,8 @@ describe("pipe() composition", () => {
     pipe(afterWhere, orderBy("name", "asc"), limit(10));
 
     // Assert - intermediate node is unchanged
-    assert.equal(afterWhere.orderBy.length, 0);
-    assert.equal(afterWhere.limit, null);
+    expect(afterWhere.orderBy.length).toBe(0);
+    expect(afterWhere.limit).toBe(null);
   });
 });
 
@@ -606,8 +604,8 @@ describe("from() — timestamps option", () => {
 
     // Assert — the two timestamp columns are appended
     const columnNames = node.model.columns.map(c => c.name);
-    assert.ok(columnNames.includes("createdAt"), "expected createdAt column");
-    assert.ok(columnNames.includes("updatedAt"), "expected updatedAt column");
+    expect(columnNames.includes("createdAt")).toBeTruthy();
+    expect(columnNames.includes("updatedAt")).toBeTruthy();
   });
 
   it("does NOT include timestamp columns when timestamps option is omitted", () => {
@@ -617,8 +615,8 @@ describe("from() — timestamps option", () => {
 
     // Assert
     const columnNames = node.model.columns.map(c => c.name);
-    assert.ok(!columnNames.includes("createdAt"), "should not have createdAt");
-    assert.ok(!columnNames.includes("updatedAt"), "should not have updatedAt");
+    expect(!columnNames.includes("createdAt")).toBeTruthy();
+    expect(!columnNames.includes("updatedAt")).toBeTruthy();
   });
 });
 
@@ -635,7 +633,7 @@ describe("select() — single column", () => {
     const node = select("id")(initial);
 
     // Assert
-    assert.deepEqual(node.columns, ["id"]);
+    expect(node.columns).toEqual(["id"]);
   });
 });
 
@@ -656,8 +654,8 @@ describe("where() — complex nested conditions", () => {
     const node = where(condition)(initial);
 
     // Assert — one top-level condition composed of nested operators
-    assert.equal(node.conditions.length, 1);
-    assert.equal(node.conditions[0]?.tag, "And");
+    expect(node.conditions.length).toBe(1);
+    expect(node.conditions[0]?.tag).toBe("And");
   });
 
   it("accumulates complex conditions alongside simple ones", () => {
@@ -672,9 +670,9 @@ describe("where() — complex nested conditions", () => {
     const node = where(complex)(where(simple)(from(TestUser)));
 
     // Assert
-    assert.equal(node.conditions.length, 2);
-    assert.equal(node.conditions[0]?.tag, "Eq");
-    assert.equal(node.conditions[1]?.tag, "And");
+    expect(node.conditions.length).toBe(2);
+    expect(node.conditions[0]?.tag).toBe("Eq");
+    expect(node.conditions[1]?.tag).toBe("And");
   });
 });
 
@@ -688,7 +686,7 @@ describe("limit() — overwrites previous value", () => {
     const node = limit(1)(limit(999)(from(TestUser)));
 
     // Assert
-    assert.equal(node.limit, 1);
+    expect(node.limit).toBe(1);
   });
 });
 
@@ -702,6 +700,6 @@ describe("offset() — overwrites previous value", () => {
     const node = offset(50)(offset(0)(from(TestUser)));
 
     // Assert
-    assert.equal(node.offset, 50);
+    expect(node.offset).toBe(50);
   });
 });

@@ -3,8 +3,7 @@
  * Also tests migration runner types (runner logic needs a real DB).
  */
 
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, expect, it } from "@igorjs/pure-test";
 import type { AuditEntryInput } from "../src/audit/interceptor.ts";
 import { createAuditHooks, withAuditContext } from "../src/audit/interceptor.ts";
 import type { DatabaseClient } from "../src/connection/types.ts";
@@ -58,8 +57,8 @@ describe("createAuditHooks()", () => {
   it("returns hooks with beforeExecute and afterExecute", () => {
     const hooks = createAuditHooks({ callback: () => undefined });
 
-    assert.equal(typeof hooks.beforeExecute, "function");
-    assert.equal(typeof hooks.afterExecute, "function");
+    expect(typeof hooks.beforeExecute).toBe("function");
+    expect(typeof hooks.afterExecute).toBe("function");
   });
 
   it("calls callback for INSERT operations", () => {
@@ -77,9 +76,9 @@ describe("createAuditHooks()", () => {
       durationMs: 5,
     });
 
-    assert.equal(entries.length, 1);
-    assert.equal(entries[0].operation, "INSERT");
-    assert.equal(entries[0].tableName, "users");
+    expect(entries.length).toBe(1);
+    expect(entries[0].operation).toBe("INSERT");
+    expect(entries[0].tableName).toBe("users");
   });
 
   it("calls callback for UPDATE operations", () => {
@@ -94,9 +93,9 @@ describe("createAuditHooks()", () => {
       durationMs: 3,
     });
 
-    assert.equal(entries.length, 1);
-    assert.equal(entries[0].operation, "UPDATE");
-    assert.equal(entries[0].tableName, "posts");
+    expect(entries.length).toBe(1);
+    expect(entries[0].operation).toBe("UPDATE");
+    expect(entries[0].tableName).toBe("posts");
   });
 
   it("calls callback for DELETE operations", () => {
@@ -111,8 +110,8 @@ describe("createAuditHooks()", () => {
       durationMs: 2,
     });
 
-    assert.equal(entries.length, 1);
-    assert.equal(entries[0].operation, "DELETE");
+    expect(entries.length).toBe(1);
+    expect(entries[0].operation).toBe("DELETE");
   });
 
   it("detects SOFT_DELETE when SQL contains deleted_at", () => {
@@ -127,8 +126,8 @@ describe("createAuditHooks()", () => {
       durationMs: 1,
     });
 
-    assert.equal(entries.length, 1);
-    assert.equal(entries[0].operation, "SOFT_DELETE");
+    expect(entries.length).toBe(1);
+    expect(entries[0].operation).toBe("SOFT_DELETE");
   });
 
   it("does NOT call callback for SELECT operations", () => {
@@ -143,7 +142,7 @@ describe("createAuditHooks()", () => {
       durationMs: 1,
     });
 
-    assert.equal(entries.length, 0);
+    expect(entries.length).toBe(0);
   });
 
   it("includes context when provided", () => {
@@ -161,9 +160,9 @@ describe("createAuditHooks()", () => {
       durationMs: 1,
     });
 
-    assert.equal(entries[0].actorId, "admin-1");
-    assert.equal(entries[0].actorIp, "127.0.0.1");
-    assert.deepEqual(entries[0].metadata, { reason: "test" });
+    expect(entries[0].actorId).toBe("admin-1");
+    expect(entries[0].actorIp).toBe("127.0.0.1");
+    expect(entries[0].metadata).toEqual({ reason: "test" });
   });
 
   it("defaults context fields to null", () => {
@@ -178,9 +177,9 @@ describe("createAuditHooks()", () => {
       durationMs: 0,
     });
 
-    assert.equal(entries[0].actorId, null);
-    assert.equal(entries[0].actorIp, null);
-    assert.equal(entries[0].metadata, null);
+    expect(entries[0].actorId).toBe(null);
+    expect(entries[0].actorIp).toBe(null);
+    expect(entries[0].metadata).toBe(null);
   });
 });
 
@@ -192,22 +191,22 @@ describe("withAuditContext()", () => {
   it("returns a new DatabaseClient", () => {
     const db = withAuditContext(mockDb, { actorId: "u-1" });
 
-    assert.notEqual(db, mockDb);
-    assert.equal(db.dialect.name, "postgresql");
+    expect(db).not.toBe(mockDb);
+    expect(db.dialect.name).toBe("postgresql");
   });
 
   it("preserves existing client properties", () => {
     const db = withAuditContext(mockDb, { actorId: "u-1" });
 
-    assert.equal(db.pool.mode, "pool");
-    assert.equal(typeof db.logger.debug, "function");
+    expect(db.pool.mode).toBe("pool");
+    expect(typeof db.logger.debug).toBe("function");
   });
 
   it("attaches hooks", () => {
     const db = withAuditContext(mockDb, { actorId: "u-1" });
 
-    assert.equal(typeof db.hooks.beforeExecute, "function");
-    assert.equal(typeof db.hooks.afterExecute, "function");
+    expect(typeof db.hooks.beforeExecute).toBe("function");
+    expect(typeof db.hooks.afterExecute).toBe("function");
   });
 });
 
@@ -223,8 +222,8 @@ describe("Migration runner types", () => {
       checksum: "abc123",
     };
 
-    assert.equal(input.name, "0001_create_users");
-    assert.equal(input.checksum, "abc123");
+    expect(input.name).toBe("0001_create_users");
+    expect(input.checksum).toBe("abc123");
   });
 
   it("RollbackInput has expected shape", () => {
@@ -233,6 +232,6 @@ describe("Migration runner types", () => {
       downSql: 'DROP TABLE "users"',
     };
 
-    assert.equal(input.name, "0001_create_users");
+    expect(input.name).toBe("0001_create_users");
   });
 });

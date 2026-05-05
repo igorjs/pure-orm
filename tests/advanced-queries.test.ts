@@ -2,9 +2,8 @@
  * Tests for Phase 6 advanced query features: groupBy, having, raw, sql.
  */
 
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { Model } from "../src/model/define.ts";
@@ -44,40 +43,40 @@ describe("groupBy()", () => {
   it("adds columns to the groupBy array", () => {
     const node = groupBy("authorId")(from(Post));
 
-    assert.deepEqual(node.groupBy, ["authorId"]);
+    expect(node.groupBy).toEqual(["authorId"]);
   });
 
   it("accumulates across multiple calls", () => {
     const node = groupBy("published")(groupBy("authorId")(from(Post)));
 
-    assert.deepEqual(node.groupBy, ["authorId", "published"]);
+    expect(node.groupBy).toEqual(["authorId", "published"]);
   });
 
   it("accepts multiple columns in a single call", () => {
     const node = groupBy("authorId", "published")(from(Post));
 
-    assert.deepEqual(node.groupBy, ["authorId", "published"]);
+    expect(node.groupBy).toEqual(["authorId", "published"]);
   });
 
   it("does not mutate the input node", () => {
     const base = from(Post);
     groupBy("authorId")(base);
 
-    assert.deepEqual(base.groupBy, []);
+    expect(base.groupBy).toEqual([]);
   });
 
   it("returns a frozen SelectNode", () => {
     const node = groupBy("authorId")(from(Post));
 
-    assert.ok(Object.isFrozen(node));
-    assert.ok(Object.isFrozen(node.groupBy));
+    expect(Object.isFrozen(node)).toBeTruthy();
+    expect(Object.isFrozen(node.groupBy)).toBeTruthy();
   });
 
   it("from() initialises groupBy as empty frozen array", () => {
     const node = from(Post);
 
-    assert.deepEqual(node.groupBy, []);
-    assert.ok(Object.isFrozen(node.groupBy));
+    expect(node.groupBy).toEqual([]);
+    expect(Object.isFrozen(node.groupBy)).toBeTruthy();
   });
 });
 
@@ -89,35 +88,35 @@ describe("having()", () => {
   it("adds a condition to the having array", () => {
     const node = having(gt("views", 100))(from(Post));
 
-    assert.equal(node.having.length, 1);
-    assert.equal(node.having[0].tag, "Gt");
+    expect(node.having.length).toBe(1);
+    expect(node.having[0].tag).toBe("Gt");
   });
 
   it("accumulates across multiple calls", () => {
     const node = having(eq("published", true))(having(gt("views", 100))(from(Post)));
 
-    assert.equal(node.having.length, 2);
+    expect(node.having.length).toBe(2);
   });
 
   it("does not mutate the input node", () => {
     const base = from(Post);
     having(gt("views", 100))(base);
 
-    assert.deepEqual(base.having, []);
+    expect(base.having).toEqual([]);
   });
 
   it("returns a frozen SelectNode", () => {
     const node = having(gt("views", 100))(from(Post));
 
-    assert.ok(Object.isFrozen(node));
-    assert.ok(Object.isFrozen(node.having));
+    expect(Object.isFrozen(node)).toBeTruthy();
+    expect(Object.isFrozen(node.having)).toBeTruthy();
   });
 
   it("from() initialises having as empty frozen array", () => {
     const node = from(Post);
 
-    assert.deepEqual(node.having, []);
-    assert.ok(Object.isFrozen(node.having));
+    expect(node.having).toEqual([]);
+    expect(Object.isFrozen(node.having)).toBeTruthy();
   });
 });
 
@@ -130,14 +129,14 @@ describe("PostgreSQL GROUP BY / HAVING compilation", () => {
     const node = groupBy("authorId")(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('GROUP BY "posts"."author_id"'));
+    expect(result.sql.includes('GROUP BY "posts"."author_id"')).toBeTruthy();
   });
 
   it("compiles multiple GROUP BY columns", () => {
     const node = groupBy("authorId", "published")(from(Post));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('GROUP BY "posts"."author_id", "posts"."published"'));
+    expect(result.sql.includes('GROUP BY "posts"."author_id", "posts"."published"')).toBeTruthy();
   });
 
   it("places GROUP BY after WHERE", () => {
@@ -146,16 +145,16 @@ describe("PostgreSQL GROUP BY / HAVING compilation", () => {
 
     const wherePos = result.sql.indexOf("WHERE");
     const groupPos = result.sql.indexOf("GROUP BY");
-    assert.ok(wherePos < groupPos, "GROUP BY should come after WHERE");
+    expect(wherePos < groupPos).toBeTruthy();
   });
 
   it("compiles HAVING clause", () => {
     const node = having(gt("views", 100))(groupBy("authorId")(from(Post)));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("HAVING"));
-    assert.ok(result.sql.includes('"views" > $1'));
-    assert.deepEqual(result.params, [100]);
+    expect(result.sql.includes("HAVING")).toBeTruthy();
+    expect(result.sql.includes('"views" > $1')).toBeTruthy();
+    expect(result.params).toEqual([100]);
   });
 
   it("places HAVING after GROUP BY and before ORDER BY", () => {
@@ -169,17 +168,17 @@ describe("PostgreSQL GROUP BY / HAVING compilation", () => {
     const havingPos = result.sql.indexOf("HAVING");
     const orderPos = result.sql.indexOf("ORDER BY");
 
-    assert.ok(groupPos < havingPos, "HAVING should come after GROUP BY");
-    assert.ok(havingPos < orderPos, "HAVING should come before ORDER BY");
+    expect(groupPos < havingPos).toBeTruthy();
+    expect(havingPos < orderPos).toBeTruthy();
   });
 
   it("no GROUP BY produces same SQL as before (regression)", () => {
     const node = where(eq("role", "admin"))(from(User));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(!result.sql.includes("GROUP BY"));
-    assert.ok(!result.sql.includes("HAVING"));
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."role" = $1');
+    expect(!result.sql.includes("GROUP BY")).toBeTruthy();
+    expect(!result.sql.includes("HAVING")).toBeTruthy();
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."role" = $1');
   });
 
   it("composes all clauses correctly", () => {
@@ -191,12 +190,12 @@ describe("PostgreSQL GROUP BY / HAVING compilation", () => {
     );
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("WHERE"));
-    assert.ok(result.sql.includes("GROUP BY"));
-    assert.ok(result.sql.includes("HAVING"));
-    assert.ok(result.sql.includes("ORDER BY"));
-    assert.ok(result.sql.includes("LIMIT"));
-    assert.deepEqual(result.params, [true, 50, 10]);
+    expect(result.sql.includes("WHERE")).toBeTruthy();
+    expect(result.sql.includes("GROUP BY")).toBeTruthy();
+    expect(result.sql.includes("HAVING")).toBeTruthy();
+    expect(result.sql.includes("ORDER BY")).toBeTruthy();
+    expect(result.sql.includes("LIMIT")).toBeTruthy();
+    expect(result.params).toEqual([true, 50, 10]);
   });
 });
 
@@ -209,16 +208,16 @@ describe("SQLite GROUP BY / HAVING compilation", () => {
     const node = groupBy("authorId")(from(Post));
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('GROUP BY "posts"."author_id"'));
+    expect(result.sql.includes('GROUP BY "posts"."author_id"')).toBeTruthy();
   });
 
   it("compiles HAVING with ? placeholders", () => {
     const node = having(gt("views", 100))(groupBy("authorId")(from(Post)));
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes("HAVING"));
-    assert.ok(result.sql.includes("?"));
-    assert.deepEqual(result.params, [100]);
+    expect(result.sql.includes("HAVING")).toBeTruthy();
+    expect(result.sql.includes("?")).toBeTruthy();
+    expect(result.params).toEqual([100]);
   });
 });
 
@@ -230,30 +229,30 @@ describe("raw()", () => {
   it("creates a RawNode with SQL and params", () => {
     const node = raw("SELECT * FROM users WHERE id = $1", ["user-1"]);
 
-    assert.equal(node.tag, "Raw");
-    assert.equal(node.sql, "SELECT * FROM users WHERE id = $1");
-    assert.deepEqual(node.params, ["user-1"]);
+    expect(node.tag).toBe("Raw");
+    expect(node.sql).toBe("SELECT * FROM users WHERE id = $1");
+    expect(node.params).toEqual(["user-1"]);
   });
 
   it("defaults params to empty array", () => {
     const node = raw("SELECT 1");
 
-    assert.deepEqual(node.params, []);
+    expect(node.params).toEqual([]);
   });
 
   it("is frozen", () => {
     const node = raw("SELECT 1", [42]);
 
-    assert.ok(Object.isFrozen(node));
-    assert.ok(Object.isFrozen(node.params));
+    expect(Object.isFrozen(node)).toBeTruthy();
+    expect(Object.isFrozen(node.params)).toBeTruthy();
   });
 
   it("passes through to compile() without modification", () => {
     const node = raw('SELECT * FROM "users" WHERE id = $1', ["user-1"]);
 
     // RawNode bypasses dialect compilation; compile() returns it as-is.
-    assert.equal(node.sql, 'SELECT * FROM "users" WHERE id = $1');
-    assert.deepEqual(node.params, ["user-1"]);
+    expect(node.sql).toBe('SELECT * FROM "users" WHERE id = $1');
+    expect(node.params).toEqual(["user-1"]);
   });
 });
 
@@ -266,8 +265,8 @@ describe("sql`` tagged template", () => {
     const email = "alice@example.com";
     const node = sql`SELECT * FROM users WHERE email = ${email}`;
 
-    assert.equal(node.tag, "Raw");
-    assert.deepEqual(node.params, ["alice@example.com"]);
+    expect(node.tag).toBe("Raw");
+    expect(node.params).toEqual(["alice@example.com"]);
   });
 
   it("replaces interpolated values with ? placeholders", () => {
@@ -275,9 +274,9 @@ describe("sql`` tagged template", () => {
     const age = 25;
     const node = sql`SELECT * FROM users WHERE email = ${email} AND age > ${age}`;
 
-    assert.ok(node.sql.includes("?"));
-    assert.ok(!node.sql.includes("alice@example.com"), "Should not interpolate value into SQL");
-    assert.deepEqual(node.params, ["alice@example.com", 25]);
+    expect(node.sql.includes("?")).toBeTruthy();
+    expect(!node.sql.includes("alice@example.com")).toBeTruthy();
+    expect(node.params).toEqual(["alice@example.com", 25]);
   });
 
   it("handles multiple interpolations", () => {
@@ -286,21 +285,21 @@ describe("sql`` tagged template", () => {
     const c = 3;
     const node = sql`SELECT ${a}, ${b}, ${c}`;
 
-    assert.deepEqual(node.params, [1, 2, 3]);
-    assert.equal(node.sql.split("?").length - 1, 3); // 3 placeholders
+    expect(node.params).toEqual([1, 2, 3]);
+    expect(node.sql.split("?").length - 1).toBe(3); // 3 placeholders
   });
 
   it("handles no interpolations", () => {
     const node = sql`SELECT 1`;
 
-    assert.equal(node.sql, "SELECT 1");
-    assert.deepEqual(node.params, []);
+    expect(node.sql).toBe("SELECT 1");
+    expect(node.params).toEqual([]);
   });
 
   it("is frozen", () => {
     const node = sql`SELECT ${42}`;
 
-    assert.ok(Object.isFrozen(node));
-    assert.ok(Object.isFrozen(node.params));
+    expect(Object.isFrozen(node)).toBeTruthy();
+    expect(Object.isFrozen(node.params)).toBeTruthy();
   });
 });

@@ -6,9 +6,8 @@
  * in $relations as a lazily-evaluated thunk.
  */
 
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 import { Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";
 import { belongsTo, hasMany, hasOne, manyToMany } from "../src/model/relations.ts";
@@ -55,22 +54,22 @@ describe("hasOne()", () => {
   it("creates a frozen HasOneRelation with tag 'HasOne'", () => {
     const rel = hasOne(() => ProfileModel, { foreignKey: "userId", localKey: "id" });
 
-    assert.equal(rel.tag, "HasOne");
-    assert.ok(Object.isFrozen(rel));
+    expect(rel.tag).toBe("HasOne");
+    expect(Object.isFrozen(rel)).toBeTruthy();
   });
 
   it("stores foreignKey and localKey", () => {
     const rel = hasOne(() => ProfileModel, { foreignKey: "userId", localKey: "id" });
 
-    assert.equal(rel.foreignKey, "userId");
-    assert.equal(rel.localKey, "id");
+    expect(rel.foreignKey).toBe("userId");
+    expect(rel.localKey).toBe("id");
   });
 
   it("stores a lazy target thunk that resolves to the target model", () => {
     const rel = hasOne(() => ProfileModel, { foreignKey: "userId", localKey: "id" });
 
-    assert.equal(typeof rel.target, "function");
-    assert.equal(rel.target().$name, "profiles");
+    expect(typeof rel.target).toBe("function");
+    expect(rel.target().$name).toBe("profiles");
   });
 });
 
@@ -82,21 +81,21 @@ describe("hasMany()", () => {
   it("creates a frozen HasManyRelation with tag 'HasMany'", () => {
     const rel = hasMany(() => PostModel, { foreignKey: "authorId", localKey: "id" });
 
-    assert.equal(rel.tag, "HasMany");
-    assert.ok(Object.isFrozen(rel));
+    expect(rel.tag).toBe("HasMany");
+    expect(Object.isFrozen(rel)).toBeTruthy();
   });
 
   it("stores foreignKey and localKey", () => {
     const rel = hasMany(() => PostModel, { foreignKey: "authorId", localKey: "id" });
 
-    assert.equal(rel.foreignKey, "authorId");
-    assert.equal(rel.localKey, "id");
+    expect(rel.foreignKey).toBe("authorId");
+    expect(rel.localKey).toBe("id");
   });
 
   it("stores a lazy target thunk", () => {
     const rel = hasMany(() => PostModel, { foreignKey: "authorId", localKey: "id" });
 
-    assert.equal(rel.target().$name, "posts");
+    expect(rel.target().$name).toBe("posts");
   });
 });
 
@@ -108,21 +107,21 @@ describe("belongsTo()", () => {
   it("creates a frozen BelongsToRelation with tag 'BelongsTo'", () => {
     const rel = belongsTo(() => UserModel, { foreignKey: "authorId", localKey: "id" });
 
-    assert.equal(rel.tag, "BelongsTo");
-    assert.ok(Object.isFrozen(rel));
+    expect(rel.tag).toBe("BelongsTo");
+    expect(Object.isFrozen(rel)).toBeTruthy();
   });
 
   it("stores foreignKey and localKey", () => {
     const rel = belongsTo(() => UserModel, { foreignKey: "authorId", localKey: "id" });
 
-    assert.equal(rel.foreignKey, "authorId");
-    assert.equal(rel.localKey, "id");
+    expect(rel.foreignKey).toBe("authorId");
+    expect(rel.localKey).toBe("id");
   });
 
   it("stores a lazy target thunk", () => {
     const rel = belongsTo(() => UserModel, { foreignKey: "authorId", localKey: "id" });
 
-    assert.equal(rel.target().$name, "users");
+    expect(rel.target().$name).toBe("users");
   });
 });
 
@@ -140,8 +139,8 @@ describe("manyToMany()", () => {
       otherLocalKey: "id",
     });
 
-    assert.equal(rel.tag, "ManyToMany");
-    assert.ok(Object.isFrozen(rel));
+    expect(rel.tag).toBe("ManyToMany");
+    expect(Object.isFrozen(rel)).toBeTruthy();
   });
 
   it("stores all junction table keys", () => {
@@ -153,11 +152,11 @@ describe("manyToMany()", () => {
       otherLocalKey: "id",
     });
 
-    assert.equal(rel.through, "user_tags");
-    assert.equal(rel.localKey, "id");
-    assert.equal(rel.foreignKey, "userId");
-    assert.equal(rel.otherKey, "tagId");
-    assert.equal(rel.otherLocalKey, "id");
+    expect(rel.through).toBe("user_tags");
+    expect(rel.localKey).toBe("id");
+    expect(rel.foreignKey).toBe("userId");
+    expect(rel.otherKey).toBe("tagId");
+    expect(rel.otherLocalKey).toBe("id");
   });
 
   it("stores a lazy target thunk", () => {
@@ -169,7 +168,7 @@ describe("manyToMany()", () => {
       otherLocalKey: "id",
     });
 
-    assert.equal(rel.target().$name, "tags");
+    expect(rel.target().$name).toBe("tags");
   });
 });
 
@@ -184,7 +183,7 @@ describe("Model.$relations", () => {
     });
 
     const relations = m.$relations();
-    assert.deepEqual(relations, {});
+    expect(relations).toEqual({});
   });
 
   it("accepts a plain RelationMap object", () => {
@@ -200,9 +199,9 @@ describe("Model.$relations", () => {
     });
 
     const rels = m.$relations();
-    assert.equal(Object.keys(rels).length, 2);
-    assert.equal(rels.posts.tag, "HasMany");
-    assert.equal(rels.profile.tag, "HasOne");
+    expect(Object.keys(rels).length).toBe(2);
+    expect(rels.posts.tag).toBe("HasMany");
+    expect(rels.profile.tag).toBe("HasOne");
   });
 
   it("accepts a lazy thunk for circular references", () => {
@@ -228,12 +227,12 @@ describe("Model.$relations", () => {
 
     // Relations resolve correctly despite circular definition.
     const userRels = UserWithPosts.$relations();
-    assert.equal(userRels.posts.tag, "HasMany");
-    assert.equal(userRels.posts.target().$name, "posts");
+    expect(userRels.posts.tag).toBe("HasMany");
+    expect(userRels.posts.target().$name).toBe("posts");
 
     const postRels = PostWithAuthor.$relations();
-    assert.equal(postRels.author.tag, "BelongsTo");
-    assert.equal(postRels.author.target().$name, "users");
+    expect(postRels.author.tag).toBe("BelongsTo");
+    expect(postRels.author.target().$name).toBe("users");
   });
 
   it("$relations is a function (thunk), not a direct value", () => {
@@ -242,6 +241,6 @@ describe("Model.$relations", () => {
       relations: { foo: hasOne(() => UserModel, { foreignKey: "thingId", localKey: "id" }) },
     });
 
-    assert.equal(typeof m.$relations, "function");
+    expect(typeof m.$relations).toBe("function");
   });
 });

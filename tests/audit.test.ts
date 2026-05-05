@@ -2,9 +2,8 @@
  * Tests for the audit system: AuditModel, auditLog(), and audit types.
  */
 
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 import { auditLog } from "../src/audit/logger.ts";
 import { AuditModel } from "../src/audit/table.ts";
 import type { AuditContext, AuditEntry, AuditOperation } from "../src/audit/types.ts";
@@ -34,44 +33,44 @@ const sqliteDialect = createSqliteDialect();
 
 describe("AuditModel", () => {
   it("has table name _pure_orm_audit", () => {
-    assert.equal(AuditModel.$name, "_pure_orm_audit");
+    expect(AuditModel.$name).toBe("_pure_orm_audit");
   });
 
   it("has all expected columns", () => {
     const names = AuditModel.$columns.map(c => c.name);
 
-    assert.ok(names.includes("id"));
-    assert.ok(names.includes("tableName"));
-    assert.ok(names.includes("operation"));
-    assert.ok(names.includes("rowId"));
-    assert.ok(names.includes("oldData"));
-    assert.ok(names.includes("newData"));
-    assert.ok(names.includes("changedFields"));
-    assert.ok(names.includes("actorId"));
-    assert.ok(names.includes("actorIp"));
-    assert.ok(names.includes("metadata"));
-    assert.ok(names.includes("createdAt"));
+    expect(names.includes("id")).toBeTruthy();
+    expect(names.includes("tableName")).toBeTruthy();
+    expect(names.includes("operation")).toBeTruthy();
+    expect(names.includes("rowId")).toBeTruthy();
+    expect(names.includes("oldData")).toBeTruthy();
+    expect(names.includes("newData")).toBeTruthy();
+    expect(names.includes("changedFields")).toBeTruthy();
+    expect(names.includes("actorId")).toBeTruthy();
+    expect(names.includes("actorIp")).toBeTruthy();
+    expect(names.includes("metadata")).toBeTruthy();
+    expect(names.includes("createdAt")).toBeTruthy();
   });
 
   it("resolves camelCase column names to snake_case", () => {
     const tableNameCol = AuditModel.$columns.find(c => c.name === "tableName");
-    assert.equal(tableNameCol?.columnName, "table_name");
+    expect(tableNameCol?.columnName).toBe("table_name");
 
     const rowIdCol = AuditModel.$columns.find(c => c.name === "rowId");
-    assert.equal(rowIdCol?.columnName, "row_id");
+    expect(rowIdCol?.columnName).toBe("row_id");
 
     const oldDataCol = AuditModel.$columns.find(c => c.name === "oldData");
-    assert.equal(oldDataCol?.columnName, "old_data");
+    expect(oldDataCol?.columnName).toBe("old_data");
 
     const actorIdCol = AuditModel.$columns.find(c => c.name === "actorId");
-    assert.equal(actorIdCol?.columnName, "actor_id");
+    expect(actorIdCol?.columnName).toBe("actor_id");
 
     const changedFieldsCol = AuditModel.$columns.find(c => c.name === "changedFields");
-    assert.equal(changedFieldsCol?.columnName, "changed_fields");
+    expect(changedFieldsCol?.columnName).toBe("changed_fields");
   });
 
   it("is frozen", () => {
-    assert.ok(Object.isFrozen(AuditModel));
+    expect(Object.isFrozen(AuditModel)).toBeTruthy();
   });
 });
 
@@ -83,56 +82,56 @@ describe("auditLog()", () => {
   it("creates a SelectNode for the _pure_orm_audit table", () => {
     const node = auditLog(User);
 
-    assert.equal(node.tag, "Select");
-    assert.equal(node.model.name, "_pure_orm_audit");
+    expect(node.tag).toBe("Select");
+    expect(node.model.name).toBe("_pure_orm_audit");
   });
 
   it("pre-filters by the model's table name", () => {
     const node = auditLog(User);
 
-    assert.equal(node.conditions.length, 1);
-    assert.equal(node.conditions[0].tag, "Eq");
+    expect(node.conditions.length).toBe(1);
+    expect(node.conditions[0].tag).toBe("Eq");
     if (node.conditions[0].tag === "Eq") {
-      assert.equal(node.conditions[0].column, "tableName");
-      assert.equal(node.conditions[0].value, "users");
+      expect(node.conditions[0].column).toBe("tableName");
+      expect(node.conditions[0].value).toBe("users");
     }
   });
 
   it("composes with where() for additional filtering", () => {
     const node = where(eq("rowId", "user-123"))(auditLog(User));
 
-    assert.equal(node.conditions.length, 2);
-    assert.equal(node.conditions[0].tag, "Eq"); // tableName = 'users'
-    assert.equal(node.conditions[1].tag, "Eq"); // rowId = 'user-123'
+    expect(node.conditions.length).toBe(2);
+    expect(node.conditions[0].tag).toBe("Eq"); // tableName = 'users'
+    expect(node.conditions[1].tag).toBe("Eq"); // rowId = 'user-123'
   });
 
   it("composes with orderBy() and limit()", () => {
     const node = limit(50)(orderBy("createdAt", "desc")(auditLog(User)));
 
-    assert.equal(node.limit, 50);
-    assert.equal(node.orderBy.length, 1);
-    assert.equal(node.orderBy[0].column, "createdAt");
-    assert.equal(node.orderBy[0].direction, "desc");
+    expect(node.limit).toBe(50);
+    expect(node.orderBy.length).toBe(1);
+    expect(node.orderBy[0].column).toBe("createdAt");
+    expect(node.orderBy[0].direction).toBe("desc");
   });
 
   it("PostgreSQL: compiles to SELECT from _pure_orm_audit", () => {
     const node = where(eq("rowId", "u-1"))(orderBy("createdAt", "desc")(limit(10)(auditLog(User))));
     const result = pgDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('"_pure_orm_audit"'));
-    assert.ok(result.sql.includes('"table_name" = $1'));
-    assert.ok(result.sql.includes('"row_id" = $2'));
-    assert.ok(result.sql.includes("ORDER BY"));
-    assert.deepEqual(result.params, ["users", "u-1", 10]);
+    expect(result.sql.includes('"_pure_orm_audit"')).toBeTruthy();
+    expect(result.sql.includes('"table_name" = $1')).toBeTruthy();
+    expect(result.sql.includes('"row_id" = $2')).toBeTruthy();
+    expect(result.sql.includes("ORDER BY")).toBeTruthy();
+    expect(result.params).toEqual(["users", "u-1", 10]);
   });
 
   it("SQLite: compiles with ? placeholders", () => {
     const node = auditLog(User);
     const result = sqliteDialect.compileSelect(node);
 
-    assert.ok(result.sql.includes('"_pure_orm_audit"'));
-    assert.ok(result.sql.includes("?"));
-    assert.deepEqual(result.params, ["users"]);
+    expect(result.sql.includes('"_pure_orm_audit"')).toBeTruthy();
+    expect(result.sql.includes("?")).toBeTruthy();
+    expect(result.params).toEqual(["users"]);
   });
 });
 
@@ -144,7 +143,7 @@ describe("Audit types", () => {
   it("AuditOperation covers all expected operations", () => {
     const ops: AuditOperation[] = ["INSERT", "UPDATE", "DELETE", "SOFT_DELETE", "RESTORE"];
 
-    assert.equal(ops.length, 5);
+    expect(ops.length).toBe(5);
   });
 
   it("AuditContext can be constructed with partial fields", () => {
@@ -153,10 +152,10 @@ describe("Audit types", () => {
     const ctx3: AuditContext = { metadata: { requestId: "req-1" } };
     const ctx4: AuditContext = {};
 
-    assert.equal(ctx1.actorId, "user-1");
-    assert.equal(ctx2.actorIp, "127.0.0.1");
-    assert.deepEqual(ctx3.metadata, { requestId: "req-1" });
-    assert.equal(ctx4.actorId, undefined);
+    expect(ctx1.actorId).toBe("user-1");
+    expect(ctx2.actorIp).toBe("127.0.0.1");
+    expect(ctx3.metadata).toEqual({ requestId: "req-1" });
+    expect(ctx4.actorId).toBe(undefined);
   });
 
   it("AuditEntry can be constructed with all fields", () => {
@@ -174,9 +173,9 @@ describe("Audit types", () => {
       createdAt: "2026-04-07T12:00:00Z",
     };
 
-    assert.equal(entry.tableName, "users");
-    assert.equal(entry.operation, "UPDATE");
-    assert.deepEqual(entry.changedFields, ["name"]);
+    expect(entry.tableName).toBe("users");
+    expect(entry.operation).toBe("UPDATE");
+    expect(entry.changedFields).toEqual(["name"]);
   });
 
   it("AuditEntry allows null for optional JSONB fields", () => {
@@ -194,7 +193,7 @@ describe("Audit types", () => {
       createdAt: "2026-04-07T12:00:00Z",
     };
 
-    assert.equal(entry.oldData, null);
-    assert.equal(entry.actorId, null);
+    expect(entry.oldData).toBe(null);
+    expect(entry.actorId).toBe(null);
   });
 });

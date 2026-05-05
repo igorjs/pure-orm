@@ -2,9 +2,8 @@
  * Tests for the migration system: snapshot, differ, and SQL generator.
  */
 
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 import { columnsEqual, diffSnapshots, diffTable } from "../src/migration/differ.ts";
@@ -72,34 +71,34 @@ const emptySnapshot: SchemaSnapshot = Object.freeze({
 describe("snapshotColumn()", () => {
   it("extracts primaryKey from field config", () => {
     const idCol = User.$columns.find(c => c.name === "id");
-    assert.ok(idCol !== undefined);
+    expect(idCol !== undefined).toBeTruthy();
     const snap = snapshotColumn(idCol);
 
-    assert.equal(snap.primaryKey, true);
+    expect(snap.primaryKey).toBe(true);
   });
 
   it("extracts unique from field config", () => {
     const emailCol = User.$columns.find(c => c.name === "email");
-    assert.ok(emailCol !== undefined);
+    expect(emailCol !== undefined).toBeTruthy();
     const snap = snapshotColumn(emailCol);
 
-    assert.equal(snap.unique, true);
+    expect(snap.unique).toBe(true);
   });
 
   it("extracts default from field config", () => {
     const idCol = User.$columns.find(c => c.name === "id");
-    assert.ok(idCol !== undefined);
+    expect(idCol !== undefined).toBeTruthy();
     const snap = snapshotColumn(idCol);
 
-    assert.equal(snap.default, "uuid");
+    expect(snap.default).toBe("uuid");
   });
 
   it("returns null default when none set", () => {
     const nameCol = User.$columns.find(c => c.name === "name");
-    assert.ok(nameCol !== undefined);
+    expect(nameCol !== undefined).toBeTruthy();
     const snap = snapshotColumn(nameCol);
 
-    assert.equal(snap.default, null);
+    expect(snap.default).toBe(null);
   });
 });
 
@@ -111,37 +110,37 @@ describe("snapshotTable()", () => {
   it("creates a table snapshot with all columns", () => {
     const snap = snapshotTable(User);
 
-    assert.ok("id" in snap.columns);
-    assert.ok("email" in snap.columns);
-    assert.ok("name" in snap.columns);
-    assert.ok("age" in snap.columns);
+    expect("id" in snap.columns).toBeTruthy();
+    expect("email" in snap.columns).toBeTruthy();
+    expect("name" in snap.columns).toBeTruthy();
+    expect("age" in snap.columns).toBeTruthy();
     // Timestamp columns
-    assert.ok("created_at" in snap.columns);
-    assert.ok("updated_at" in snap.columns);
+    expect("created_at" in snap.columns).toBeTruthy();
+    expect("updated_at" in snap.columns).toBeTruthy();
   });
 
   it("uses snake_case column names as keys", () => {
     const snap = snapshotTable(User);
     const keys = Object.keys(snap.columns);
 
-    assert.ok(keys.includes("created_at"));
-    assert.ok(keys.includes("updated_at"));
-    assert.ok(!keys.includes("createdAt"));
+    expect(keys.includes("created_at")).toBeTruthy();
+    expect(keys.includes("updated_at")).toBeTruthy();
+    expect(!keys.includes("createdAt")).toBeTruthy();
   });
 
   it("generates unique index entries for unique columns", () => {
     const snap = snapshotTable(User);
 
     const emailIndex = snap.indexes.find(i => i.columns.includes("email"));
-    assert.ok(emailIndex !== undefined, "Should have an index for unique email column");
-    assert.equal(emailIndex.unique, true);
+    expect(emailIndex !== undefined).toBeTruthy();
+    expect(emailIndex.unique).toBe(true);
   });
 
   it("is frozen", () => {
     const snap = snapshotTable(User);
 
-    assert.ok(Object.isFrozen(snap));
-    assert.ok(Object.isFrozen(snap.columns));
+    expect(Object.isFrozen(snap)).toBeTruthy();
+    expect(Object.isFrozen(snap.columns)).toBeTruthy();
   });
 });
 
@@ -153,29 +152,29 @@ describe("createSnapshot()", () => {
   it("creates a snapshot with version 1", () => {
     const snap = createSnapshot([User]);
 
-    assert.equal(snap.version, 1);
+    expect(snap.version).toBe(1);
   });
 
   it("includes all provided models", () => {
     const snap = createSnapshot([User, Post]);
 
-    assert.ok("users" in snap.tables);
-    assert.ok("posts" in snap.tables);
-    assert.equal(Object.keys(snap.tables).length, 2);
+    expect("users" in snap.tables).toBeTruthy();
+    expect("posts" in snap.tables).toBeTruthy();
+    expect(Object.keys(snap.tables).length).toBe(2);
   });
 
   it("sets generatedAt to a valid ISO date", () => {
     const snap = createSnapshot([User]);
 
-    assert.ok(snap.generatedAt.includes("T"));
-    assert.ok(!Number.isNaN(Date.parse(snap.generatedAt)));
+    expect(snap.generatedAt.includes("T")).toBeTruthy();
+    expect(!Number.isNaN(Date.parse(snap.generatedAt))).toBeTruthy();
   });
 
   it("is frozen", () => {
     const snap = createSnapshot([User]);
 
-    assert.ok(Object.isFrozen(snap));
-    assert.ok(Object.isFrozen(snap.tables));
+    expect(Object.isFrozen(snap)).toBeTruthy();
+    expect(Object.isFrozen(snap.tables)).toBeTruthy();
   });
 });
 
@@ -188,23 +187,23 @@ describe("columnsEqual()", () => {
     const a = makeCol({ type: "string", unique: true });
     const b = makeCol({ type: "string", unique: true });
 
-    assert.equal(columnsEqual(a, b), true);
+    expect(columnsEqual(a, b)).toBe(true);
   });
 
   it("returns false when type differs", () => {
-    assert.equal(columnsEqual(makeCol({ type: "string" }), makeCol({ type: "number" })), false);
+    expect(columnsEqual(makeCol({ type: "string" }), makeCol({ type: "number" }))).toBe(false);
   });
 
   it("returns false when nullable differs", () => {
-    assert.equal(columnsEqual(makeCol({ nullable: false }), makeCol({ nullable: true })), false);
+    expect(columnsEqual(makeCol({ nullable: false }), makeCol({ nullable: true }))).toBe(false);
   });
 
   it("returns false when unique differs", () => {
-    assert.equal(columnsEqual(makeCol({ unique: false }), makeCol({ unique: true })), false);
+    expect(columnsEqual(makeCol({ unique: false }), makeCol({ unique: true }))).toBe(false);
   });
 
   it("returns false when default differs", () => {
-    assert.equal(columnsEqual(makeCol({ default: null }), makeCol({ default: "uuid" })), false);
+    expect(columnsEqual(makeCol({ default: null }), makeCol({ default: "uuid" }))).toBe(false);
   });
 });
 
@@ -219,10 +218,10 @@ describe("diffTable()", () => {
 
     const ops = diffTable("users", from, to);
 
-    assert.equal(ops.length, 1);
-    assert.equal(ops[0].tag, "AddColumn");
+    expect(ops.length).toBe(1);
+    expect(ops[0].tag).toBe("AddColumn");
     if (ops[0].tag === "AddColumn") {
-      assert.equal(ops[0].column, "name");
+      expect(ops[0].column).toBe("name");
     }
   });
 
@@ -232,10 +231,10 @@ describe("diffTable()", () => {
 
     const ops = diffTable("users", from, to);
 
-    assert.equal(ops.length, 1);
-    assert.equal(ops[0].tag, "DropColumn");
+    expect(ops.length).toBe(1);
+    expect(ops[0].tag).toBe("DropColumn");
     if (ops[0].tag === "DropColumn") {
-      assert.equal(ops[0].column, "name");
+      expect(ops[0].column).toBe("name");
     }
   });
 
@@ -245,11 +244,11 @@ describe("diffTable()", () => {
 
     const ops = diffTable("users", from, to);
 
-    assert.equal(ops.length, 1);
-    assert.equal(ops[0].tag, "AlterColumn");
+    expect(ops.length).toBe(1);
+    expect(ops[0].tag).toBe("AlterColumn");
     if (ops[0].tag === "AlterColumn") {
-      assert.equal(ops[0].from.type, "string");
-      assert.equal(ops[0].to.type, "number");
+      expect(ops[0].from.type).toBe("string");
+      expect(ops[0].to.type).toBe("number");
     }
   });
 
@@ -257,7 +256,7 @@ describe("diffTable()", () => {
     const table = makeTable({ id: makeCol({ primaryKey: true }), name: makeCol() });
     const ops = diffTable("users", table, table);
 
-    assert.equal(ops.length, 0);
+    expect(ops.length).toBe(0);
   });
 });
 
@@ -277,10 +276,10 @@ describe("diffSnapshots()", () => {
 
     const ops = diffSnapshots(from, to);
 
-    assert.equal(ops.length, 1);
-    assert.equal(ops[0].tag, "CreateTable");
+    expect(ops.length).toBe(1);
+    expect(ops[0].tag).toBe("CreateTable");
     if (ops[0].tag === "CreateTable") {
-      assert.equal(ops[0].table, "users");
+      expect(ops[0].table).toBe("users");
     }
   });
 
@@ -295,8 +294,8 @@ describe("diffSnapshots()", () => {
 
     const ops = diffSnapshots(from, to);
 
-    assert.equal(ops.length, 1);
-    assert.equal(ops[0].tag, "DropTable");
+    expect(ops.length).toBe(1);
+    expect(ops[0].tag).toBe("DropTable");
   });
 
   it("detects column changes within existing tables", () => {
@@ -315,8 +314,8 @@ describe("diffSnapshots()", () => {
 
     const ops = diffSnapshots(from, to);
 
-    assert.equal(ops.length, 1);
-    assert.equal(ops[0].tag, "AddColumn");
+    expect(ops.length).toBe(1);
+    expect(ops[0].tag).toBe("AddColumn");
   });
 
   it("returns empty array for identical snapshots", () => {
@@ -329,7 +328,7 @@ describe("diffSnapshots()", () => {
 
     const ops = diffSnapshots(snap, snap);
 
-    assert.equal(ops.length, 0);
+    expect(ops.length).toBe(0);
   });
 
   it("orders drops before creates", () => {
@@ -348,9 +347,9 @@ describe("diffSnapshots()", () => {
 
     const ops = diffSnapshots(from, to);
 
-    assert.equal(ops.length, 2);
-    assert.equal(ops[0].tag, "DropTable");
-    assert.equal(ops[1].tag, "CreateTable");
+    expect(ops.length).toBe(2);
+    expect(ops[0].tag).toBe("DropTable");
+    expect(ops[1].tag).toBe("CreateTable");
   });
 });
 
@@ -367,11 +366,11 @@ describe("generateUp()", () => {
     });
     const sql = generateUp({ tag: "CreateTable", table: "users", snapshot: table }, pgDialect);
 
-    assert.ok(sql.includes("CREATE TABLE"));
-    assert.ok(sql.includes('"users"'));
-    assert.ok(sql.includes('"id"'));
-    assert.ok(sql.includes("PRIMARY KEY"));
-    assert.ok(sql.includes("NOT NULL"));
+    expect(sql.includes("CREATE TABLE")).toBeTruthy();
+    expect(sql.includes('"users"')).toBeTruthy();
+    expect(sql.includes('"id"')).toBeTruthy();
+    expect(sql.includes("PRIMARY KEY")).toBeTruthy();
+    expect(sql.includes("NOT NULL")).toBeTruthy();
   });
 
   it("generates CREATE TABLE SQL for SQLite", () => {
@@ -381,8 +380,8 @@ describe("generateUp()", () => {
     });
     const sql = generateUp({ tag: "CreateTable", table: "items", snapshot: table }, sqliteDialect);
 
-    assert.ok(sql.includes("CREATE TABLE"));
-    assert.ok(sql.includes("INTEGER")); // SQLite maps boolean to INTEGER
+    expect(sql.includes("CREATE TABLE")).toBeTruthy();
+    expect(sql.includes("INTEGER")).toBeTruthy(); // SQLite maps boolean to INTEGER
   });
 
   it("generates ALTER TABLE ADD COLUMN", () => {
@@ -391,10 +390,10 @@ describe("generateUp()", () => {
       pgDialect,
     );
 
-    assert.ok(sql.includes("ALTER TABLE"));
-    assert.ok(sql.includes("ADD COLUMN"));
-    assert.ok(sql.includes('"email"'));
-    assert.ok(sql.includes("UNIQUE"));
+    expect(sql.includes("ALTER TABLE")).toBeTruthy();
+    expect(sql.includes("ADD COLUMN")).toBeTruthy();
+    expect(sql.includes('"email"')).toBeTruthy();
+    expect(sql.includes("UNIQUE")).toBeTruthy();
   });
 
   it("generates ALTER TABLE DROP COLUMN", () => {
@@ -403,8 +402,8 @@ describe("generateUp()", () => {
       pgDialect,
     );
 
-    assert.ok(sql.includes("DROP COLUMN"));
-    assert.ok(sql.includes('"age"'));
+    expect(sql.includes("DROP COLUMN")).toBeTruthy();
+    expect(sql.includes('"age"')).toBeTruthy();
   });
 
   it("generates DROP TABLE", () => {
@@ -417,7 +416,7 @@ describe("generateUp()", () => {
       pgDialect,
     );
 
-    assert.equal(sql, 'DROP TABLE "old";');
+    expect(sql).toBe('DROP TABLE "old";');
   });
 
   it("generates CREATE INDEX", () => {
@@ -430,14 +429,14 @@ describe("generateUp()", () => {
       pgDialect,
     );
 
-    assert.ok(sql.includes("CREATE UNIQUE INDEX"));
-    assert.ok(sql.includes('"idx_users_email"'));
+    expect(sql.includes("CREATE UNIQUE INDEX")).toBeTruthy();
+    expect(sql.includes('"idx_users_email"')).toBeTruthy();
   });
 
   it("generates DROP INDEX", () => {
     const sql = generateUp({ tag: "DropIndex", table: "users", indexName: "idx_old" }, pgDialect);
 
-    assert.equal(sql, 'DROP INDEX "idx_old";');
+    expect(sql).toBe('DROP INDEX "idx_old";');
   });
 });
 
@@ -452,8 +451,8 @@ describe("generateMigration()", () => {
 
     const migration = generateMigration(ops, pgDialect);
 
-    assert.ok(migration.up.includes("CREATE TABLE"));
-    assert.ok(migration.down.includes("DROP TABLE"));
+    expect(migration.up.includes("CREATE TABLE")).toBeTruthy();
+    expect(migration.down.includes("DROP TABLE")).toBeTruthy();
   });
 
   it("down reverses the up operations", () => {
@@ -471,14 +470,14 @@ describe("generateMigration()", () => {
     const ops = diffSnapshots(from, to);
     const migration = generateMigration(ops, pgDialect);
 
-    assert.ok(migration.up.includes("ADD COLUMN"));
-    assert.ok(migration.down.includes("DROP COLUMN"));
+    expect(migration.up.includes("ADD COLUMN")).toBeTruthy();
+    expect(migration.down.includes("DROP COLUMN")).toBeTruthy();
   });
 
   it("is frozen", () => {
     const migration = generateMigration([], pgDialect);
 
-    assert.ok(Object.isFrozen(migration));
+    expect(Object.isFrozen(migration)).toBeTruthy();
   });
 });
 
@@ -488,25 +487,25 @@ describe("generateMigration()", () => {
 
 describe("MigrationModel", () => {
   it("has table name _pure_orm_migrations", () => {
-    assert.equal(MigrationModel.$name, "_pure_orm_migrations");
+    expect(MigrationModel.$name).toBe("_pure_orm_migrations");
   });
 
   it("has expected columns", () => {
     const names = MigrationModel.$columns.map(c => c.name);
 
-    assert.ok(names.includes("id"));
-    assert.ok(names.includes("name"));
-    assert.ok(names.includes("appliedAt"));
-    assert.ok(names.includes("checksum"));
-    assert.ok(names.includes("executionMs"));
+    expect(names.includes("id")).toBeTruthy();
+    expect(names.includes("name")).toBeTruthy();
+    expect(names.includes("appliedAt")).toBeTruthy();
+    expect(names.includes("checksum")).toBeTruthy();
+    expect(names.includes("executionMs")).toBeTruthy();
   });
 
   it("resolves column names to snake_case", () => {
     const appliedCol = MigrationModel.$columns.find(c => c.name === "appliedAt");
-    assert.equal(appliedCol?.columnName, "applied_at");
+    expect(appliedCol?.columnName).toBe("applied_at");
 
     const execCol = MigrationModel.$columns.find(c => c.name === "executionMs");
-    assert.equal(execCol?.columnName, "execution_ms");
+    expect(execCol?.columnName).toBe("execution_ms");
   });
 });
 
@@ -521,12 +520,12 @@ describe("end-to-end migration pipeline", () => {
     const migration = generateMigration(ops, pgDialect);
 
     // Should create both tables
-    assert.ok(migration.up.includes('"users"'));
-    assert.ok(migration.up.includes('"posts"'));
-    assert.ok(migration.up.includes("CREATE TABLE"));
+    expect(migration.up.includes('"users"')).toBeTruthy();
+    expect(migration.up.includes('"posts"')).toBeTruthy();
+    expect(migration.up.includes("CREATE TABLE")).toBeTruthy();
 
     // Down should drop both
-    assert.ok(migration.down.includes("DROP TABLE"));
+    expect(migration.down.includes("DROP TABLE")).toBeTruthy();
   });
 
   it("detects column additions between snapshots", () => {
@@ -544,13 +543,13 @@ describe("end-to-end migration pipeline", () => {
 
     const ops = diffSnapshots(v1, v2);
 
-    assert.equal(ops.length, 1);
-    assert.equal(ops[0].tag, "AddColumn");
+    expect(ops.length).toBe(1);
+    expect(ops[0].tag).toBe("AddColumn");
     if (ops[0].tag === "AddColumn") {
-      assert.equal(ops[0].column, "name");
+      expect(ops[0].column).toBe("name");
     }
 
     const migration = generateMigration(ops, pgDialect);
-    assert.ok(migration.up.includes("ADD COLUMN"));
+    expect(migration.up.includes("ADD COLUMN")).toBeTruthy();
   });
 });

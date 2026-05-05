@@ -8,9 +8,8 @@
  * data flows cleanly from a QueryNode through the dialect into typed results.
  */
 
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
 import { Schema, Task } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 
 import type { DatabaseClient, RawConnection } from "../src/connection/types.ts";
 import {
@@ -125,27 +124,27 @@ describe("integration: full compile pipeline", () => {
     const { sql, params } = compile(query);
 
     // SELECT and FROM clauses
-    assert.ok(sql.includes("SELECT"), `Expected SELECT in SQL: ${sql}`);
-    assert.ok(sql.includes('FROM "users"'), `Expected FROM "users" in SQL: ${sql}`);
+    expect(sql.includes("SELECT")).toBeTruthy();
+    expect(sql.includes('FROM "users"')).toBeTruthy();
 
     // WHERE clause: soft-delete model always adds deleted_at IS NULL
-    assert.ok(sql.includes("WHERE"), `Expected WHERE in SQL: ${sql}`);
-    assert.ok(sql.includes('"role"'), `Expected role column in SQL: ${sql}`);
-    assert.ok(sql.includes('"age"'), `Expected age column in SQL: ${sql}`);
-    assert.ok(sql.includes('"deleted_at" IS NULL'), `Expected soft-delete filter in SQL: ${sql}`);
+    expect(sql.includes("WHERE")).toBeTruthy();
+    expect(sql.includes('"role"')).toBeTruthy();
+    expect(sql.includes('"age"')).toBeTruthy();
+    expect(sql.includes('"deleted_at" IS NULL')).toBeTruthy();
 
     // ORDER BY clause
-    assert.ok(sql.includes("ORDER BY"), `Expected ORDER BY in SQL: ${sql}`);
-    assert.ok(sql.includes('"name" ASC'), `Expected name ASC in SQL: ${sql}`);
+    expect(sql.includes("ORDER BY")).toBeTruthy();
+    expect(sql.includes('"name" ASC')).toBeTruthy();
 
     // LIMIT clause
-    assert.ok(sql.includes("LIMIT"), `Expected LIMIT in SQL: ${sql}`);
+    expect(sql.includes("LIMIT")).toBeTruthy();
 
     // Parameters: "admin" (role eq), 25 (age gt), 10 (limit)
-    assert.equal(params.length, 3, `Expected 3 params, got: ${JSON.stringify(params)}`);
-    assert.equal(params[0], "admin");
-    assert.equal(params[1], 25);
-    assert.equal(params[2], 10);
+    expect(params.length).toBe(3);
+    expect(params[0]).toBe("admin");
+    expect(params[1]).toBe(25);
+    expect(params[2]).toBe(10);
   });
 
   it("compiles a bare from() into a simple SELECT *", () => {
@@ -153,10 +152,10 @@ describe("integration: full compile pipeline", () => {
 
     // Soft-delete model always injects the deleted_at filter even with no
     // explicit where(), so the WHERE clause is still present.
-    assert.ok(sql.startsWith("SELECT"), `Expected SELECT at start: ${sql}`);
-    assert.ok(sql.includes('FROM "users"'), `Expected FROM "users": ${sql}`);
+    expect(sql.startsWith("SELECT")).toBeTruthy();
+    expect(sql.includes('FROM "users"')).toBeTruthy();
     // Soft-delete adds WHERE deleted_at IS NULL, so no user-supplied params.
-    assert.equal(params.length, 0);
+    expect(params.length).toBe(0);
   });
 });
 
@@ -183,25 +182,25 @@ describe("integration: full execute pipeline with mock driver", () => {
     const query = where(eq("role", "admin"))(from(User));
     const result = await execute(db)(query).run();
 
-    assert.equal(result.isOk, true, "Expected Ok result");
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
       const list = result.value;
-      assert.equal(list.length, 1, "Expected 1 record");
+      expect(list.length).toBe(1);
 
       const first = list.first();
-      assert.equal(first.isSome, true, "Expected Some for first()");
+      expect(first.isSome).toBe(true);
       if (first.isSome) {
         // Records expose $raw for direct inspection
         const raw = first.value.$raw as Record<string, unknown>;
 
         // snake_case DB columns must arrive as camelCase
-        assert.equal(raw["id"], "u1");
-        assert.equal(raw["email"], "alice@example.com");
-        assert.equal(raw["name"], "Alice");
-        assert.equal(raw["role"], "admin");
-        assert.equal(raw["age"], 30);
-        assert.equal(raw["createdAt"], "2026-01-01");
-        assert.equal(raw["updatedAt"], "2026-01-01");
+        expect(raw["id"]).toBe("u1");
+        expect(raw["email"]).toBe("alice@example.com");
+        expect(raw["name"]).toBe("Alice");
+        expect(raw["role"]).toBe("admin");
+        expect(raw["age"]).toBe(30);
+        expect(raw["createdAt"]).toBe("2026-01-01");
+        expect(raw["updatedAt"]).toBe("2026-01-01");
       }
     }
   });
@@ -217,9 +216,9 @@ describe("integration: findOne returns None for empty result", () => {
     const query = where(eq("role", "admin"))(from(User));
     const result = await findOne(db)(query).run();
 
-    assert.equal(result.isOk, true, "Expected Ok result");
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value.isNone, true, "Expected None when no rows returned");
+      expect(result.value.isNone).toBe(true);
     }
   });
 });
@@ -231,16 +230,16 @@ describe("integration: findOne returns None for empty result", () => {
 describe("integration: soft-delete model injects deleted_at filter", () => {
   it("includes deleted_at IS NULL in WHERE for a soft-delete model", () => {
     const { sql } = compile(from(User));
-    assert.ok(sql.includes('"deleted_at" IS NULL'), `Expected soft-delete filter in SQL: ${sql}`);
+    expect(sql.includes('"deleted_at" IS NULL')).toBeTruthy();
   });
 
   it("places deleted_at IS NULL alongside user-supplied conditions", () => {
     const query = where(eq("role", "admin"))(from(User));
     const { sql, params } = compile(query);
 
-    assert.ok(sql.includes('"role" = $1'), `Expected role condition: ${sql}`);
-    assert.ok(sql.includes('"deleted_at" IS NULL'), `Expected soft-delete filter: ${sql}`);
-    assert.equal(params[0], "admin");
+    expect(sql.includes('"role" = $1')).toBeTruthy();
+    expect(sql.includes('"deleted_at" IS NULL')).toBeTruthy();
+    expect(params[0]).toBe("admin");
   });
 });
 
@@ -250,66 +249,66 @@ describe("integration: soft-delete model injects deleted_at filter", () => {
 
 describe("integration: all public exports from src/index.ts are defined", () => {
   it("model layer exports are defined", () => {
-    assert.ok(Model !== undefined, "Model");
-    assert.ok(Field !== undefined, "Field");
+    expect(Model !== undefined).toBeTruthy();
+    expect(Field !== undefined).toBeTruthy();
   });
 
   it("query builder exports are defined", () => {
-    assert.ok(from !== undefined, "from");
-    assert.ok(select !== undefined, "select");
-    assert.ok(where !== undefined, "where");
-    assert.ok(orderBy !== undefined, "orderBy");
-    assert.ok(limit !== undefined, "limit");
-    assert.ok(offset !== undefined, "offset");
+    expect(from !== undefined).toBeTruthy();
+    expect(select !== undefined).toBeTruthy();
+    expect(where !== undefined).toBeTruthy();
+    expect(orderBy !== undefined).toBeTruthy();
+    expect(limit !== undefined).toBeTruthy();
+    expect(offset !== undefined).toBeTruthy();
   });
 
   it("condition function exports are defined", () => {
-    assert.ok(eq !== undefined, "eq");
-    assert.ok(ne !== undefined, "ne");
-    assert.ok(gt !== undefined, "gt");
-    assert.ok(gte !== undefined, "gte");
-    assert.ok(lt !== undefined, "lt");
-    assert.ok(lte !== undefined, "lte");
-    assert.ok(like !== undefined, "like");
-    assert.ok(ilike !== undefined, "ilike");
-    assert.ok(isNull !== undefined, "isNull");
-    assert.ok(isNotNull !== undefined, "isNotNull");
-    assert.ok(inArray !== undefined, "inArray");
-    assert.ok(between !== undefined, "between");
-    assert.ok(not !== undefined, "not");
-    assert.ok(and !== undefined, "and");
-    assert.ok(or !== undefined, "or");
+    expect(eq !== undefined).toBeTruthy();
+    expect(ne !== undefined).toBeTruthy();
+    expect(gt !== undefined).toBeTruthy();
+    expect(gte !== undefined).toBeTruthy();
+    expect(lt !== undefined).toBeTruthy();
+    expect(lte !== undefined).toBeTruthy();
+    expect(like !== undefined).toBeTruthy();
+    expect(ilike !== undefined).toBeTruthy();
+    expect(isNull !== undefined).toBeTruthy();
+    expect(isNotNull !== undefined).toBeTruthy();
+    expect(inArray !== undefined).toBeTruthy();
+    expect(between !== undefined).toBeTruthy();
+    expect(not !== undefined).toBeTruthy();
+    expect(and !== undefined).toBeTruthy();
+    expect(or !== undefined).toBeTruthy();
   });
 
   it("dialect exports are defined", () => {
-    assert.ok(createPostgresDialect !== undefined, "createPostgresDialect");
-    assert.ok(registerDialect !== undefined, "registerDialect");
-    assert.ok(resolveDialect !== undefined, "resolveDialect");
+    expect(createPostgresDialect !== undefined).toBeTruthy();
+    expect(registerDialect !== undefined).toBeTruthy();
+    expect(resolveDialect !== undefined).toBeTruthy();
   });
 
   it("logging exports are defined", () => {
-    assert.ok(createConsoleLogger !== undefined, "createConsoleLogger");
-    assert.ok(createNoopLogger !== undefined, "createNoopLogger");
-    assert.ok(dispatchHook !== undefined, "dispatchHook");
-    assert.ok(startTimer !== undefined, "startTimer");
+    expect(createConsoleLogger !== undefined).toBeTruthy();
+    expect(createNoopLogger !== undefined).toBeTruthy();
+    expect(dispatchHook !== undefined).toBeTruthy();
+    expect(startTimer !== undefined).toBeTruthy();
   });
 
   it("execution exports are defined", () => {
-    assert.ok(compile !== undefined, "compile");
-    assert.ok(execute !== undefined, "execute");
-    assert.ok(findOne !== undefined, "findOne");
-    assert.ok(mapRows !== undefined, "mapRows");
-    assert.ok(snakeToCamel !== undefined, "snakeToCamel");
+    expect(compile !== undefined).toBeTruthy();
+    expect(execute !== undefined).toBeTruthy();
+    expect(findOne !== undefined).toBeTruthy();
+    expect(mapRows !== undefined).toBeTruthy();
+    expect(snakeToCamel !== undefined).toBeTruthy();
   });
 
   it("connection exports are defined", () => {
-    assert.ok(createPool !== undefined, "createPool");
-    assert.ok(createLambdaPool !== undefined, "createLambdaPool");
-    assert.ok(Database !== undefined, "Database");
+    expect(createPool !== undefined).toBeTruthy();
+    expect(createLambdaPool !== undefined).toBeTruthy();
+    expect(Database !== undefined).toBeTruthy();
   });
 
   it("createSqliteDialect export is defined", () => {
-    assert.ok(createSqliteDialect !== undefined, "createSqliteDialect");
+    expect(createSqliteDialect !== undefined).toBeTruthy();
   });
 });
 
@@ -368,17 +367,17 @@ describe("integration: cross-dialect query compilation", () => {
     const sqliteResult = sqliteDialect.compileSelect(node);
 
     // PostgreSQL: positional numbered params
-    assert.ok(pgResult.sql.includes("$1"), `PG SQL should have $1: ${pgResult.sql}`);
-    assert.ok(pgResult.sql.includes("$2"), `PG SQL should have $2: ${pgResult.sql}`);
-    assert.ok(!pgResult.sql.includes("?"), `PG SQL should not have ?: ${pgResult.sql}`);
+    expect(pgResult.sql.includes("$1")).toBeTruthy();
+    expect(pgResult.sql.includes("$2")).toBeTruthy();
+    expect(!pgResult.sql.includes("?")).toBeTruthy();
 
     // SQLite: anonymous ? placeholders
-    assert.ok(sqliteResult.sql.includes("?"), `SQLite SQL should have ?: ${sqliteResult.sql}`);
-    assert.ok(!sqliteResult.sql.includes("$"), `SQLite SQL should not have $: ${sqliteResult.sql}`);
+    expect(sqliteResult.sql.includes("?")).toBeTruthy();
+    expect(!sqliteResult.sql.includes("$")).toBeTruthy();
 
     // Both produce the same params array (same values, same order).
-    assert.deepEqual(pgResult.params, ["Widget", "Gadgets"]);
-    assert.deepEqual(sqliteResult.params, ["Widget", "Gadgets"]);
+    expect(pgResult.params).toEqual(["Widget", "Gadgets"]);
+    expect(sqliteResult.params).toEqual(["Widget", "Gadgets"]);
   });
 
   it("PostgreSQL uses ILIKE while SQLite compiles the same ilike() call as LIKE", () => {
@@ -391,21 +390,15 @@ describe("integration: cross-dialect query compilation", () => {
     const sqliteResult = sqliteDialect.compileSelect(node);
 
     // PG preserves ILIKE.
-    assert.ok(pgResult.sql.includes("ILIKE"), `PG SQL should have ILIKE: ${pgResult.sql}`);
+    expect(pgResult.sql.includes("ILIKE")).toBeTruthy();
 
     // SQLite downgrades to LIKE.
-    assert.ok(
-      sqliteResult.sql.includes("LIKE"),
-      `SQLite SQL should have LIKE: ${sqliteResult.sql}`,
-    );
-    assert.ok(
-      !sqliteResult.sql.includes("ILIKE"),
-      `SQLite SQL must not have ILIKE: ${sqliteResult.sql}`,
-    );
+    expect(sqliteResult.sql.includes("LIKE")).toBeTruthy();
+    expect(!sqliteResult.sql.includes("ILIKE")).toBeTruthy();
 
     // Both carry the same pattern value.
-    assert.deepEqual(pgResult.params, ["%widget%"]);
-    assert.deepEqual(sqliteResult.params, ["%widget%"]);
+    expect(pgResult.params).toEqual(["%widget%"]);
+    expect(sqliteResult.params).toEqual(["%widget%"]);
   });
 });
 
@@ -427,20 +420,17 @@ describe("integration: insert compile pipeline", () => {
     )(insert(User, { email: "alice@test.com", name: "Alice" }));
     const { sql, params } = compile(query);
 
-    assert.ok(sql.includes("INSERT INTO"), `Expected INSERT INTO in SQL: ${sql}`);
-    assert.ok(sql.includes('"users"'), `Expected "users" table in SQL: ${sql}`);
-    assert.ok(sql.includes("VALUES"), `Expected VALUES in SQL: ${sql}`);
-    assert.ok(sql.includes("RETURNING"), `Expected RETURNING in SQL: ${sql}`);
-    assert.ok(sql.includes('"email"'), `Expected "email" in SQL: ${sql}`);
-    assert.ok(sql.includes('"id"'), `Expected "id" in RETURNING: ${sql}`);
+    expect(sql.includes("INSERT INTO")).toBeTruthy();
+    expect(sql.includes('"users"')).toBeTruthy();
+    expect(sql.includes("VALUES")).toBeTruthy();
+    expect(sql.includes("RETURNING")).toBeTruthy();
+    expect(sql.includes('"email"')).toBeTruthy();
+    expect(sql.includes('"id"')).toBeTruthy();
 
     // Two values: email and name.
-    assert.equal(params.length, 2, `Expected 2 params, got: ${JSON.stringify(params)}`);
-    assert.ok(
-      params.includes("alice@test.com"),
-      `Expected email in params: ${JSON.stringify(params)}`,
-    );
-    assert.ok(params.includes("Alice"), `Expected name in params: ${JSON.stringify(params)}`);
+    expect(params.length).toBe(2);
+    expect(params.includes("alice@test.com")).toBeTruthy();
+    expect(params.includes("Alice")).toBeTruthy();
   });
 });
 
@@ -459,17 +449,17 @@ describe("integration: insert execute with mock driver", () => {
     )(insert(User, { email: "alice@test.com", name: "Alice" }));
     const result = await execute(db)(query).run();
 
-    assert.equal(result.isOk, true, "Expected Ok result");
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
       const list = result.value;
-      assert.equal(list.length, 1, "Expected 1 returned record");
+      expect(list.length).toBe(1);
 
       const first = list.first();
-      assert.equal(first.isSome, true, "Expected Some for first()");
+      expect(first.isSome).toBe(true);
       if (first.isSome) {
         const raw = first.value.$raw as Record<string, unknown>;
-        assert.equal(raw["id"], "u2");
-        assert.equal(raw["email"], "alice@test.com");
+        expect(raw["id"]).toBe("u2");
+        expect(raw["email"]).toBe("alice@test.com");
       }
     }
   });
@@ -486,21 +476,18 @@ describe("integration: update compile pipeline", () => {
     );
     const { sql, params } = compile(query);
 
-    assert.ok(sql.includes("UPDATE"), `Expected UPDATE in SQL: ${sql}`);
-    assert.ok(sql.includes('"users"'), `Expected "users" table in SQL: ${sql}`);
-    assert.ok(sql.includes("SET"), `Expected SET in SQL: ${sql}`);
-    assert.ok(sql.includes("WHERE"), `Expected WHERE in SQL: ${sql}`);
-    assert.ok(sql.includes('"email"'), `Expected "email" in WHERE: ${sql}`);
-    assert.ok(sql.includes("RETURNING"), `Expected RETURNING in SQL: ${sql}`);
+    expect(sql.includes("UPDATE")).toBeTruthy();
+    expect(sql.includes('"users"')).toBeTruthy();
+    expect(sql.includes("SET")).toBeTruthy();
+    expect(sql.includes("WHERE")).toBeTruthy();
+    expect(sql.includes('"email"')).toBeTruthy();
+    expect(sql.includes("RETURNING")).toBeTruthy();
 
     // params: role value ("admin") + email value ("alice@test.com")
     // Note: softDeleteFilter on update scopes to non-deleted rows, so
     // deleted_at IS NULL is added to WHERE but produces no extra param.
-    assert.ok(params.includes("admin"), `Expected "admin" in params: ${JSON.stringify(params)}`);
-    assert.ok(
-      params.includes("alice@test.com"),
-      `Expected email value in params: ${JSON.stringify(params)}`,
-    );
+    expect(params.includes("admin")).toBeTruthy();
+    expect(params.includes("alice@test.com")).toBeTruthy();
   });
 });
 
@@ -513,10 +500,10 @@ describe("integration: soft delete compile", () => {
     const query = where(eq("id", "u1"))(remove(User));
     const { sql } = compile(query);
 
-    assert.ok(sql.includes("UPDATE"), `Expected UPDATE (soft delete) in SQL: ${sql}`);
-    assert.ok(sql.includes('"deleted_at"'), `Expected deleted_at column in SQL: ${sql}`);
-    assert.ok(sql.includes("NOW()"), `Expected NOW() expression in SQL: ${sql}`);
-    assert.ok(!sql.startsWith("DELETE"), `Expected no DELETE FROM for soft delete: ${sql}`);
+    expect(sql.includes("UPDATE")).toBeTruthy();
+    expect(sql.includes('"deleted_at"')).toBeTruthy();
+    expect(sql.includes("NOW()")).toBeTruthy();
+    expect(!sql.startsWith("DELETE")).toBeTruthy();
   });
 });
 
@@ -529,10 +516,10 @@ describe("integration: hard delete compile", () => {
     const query = where(eq("id", "u1"))(hardRemove(User));
     const { sql } = compile(query);
 
-    assert.ok(sql.includes("DELETE FROM"), `Expected DELETE FROM in SQL: ${sql}`);
-    assert.ok(sql.includes('"users"'), `Expected "users" table in SQL: ${sql}`);
-    assert.ok(!sql.includes("UPDATE"), `Expected no UPDATE for hard delete: ${sql}`);
-    assert.ok(!sql.includes("deleted_at"), `Expected no deleted_at for hard delete: ${sql}`);
+    expect(sql.includes("DELETE FROM")).toBeTruthy();
+    expect(sql.includes('"users"')).toBeTruthy();
+    expect(!sql.includes("UPDATE")).toBeTruthy();
+    expect(!sql.includes("deleted_at")).toBeTruthy();
   });
 });
 
@@ -549,11 +536,11 @@ describe("integration: upsert compile pipeline", () => {
     );
     const { sql } = compile(query);
 
-    assert.ok(sql.includes("INSERT INTO"), `Expected INSERT INTO in SQL: ${sql}`);
-    assert.ok(sql.includes("ON CONFLICT"), `Expected ON CONFLICT in SQL: ${sql}`);
-    assert.ok(sql.includes("DO UPDATE SET"), `Expected DO UPDATE SET in SQL: ${sql}`);
-    assert.ok(sql.includes("EXCLUDED"), `Expected EXCLUDED reference in SQL: ${sql}`);
-    assert.ok(sql.includes("RETURNING"), `Expected RETURNING in SQL: ${sql}`);
+    expect(sql.includes("INSERT INTO")).toBeTruthy();
+    expect(sql.includes("ON CONFLICT")).toBeTruthy();
+    expect(sql.includes("DO UPDATE SET")).toBeTruthy();
+    expect(sql.includes("EXCLUDED")).toBeTruthy();
+    expect(sql.includes("RETURNING")).toBeTruthy();
   });
 
   it("compiles insert + onConflict DO NOTHING", () => {
@@ -563,9 +550,9 @@ describe("integration: upsert compile pipeline", () => {
     )(insert(User, { email: "alice@test.com", name: "Alice" }));
     const { sql } = compile(query);
 
-    assert.ok(sql.includes("ON CONFLICT"), `Expected ON CONFLICT in SQL: ${sql}`);
-    assert.ok(sql.includes("DO NOTHING"), `Expected DO NOTHING in SQL: ${sql}`);
-    assert.ok(!sql.includes("DO UPDATE"), `Expected no DO UPDATE for DO NOTHING: ${sql}`);
+    expect(sql.includes("ON CONFLICT")).toBeTruthy();
+    expect(sql.includes("DO NOTHING")).toBeTruthy();
+    expect(!sql.includes("DO UPDATE")).toBeTruthy();
   });
 });
 
@@ -600,17 +587,14 @@ describe("integration: transaction with mock driver", () => {
 
     const result = await transaction(db, async _tx => "done").run();
 
-    assert.equal(result.isOk, true, "Expected Ok result from transaction");
+    expect(result.isOk).toBe(true);
     if (result.isOk) {
-      assert.equal(result.value, "done", "Expected callback return value");
+      expect(result.value).toBe("done");
     }
 
     // BEGIN must be first and COMMIT must follow.
-    assert.ok(
-      executedSql.some(s => s.startsWith("BEGIN")),
-      `Expected BEGIN: ${JSON.stringify(executedSql)}`,
-    );
-    assert.ok(executedSql.includes("COMMIT"), `Expected COMMIT: ${JSON.stringify(executedSql)}`);
+    expect(executedSql.some(s => s.startsWith("BEGIN"))).toBeTruthy();
+    expect(executedSql.includes("COMMIT")).toBeTruthy();
   });
 
   it("executes ROLLBACK when the callback throws", async () => {
@@ -641,20 +625,14 @@ describe("integration: transaction with mock driver", () => {
       throw new Error("boom");
     }).run();
 
-    assert.equal(result.isErr, true, "Expected Err result when callback throws");
-    assert.ok(
-      executedSql.includes("ROLLBACK"),
-      `Expected ROLLBACK: ${JSON.stringify(executedSql)}`,
-    );
-    assert.ok(
-      !executedSql.includes("COMMIT"),
-      `Expected no COMMIT on failure: ${JSON.stringify(executedSql)}`,
-    );
+    expect(result.isErr).toBe(true);
+    expect(executedSql.includes("ROLLBACK")).toBeTruthy();
+    expect(!executedSql.includes("COMMIT")).toBeTruthy();
   });
 
   it("isTransactionClient returns false for a plain DatabaseClient", () => {
     const db = createMockDb([]);
-    assert.equal(isTransactionClient(db), false);
+    expect(isTransactionClient(db)).toBe(false);
   });
 });
 
@@ -664,18 +642,18 @@ describe("integration: transaction with mock driver", () => {
 
 describe("integration: all Phase 2 public exports from src/index.ts are defined", () => {
   it("mutation builder exports are defined", () => {
-    assert.ok(insert !== undefined, "insert");
-    assert.ok(insertMany !== undefined, "insertMany");
-    assert.ok(update !== undefined, "update");
-    assert.ok(remove !== undefined, "remove");
-    assert.ok(hardRemove !== undefined, "hardRemove");
-    assert.ok(returning !== undefined, "returning");
-    assert.ok(onConflict !== undefined, "onConflict");
+    expect(insert !== undefined).toBeTruthy();
+    expect(insertMany !== undefined).toBeTruthy();
+    expect(update !== undefined).toBeTruthy();
+    expect(remove !== undefined).toBeTruthy();
+    expect(hardRemove !== undefined).toBeTruthy();
+    expect(returning !== undefined).toBeTruthy();
+    expect(onConflict !== undefined).toBeTruthy();
   });
 
   it("transaction exports are defined", () => {
-    assert.ok(transaction !== undefined, "transaction");
-    assert.ok(isTransactionClient !== undefined, "isTransactionClient");
+    expect(transaction !== undefined).toBeTruthy();
+    expect(isTransactionClient !== undefined).toBeTruthy();
   });
 });
 
@@ -694,21 +672,14 @@ describe("integration: cross-dialect mutation compilation", () => {
     const sqliteResult = sqliteDialect.compileInsert(node);
 
     // PostgreSQL: positional $1, $2
-    assert.ok(pgResult.sql.includes("$1"), `PG insert should have $1: ${pgResult.sql}`);
-    assert.ok(!pgResult.sql.includes("?"), `PG insert should not have ?: ${pgResult.sql}`);
+    expect(pgResult.sql.includes("$1")).toBeTruthy();
+    expect(!pgResult.sql.includes("?")).toBeTruthy();
 
     // SQLite: anonymous ?
-    assert.ok(sqliteResult.sql.includes("?"), `SQLite insert should have ?: ${sqliteResult.sql}`);
-    assert.ok(
-      !sqliteResult.sql.includes("$"),
-      `SQLite insert should not have $: ${sqliteResult.sql}`,
-    );
+    expect(sqliteResult.sql.includes("?")).toBeTruthy();
+    expect(!sqliteResult.sql.includes("$")).toBeTruthy();
 
     // Both share the same param values.
-    assert.deepEqual(
-      [...pgResult.params].sort(),
-      [...sqliteResult.params].sort(),
-      "Both dialects should produce the same param values",
-    );
+    expect([...pgResult.params].sort()).toEqual([...sqliteResult.params].sort());
   });
 });

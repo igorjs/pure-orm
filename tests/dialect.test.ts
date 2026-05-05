@@ -1,7 +1,5 @@
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
-
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { registerDialect, resolveDialect } from "../src/dialect/registry.ts";
@@ -71,20 +69,20 @@ const makeSelect = (overrides: Partial<SelectNode> = {}): SelectNode =>
 
 describe("quote()", () => {
   it("wraps an identifier in double-quotes", () => {
-    assert.equal(dialect.quote("users"), '"users"');
+    expect(dialect.quote("users")).toBe('"users"');
   });
 
   it("escapes embedded double-quotes by doubling them", () => {
-    assert.equal(dialect.quote('weird"name'), '"weird""name"');
+    expect(dialect.quote('weird"name')).toBe('"weird""name"');
   });
 
   it("handles identifiers with no special characters", () => {
-    assert.equal(dialect.quote("created_at"), '"created_at"');
+    expect(dialect.quote("created_at")).toBe('"created_at"');
   });
 
   it("handles an identifier that is already quoted-looking", () => {
     // The double-quote chars inside should be escaped.
-    assert.equal(dialect.quote('"foo"'), '"""foo"""');
+    expect(dialect.quote('"foo"')).toBe('"""foo"""');
   });
 });
 
@@ -94,15 +92,15 @@ describe("quote()", () => {
 
 describe("param()", () => {
   it("returns $1 for index 1", () => {
-    assert.equal(dialect.param(1), "$1");
+    expect(dialect.param(1)).toBe("$1");
   });
 
   it("returns $2 for index 2", () => {
-    assert.equal(dialect.param(2), "$2");
+    expect(dialect.param(2)).toBe("$2");
   });
 
   it("returns $10 for index 10", () => {
-    assert.equal(dialect.param(10), "$10");
+    expect(dialect.param(10)).toBe("$10");
   });
 });
 
@@ -119,8 +117,8 @@ describe("compileSelect: SELECT *", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users"');
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe('SELECT "users".* FROM "users"');
+    expect(result.params).toEqual([]);
   });
 });
 
@@ -137,8 +135,8 @@ describe("compileSelect: specific columns", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users"."id", "users"."name", "users"."email" FROM "users"');
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe('SELECT "users"."id", "users"."name", "users"."email" FROM "users"');
+    expect(result.params).toEqual([]);
   });
 
   it("resolves camelCase field names to snake_case column names", () => {
@@ -149,7 +147,7 @@ describe("compileSelect: specific columns", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users"."created_at" FROM "users"');
+    expect(result.sql).toBe('SELECT "users"."created_at" FROM "users"');
   });
 });
 
@@ -166,8 +164,8 @@ describe("compileSelect: WHERE eq", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."id" = $1');
-    assert.deepEqual(result.params, ["u1"]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."id" = $1');
+    expect(result.params).toEqual(["u1"]);
   });
 });
 
@@ -180,8 +178,8 @@ describe("compileSelect: WHERE ne", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."role" != $1');
-    assert.deepEqual(result.params, ["banned"]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."role" != $1');
+    expect(result.params).toEqual(["banned"]);
   });
 });
 
@@ -194,8 +192,8 @@ describe("compileSelect: WHERE gt", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."age" > $1');
-    assert.deepEqual(result.params, [18]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."age" > $1');
+    expect(result.params).toEqual([18]);
   });
 });
 
@@ -208,8 +206,8 @@ describe("compileSelect: WHERE isNull", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."deleted_at" IS NULL');
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."deleted_at" IS NULL');
+    expect(result.params).toEqual([]);
   });
 });
 
@@ -222,8 +220,8 @@ describe("compileSelect: WHERE inArray empty", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE FALSE');
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE FALSE');
+    expect(result.params).toEqual([]);
   });
 });
 
@@ -236,8 +234,8 @@ describe("compileSelect: WHERE inArray non-empty", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."role" IN ($1, $2)');
-    assert.deepEqual(result.params, ["admin", "editor"]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."role" IN ($1, $2)');
+    expect(result.params).toEqual(["admin", "editor"]);
   });
 });
 
@@ -250,8 +248,8 @@ describe("compileSelect: WHERE between", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."age" BETWEEN $1 AND $2');
-    assert.deepEqual(result.params, [18, 65]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."age" BETWEEN $1 AND $2');
+    expect(result.params).toEqual([18, 65]);
   });
 });
 
@@ -264,8 +262,8 @@ describe("compileSelect: WHERE not", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE NOT ("users"."active" = $1)');
-    assert.deepEqual(result.params, [false]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE NOT ("users"."active" = $1)');
+    expect(result.params).toEqual([false]);
   });
 });
 
@@ -280,11 +278,10 @@ describe("compileSelect: WHERE and", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE ("users"."role" = $1 AND "users"."age" > $2)',
     );
-    assert.deepEqual(result.params, ["admin", 18]);
+    expect(result.params).toEqual(["admin", 18]);
   });
 });
 
@@ -299,11 +296,10 @@ describe("compileSelect: WHERE or", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE ("users"."role" = $1 OR "users"."role" = $2)',
     );
-    assert.deepEqual(result.params, ["admin", "editor"]);
+    expect(result.params).toEqual(["admin", "editor"]);
   });
 });
 
@@ -322,11 +318,10 @@ describe("compileSelect: compound WHERE", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE (("users"."role" = $1 OR "users"."role" = $2) AND "users"."age" > $3)',
     );
-    assert.deepEqual(result.params, ["admin", "editor", 18]);
+    expect(result.params).toEqual(["admin", "editor", 18]);
   });
 
   it("multiple top-level conditions are joined with AND", () => {
@@ -339,11 +334,10 @@ describe("compileSelect: compound WHERE", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE "users"."role" = $1 AND "users"."age" > $2',
     );
-    assert.deepEqual(result.params, ["admin", 18]);
+    expect(result.params).toEqual(["admin", 18]);
   });
 });
 
@@ -360,7 +354,7 @@ describe("compileSelect: ORDER BY", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" ORDER BY "users"."name" ASC');
+    expect(result.sql).toBe('SELECT "users".* FROM "users" ORDER BY "users"."name" ASC');
   });
 
   it("adds DESC order clause", () => {
@@ -371,7 +365,7 @@ describe("compileSelect: ORDER BY", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" ORDER BY "users"."created_at" DESC');
+    expect(result.sql).toBe('SELECT "users".* FROM "users" ORDER BY "users"."created_at" DESC');
   });
 
   it("supports multiple ORDER BY columns", () => {
@@ -387,8 +381,7 @@ describe("compileSelect: ORDER BY", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" ORDER BY "users"."role" ASC, "users"."created_at" DESC',
     );
   });
@@ -407,8 +400,8 @@ describe("compileSelect: LIMIT", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" LIMIT $1');
-    assert.deepEqual(result.params, [10]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" LIMIT $1');
+    expect(result.params).toEqual([10]);
   });
 });
 
@@ -421,8 +414,8 @@ describe("compileSelect: OFFSET", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" OFFSET $1');
-    assert.deepEqual(result.params, [20]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" OFFSET $1');
+    expect(result.params).toEqual([20]);
   });
 });
 
@@ -435,8 +428,8 @@ describe("compileSelect: LIMIT + OFFSET together", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" LIMIT $1 OFFSET $2');
-    assert.deepEqual(result.params, [10, 30]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" LIMIT $1 OFFSET $2');
+    expect(result.params).toEqual([10, 30]);
   });
 
   it("WHERE params come before LIMIT/OFFSET params", () => {
@@ -451,11 +444,10 @@ describe("compileSelect: LIMIT + OFFSET together", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE "users"."role" = $1 LIMIT $2 OFFSET $3',
     );
-    assert.deepEqual(result.params, ["admin", 5, 0]);
+    expect(result.params).toEqual(["admin", 5, 0]);
   });
 });
 
@@ -472,8 +464,8 @@ describe("compileSelect: soft delete filter", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."deleted_at" IS NULL');
-    assert.deepEqual(result.params, []);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."deleted_at" IS NULL');
+    expect(result.params).toEqual([]);
   });
 
   it("adds soft delete filter after existing conditions joined with AND", () => {
@@ -487,11 +479,10 @@ describe("compileSelect: soft delete filter", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" WHERE "users"."role" = $1 AND "users"."deleted_at" IS NULL',
     );
-    assert.deepEqual(result.params, ["admin"]);
+    expect(result.params).toEqual(["admin"]);
   });
 });
 
@@ -508,7 +499,7 @@ describe("compileSelect: column name resolution", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."created_at" = $1');
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."created_at" = $1');
   });
 
   it("resolves 'role' field to 'role' column (already matches)", () => {
@@ -519,7 +510,7 @@ describe("compileSelect: column name resolution", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.ok(result.sql.includes('"users"."role"'));
+    expect(result.sql.includes('"users"."role"')).toBeTruthy();
   });
 
   it("strips leading qualifier (Model.field) before resolving", () => {
@@ -530,7 +521,7 @@ describe("compileSelect: column name resolution", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."created_at" = $1');
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."created_at" = $1');
   });
 
   it("falls back to raw field name when no metadata match exists", () => {
@@ -541,7 +532,7 @@ describe("compileSelect: column name resolution", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.ok(result.sql.includes('"users"."raw_col"'));
+    expect(result.sql.includes('"users"."raw_col"')).toBeTruthy();
   });
 
   it("resolves ilike column to snake_case", () => {
@@ -552,8 +543,8 @@ describe("compileSelect: column name resolution", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" WHERE "users"."email" ILIKE $1');
-    assert.deepEqual(result.params, ["%@example.com"]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" WHERE "users"."email" ILIKE $1');
+    expect(result.params).toEqual(["%@example.com"]);
   });
 });
 
@@ -570,8 +561,8 @@ describe("compileSelect: softDeleteFilter false", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.ok(!result.sql.includes("deleted_at"), "should not contain deleted_at");
-    assert.equal(result.sql, 'SELECT "users".* FROM "users"');
+    expect(!result.sql.includes("deleted_at")).toBeTruthy();
+    expect(result.sql).toBe('SELECT "users".* FROM "users"');
   });
 });
 
@@ -588,8 +579,8 @@ describe("compileSelect: qualified column names", () => {
     const result = dialect.compileSelect(node);
 
     // Assert — qualifier is stripped, column is resolved correctly
-    assert.ok(result.sql.includes('"users"."role"'), `unexpected SQL: ${result.sql}`);
-    assert.deepEqual(result.params, ["admin"]);
+    expect(result.sql.includes('"users"."role"')).toBeTruthy();
+    expect(result.params).toEqual(["admin"]);
   });
 
   it("strips non-matching qualifier and resolves camelCase field to snake_case", () => {
@@ -600,7 +591,7 @@ describe("compileSelect: qualified column names", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.ok(result.sql.includes('"created_at"'), `unexpected SQL: ${result.sql}`);
+    expect(result.sql.includes('"created_at"')).toBeTruthy();
   });
 });
 
@@ -617,8 +608,8 @@ describe("compileSelect: limit(0)", () => {
     const result = dialect.compileSelect(node);
 
     // Assert
-    assert.equal(result.sql, 'SELECT "users".* FROM "users" LIMIT $1');
-    assert.deepEqual(result.params, [0]);
+    expect(result.sql).toBe('SELECT "users".* FROM "users" LIMIT $1');
+    expect(result.params).toEqual([0]);
   });
 });
 
@@ -641,8 +632,7 @@ describe("compileSelect: multiple ORDER BY order", () => {
     const result = dialect.compileSelect(node);
 
     // Assert — three clauses in declaration order
-    assert.equal(
-      result.sql,
+    expect(result.sql).toBe(
       'SELECT "users".* FROM "users" ORDER BY "users"."name" ASC, "users"."created_at" DESC, "users"."id" ASC',
     );
   });
@@ -658,8 +648,8 @@ describe("resolveDialect()", () => {
     const result = resolveDialect("postgresql");
 
     // Assert
-    assert.equal(result.tag, "Ok");
-    assert.equal(result.tag === "Ok" && result.value.name, "postgresql");
+    expect(result.tag).toBe("Ok");
+    expect(result.tag === "Ok" && result.value.name).toBe("postgresql");
   });
 
   it("returns Err for an unknown dialect name", () => {
@@ -667,8 +657,8 @@ describe("resolveDialect()", () => {
     const result = resolveDialect("mysql");
 
     // Assert
-    assert.equal(result.tag, "Err");
-    assert.equal(result.tag === "Err" && result.error.tag, "ValidationError");
+    expect(result.tag).toBe("Err");
+    expect(result.tag === "Err" && result.error.tag).toBe("ValidationError");
   });
 
   it("registerDialect makes a custom dialect resolvable", () => {
@@ -686,7 +676,7 @@ describe("resolveDialect()", () => {
     const result = resolveDialect("stub");
 
     // Assert
-    assert.equal(result.tag, "Ok");
-    assert.equal(result.tag === "Ok" && result.value.name, "stub");
+    expect(result.tag).toBe("Ok");
+    expect(result.tag === "Ok" && result.value.name).toBe("stub");
   });
 });

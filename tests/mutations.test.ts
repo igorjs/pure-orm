@@ -1,7 +1,5 @@
-import { strict as assert } from "node:assert";
-import { describe, it } from "node:test";
-
 import { Schema } from "@igorjs/pure-fx";
+import { describe, expect, it } from "@igorjs/pure-test";
 
 import { Model } from "../src/model/define.ts";
 import { Field } from "../src/model/field.ts";
@@ -50,7 +48,7 @@ describe("insert()", () => {
     const node = insert(UserModel, { email: "alice@example.com", name: "Alice" });
 
     // Assert
-    assert.equal(node.tag, "Insert");
+    expect(node.tag).toBe("Insert");
   });
 
   it("embeds the correct model name", () => {
@@ -58,7 +56,7 @@ describe("insert()", () => {
     const node = insert(UserModel, { email: "alice@example.com" });
 
     // Assert
-    assert.equal(node.model.name, "users");
+    expect(node.model.name).toBe("users");
   });
 
   it("embeds model columns in the node", () => {
@@ -66,7 +64,7 @@ describe("insert()", () => {
     const node = insert(UserModel, { email: "alice@example.com" });
 
     // Assert
-    assert.deepEqual(node.model.columns, UserModel.$columns);
+    expect(node.model.columns).toEqual(UserModel.$columns);
   });
 
   it("embeds model options in the node", () => {
@@ -74,7 +72,7 @@ describe("insert()", () => {
     const node = insert(UserModel, { email: "alice@example.com" });
 
     // Assert
-    assert.deepEqual(node.model.options, UserModel.$options);
+    expect(node.model.options).toEqual(UserModel.$options);
   });
 
   it("sets rows to an array containing the provided values", () => {
@@ -85,8 +83,8 @@ describe("insert()", () => {
     const node = insert(UserModel, values);
 
     // Assert
-    assert.equal(node.rows.length, 1);
-    assert.deepEqual(node.rows[0], values);
+    expect(node.rows.length).toBe(1);
+    expect(node.rows[0]).toEqual(values);
   });
 
   it("starts with returning null", () => {
@@ -94,7 +92,7 @@ describe("insert()", () => {
     const node = insert(UserModel, { email: "alice@example.com" });
 
     // Assert
-    assert.equal(node.returning, null);
+    expect(node.returning).toBe(null);
   });
 
   it("starts with onConflict null", () => {
@@ -102,7 +100,7 @@ describe("insert()", () => {
     const node = insert(UserModel, { email: "alice@example.com" });
 
     // Assert
-    assert.equal(node.onConflict, null);
+    expect(node.onConflict).toBe(null);
   });
 
   it("freezes the single row", () => {
@@ -110,7 +108,7 @@ describe("insert()", () => {
     const node = insert(UserModel, { email: "alice@example.com" });
 
     // Assert
-    assert.ok(Object.isFrozen(node.rows[0]));
+    expect(Object.isFrozen(node.rows[0])).toBeTruthy();
   });
 
   it("returns a frozen InsertNode", () => {
@@ -118,7 +116,7 @@ describe("insert()", () => {
     const node = insert(UserModel, { email: "alice@example.com" });
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("does not mutate the input values object", () => {
@@ -132,7 +130,7 @@ describe("insert()", () => {
     values["email"] = "changed@example.com";
 
     // Assert — original key still held its value before our mutation
-    assert.equal(emailBefore, "alice@example.com");
+    expect(emailBefore).toBe("alice@example.com");
   });
 
   it("row in node is independent of the original values object", () => {
@@ -144,7 +142,7 @@ describe("insert()", () => {
     values["email"] = "mutated@example.com";
 
     // Assert — frozen row still has the original value
-    assert.equal(node.rows[0]?.["email"], "alice@example.com");
+    expect(node.rows[0]?.["email"]).toBe("alice@example.com");
   });
 });
 
@@ -158,7 +156,7 @@ describe("insertMany()", () => {
     const node = insertMany(UserModel, [{ email: "a@example.com" }, { email: "b@example.com" }]);
 
     // Assert
-    assert.equal(node.tag, "Insert");
+    expect(node.tag).toBe("Insert");
   });
 
   it("creates an InsertNode with multiple rows", () => {
@@ -173,10 +171,10 @@ describe("insertMany()", () => {
     const node = insertMany(UserModel, rows);
 
     // Assert
-    assert.equal(node.rows.length, 3);
-    assert.deepEqual(node.rows[0], rows[0]);
-    assert.deepEqual(node.rows[1], rows[1]);
-    assert.deepEqual(node.rows[2], rows[2]);
+    expect(node.rows.length).toBe(3);
+    expect(node.rows[0]).toEqual(rows[0]);
+    expect(node.rows[1]).toEqual(rows[1]);
+    expect(node.rows[2]).toEqual(rows[2]);
   });
 
   it("freezes each row independently", () => {
@@ -185,7 +183,7 @@ describe("insertMany()", () => {
 
     // Assert
     for (const row of node.rows) {
-      assert.ok(Object.isFrozen(row));
+      expect(Object.isFrozen(row)).toBeTruthy();
     }
   });
 
@@ -194,7 +192,7 @@ describe("insertMany()", () => {
     const node = insertMany(UserModel, [{ email: "a@example.com" }]);
 
     // Assert
-    assert.ok(Object.isFrozen(node.rows));
+    expect(Object.isFrozen(node.rows)).toBeTruthy();
   });
 
   it("returns a frozen InsertNode", () => {
@@ -202,7 +200,7 @@ describe("insertMany()", () => {
     const node = insertMany(UserModel, [{ email: "a@example.com" }]);
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("starts with returning null", () => {
@@ -210,7 +208,7 @@ describe("insertMany()", () => {
     const node = insertMany(UserModel, [{ email: "a@example.com" }]);
 
     // Assert
-    assert.equal(node.returning, null);
+    expect(node.returning).toBe(null);
   });
 
   it("starts with onConflict null", () => {
@@ -218,7 +216,7 @@ describe("insertMany()", () => {
     const node = insertMany(UserModel, [{ email: "a@example.com" }]);
 
     // Assert
-    assert.equal(node.onConflict, null);
+    expect(node.onConflict).toBe(null);
   });
 });
 
@@ -232,7 +230,7 @@ describe("update()", () => {
     const node = update(UserModel, { name: "Alice" });
 
     // Assert
-    assert.equal(node.tag, "Update");
+    expect(node.tag).toBe("Update");
   });
 
   it("embeds the correct model name", () => {
@@ -240,7 +238,7 @@ describe("update()", () => {
     const node = update(UserModel, { name: "Alice" });
 
     // Assert
-    assert.equal(node.model.name, "users");
+    expect(node.model.name).toBe("users");
   });
 
   it("stores the provided values", () => {
@@ -251,7 +249,7 @@ describe("update()", () => {
     const node = update(UserModel, values);
 
     // Assert
-    assert.deepEqual(node.values, values);
+    expect(node.values).toEqual(values);
   });
 
   it("starts with an empty conditions array", () => {
@@ -259,7 +257,7 @@ describe("update()", () => {
     const node = update(UserModel, { name: "Alice" });
 
     // Assert
-    assert.equal(node.conditions.length, 0);
+    expect(node.conditions.length).toBe(0);
   });
 
   it("starts with returning null", () => {
@@ -267,7 +265,7 @@ describe("update()", () => {
     const node = update(UserModel, { name: "Alice" });
 
     // Assert
-    assert.equal(node.returning, null);
+    expect(node.returning).toBe(null);
   });
 
   it("sets softDeleteFilter to true when model has softDelete: true", () => {
@@ -275,7 +273,7 @@ describe("update()", () => {
     const node = update(UserModel, { name: "Alice" });
 
     // Assert
-    assert.equal(node.softDeleteFilter, true);
+    expect(node.softDeleteFilter).toBe(true);
   });
 
   it("sets softDeleteFilter to false when model has no softDelete option", () => {
@@ -283,7 +281,7 @@ describe("update()", () => {
     const node = update(PostModel, { title: "Hello" });
 
     // Assert
-    assert.equal(node.softDeleteFilter, false);
+    expect(node.softDeleteFilter).toBe(false);
   });
 
   it("sets softDeleteFilter to false when model has softDelete: false", () => {
@@ -297,7 +295,7 @@ describe("update()", () => {
     const node = update(ThingModel, { id: "x" });
 
     // Assert
-    assert.equal(node.softDeleteFilter, false);
+    expect(node.softDeleteFilter).toBe(false);
   });
 
   it("freezes the values object", () => {
@@ -305,7 +303,7 @@ describe("update()", () => {
     const node = update(UserModel, { name: "Alice" });
 
     // Assert
-    assert.ok(Object.isFrozen(node.values));
+    expect(Object.isFrozen(node.values)).toBeTruthy();
   });
 
   it("freezes the conditions array", () => {
@@ -313,7 +311,7 @@ describe("update()", () => {
     const node = update(UserModel, { name: "Alice" });
 
     // Assert
-    assert.ok(Object.isFrozen(node.conditions));
+    expect(Object.isFrozen(node.conditions)).toBeTruthy();
   });
 
   it("returns a frozen UpdateNode", () => {
@@ -321,7 +319,7 @@ describe("update()", () => {
     const node = update(UserModel, { name: "Alice" });
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 });
 
@@ -335,7 +333,7 @@ describe("remove()", () => {
     const node = remove(UserModel);
 
     // Assert
-    assert.equal(node.tag, "Delete");
+    expect(node.tag).toBe("Delete");
   });
 
   it("embeds the correct model name", () => {
@@ -343,7 +341,7 @@ describe("remove()", () => {
     const node = remove(UserModel);
 
     // Assert
-    assert.equal(node.model.name, "users");
+    expect(node.model.name).toBe("users");
   });
 
   it("sets isSoftDelete to true when model has softDelete: true", () => {
@@ -351,7 +349,7 @@ describe("remove()", () => {
     const node = remove(UserModel);
 
     // Assert
-    assert.equal(node.isSoftDelete, true);
+    expect(node.isSoftDelete).toBe(true);
   });
 
   it("sets isSoftDelete to false when model has no softDelete option", () => {
@@ -359,7 +357,7 @@ describe("remove()", () => {
     const node = remove(PostModel);
 
     // Assert
-    assert.equal(node.isSoftDelete, false);
+    expect(node.isSoftDelete).toBe(false);
   });
 
   it("sets softDeleteFilter to true when model has softDelete: true", () => {
@@ -367,7 +365,7 @@ describe("remove()", () => {
     const node = remove(UserModel);
 
     // Assert
-    assert.equal(node.softDeleteFilter, true);
+    expect(node.softDeleteFilter).toBe(true);
   });
 
   it("sets softDeleteFilter to false when model has no softDelete option", () => {
@@ -375,7 +373,7 @@ describe("remove()", () => {
     const node = remove(PostModel);
 
     // Assert
-    assert.equal(node.softDeleteFilter, false);
+    expect(node.softDeleteFilter).toBe(false);
   });
 
   it("starts with an empty conditions array", () => {
@@ -383,7 +381,7 @@ describe("remove()", () => {
     const node = remove(UserModel);
 
     // Assert
-    assert.equal(node.conditions.length, 0);
+    expect(node.conditions.length).toBe(0);
   });
 
   it("starts with returning null", () => {
@@ -391,7 +389,7 @@ describe("remove()", () => {
     const node = remove(UserModel);
 
     // Assert
-    assert.equal(node.returning, null);
+    expect(node.returning).toBe(null);
   });
 
   it("returns a frozen DeleteNode", () => {
@@ -399,7 +397,7 @@ describe("remove()", () => {
     const node = remove(UserModel);
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("conditions array is frozen", () => {
@@ -407,7 +405,7 @@ describe("remove()", () => {
     const node = remove(UserModel);
 
     // Assert
-    assert.ok(Object.isFrozen(node.conditions));
+    expect(Object.isFrozen(node.conditions)).toBeTruthy();
   });
 });
 
@@ -421,7 +419,7 @@ describe("hardRemove()", () => {
     const node = hardRemove(UserModel);
 
     // Assert
-    assert.equal(node.tag, "Delete");
+    expect(node.tag).toBe("Delete");
   });
 
   it("sets isSoftDelete to false even when model has softDelete: true", () => {
@@ -429,7 +427,7 @@ describe("hardRemove()", () => {
     const node = hardRemove(UserModel);
 
     // Assert
-    assert.equal(node.isSoftDelete, false);
+    expect(node.isSoftDelete).toBe(false);
   });
 
   it("sets softDeleteFilter to false even when model has softDelete: true", () => {
@@ -437,7 +435,7 @@ describe("hardRemove()", () => {
     const node = hardRemove(UserModel);
 
     // Assert
-    assert.equal(node.softDeleteFilter, false);
+    expect(node.softDeleteFilter).toBe(false);
   });
 
   it("sets isSoftDelete to false when model has no softDelete option", () => {
@@ -445,7 +443,7 @@ describe("hardRemove()", () => {
     const node = hardRemove(PostModel);
 
     // Assert
-    assert.equal(node.isSoftDelete, false);
+    expect(node.isSoftDelete).toBe(false);
   });
 
   it("starts with an empty conditions array", () => {
@@ -453,7 +451,7 @@ describe("hardRemove()", () => {
     const node = hardRemove(UserModel);
 
     // Assert
-    assert.equal(node.conditions.length, 0);
+    expect(node.conditions.length).toBe(0);
   });
 
   it("starts with returning null", () => {
@@ -461,7 +459,7 @@ describe("hardRemove()", () => {
     const node = hardRemove(UserModel);
 
     // Assert
-    assert.equal(node.returning, null);
+    expect(node.returning).toBe(null);
   });
 
   it("returns a frozen DeleteNode", () => {
@@ -469,7 +467,7 @@ describe("hardRemove()", () => {
     const node = hardRemove(UserModel);
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 });
 
@@ -483,7 +481,7 @@ describe("returning()", () => {
     const node = returning()(insert(UserModel, { email: "a@example.com" }));
 
     // Assert
-    assert.equal(node.returning, "*");
+    expect(node.returning).toBe("*");
   });
 
   it("sets returning to '*' when called with the literal '*'", () => {
@@ -491,7 +489,7 @@ describe("returning()", () => {
     const node = returning("*")(insert(UserModel, { email: "a@example.com" }));
 
     // Assert
-    assert.equal(node.returning, "*");
+    expect(node.returning).toBe("*");
   });
 
   it("sets returning to an array of the specified columns", () => {
@@ -499,7 +497,7 @@ describe("returning()", () => {
     const node = returning("id", "email")(insert(UserModel, { email: "a@example.com" }));
 
     // Assert
-    assert.deepEqual(node.returning, ["id", "email"]);
+    expect(node.returning).toEqual(["id", "email"]);
   });
 
   it("works on an InsertNode", () => {
@@ -510,8 +508,8 @@ describe("returning()", () => {
     const result = returning("id")(insertNode);
 
     // Assert
-    assert.equal(result.tag, "Insert");
-    assert.deepEqual(result.returning, ["id"]);
+    expect(result.tag).toBe("Insert");
+    expect(result.returning).toEqual(["id"]);
   });
 
   it("works on an UpdateNode", () => {
@@ -522,8 +520,8 @@ describe("returning()", () => {
     const result = returning("id", "email")(updateNode);
 
     // Assert
-    assert.equal(result.tag, "Update");
-    assert.deepEqual(result.returning, ["id", "email"]);
+    expect(result.tag).toBe("Update");
+    expect(result.returning).toEqual(["id", "email"]);
   });
 
   it("works on a DeleteNode", () => {
@@ -534,8 +532,8 @@ describe("returning()", () => {
     const result = returning("id")(deleteNode);
 
     // Assert
-    assert.equal(result.tag, "Delete");
-    assert.deepEqual(result.returning, ["id"]);
+    expect(result.tag).toBe("Delete");
+    expect(result.returning).toEqual(["id"]);
   });
 
   it("preserves all other fields on an InsertNode", () => {
@@ -546,9 +544,9 @@ describe("returning()", () => {
     const after = returning("id")(before);
 
     // Assert
-    assert.equal(after.tag, before.tag);
-    assert.deepEqual(after.rows, before.rows);
-    assert.equal(after.onConflict, before.onConflict);
+    expect(after.tag).toBe(before.tag);
+    expect(after.rows).toEqual(before.rows);
+    expect(after.onConflict).toBe(before.onConflict);
   });
 
   it("preserves all other fields on an UpdateNode", () => {
@@ -559,10 +557,10 @@ describe("returning()", () => {
     const after = returning("id")(before);
 
     // Assert
-    assert.equal(after.tag, before.tag);
-    assert.deepEqual(after.values, before.values);
-    assert.deepEqual(after.conditions, before.conditions);
-    assert.equal(after.softDeleteFilter, before.softDeleteFilter);
+    expect(after.tag).toBe(before.tag);
+    expect(after.values).toEqual(before.values);
+    expect(after.conditions).toEqual(before.conditions);
+    expect(after.softDeleteFilter).toBe(before.softDeleteFilter);
   });
 
   it("preserves all other fields on a DeleteNode", () => {
@@ -573,10 +571,10 @@ describe("returning()", () => {
     const after = returning("id")(before);
 
     // Assert
-    assert.equal(after.tag, before.tag);
-    assert.equal(after.isSoftDelete, before.isSoftDelete);
-    assert.equal(after.softDeleteFilter, before.softDeleteFilter);
-    assert.deepEqual(after.conditions, before.conditions);
+    expect(after.tag).toBe(before.tag);
+    expect(after.isSoftDelete).toBe(before.isSoftDelete);
+    expect(after.softDeleteFilter).toBe(before.softDeleteFilter);
+    expect(after.conditions).toEqual(before.conditions);
   });
 
   it("returns a frozen node", () => {
@@ -584,7 +582,7 @@ describe("returning()", () => {
     const node = returning("id")(insert(UserModel, { email: "a@example.com" }));
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("does not mutate the input node", () => {
@@ -595,7 +593,7 @@ describe("returning()", () => {
     returning("id")(before);
 
     // Assert
-    assert.equal(before.returning, null);
+    expect(before.returning).toBe(null);
   });
 });
 
@@ -609,9 +607,9 @@ describe("onConflict()", () => {
     const node = onConflict("email", "nothing")(insert(UserModel, { email: "a@example.com" }));
 
     // Assert
-    assert.ok(node.onConflict !== null);
-    assert.deepEqual(node.onConflict.columns, ["email"]);
-    assert.equal(node.onConflict.action, "nothing");
+    expect(node.onConflict !== null).toBeTruthy();
+    expect(node.onConflict.columns).toEqual(["email"]);
+    expect(node.onConflict.action).toBe("nothing");
   });
 
   it("sets the conflict clause with an array of columns and 'nothing' action", () => {
@@ -622,9 +620,9 @@ describe("onConflict()", () => {
     )(insert(UserModel, { email: "a@example.com" }));
 
     // Assert
-    assert.ok(node.onConflict !== null);
-    assert.deepEqual(node.onConflict.columns, ["email", "name"]);
-    assert.equal(node.onConflict.action, "nothing");
+    expect(node.onConflict !== null).toBeTruthy();
+    expect(node.onConflict.columns).toEqual(["email", "name"]);
+    expect(node.onConflict.action).toBe("nothing");
   });
 
   it("sets the conflict clause with an update action", () => {
@@ -634,9 +632,9 @@ describe("onConflict()", () => {
     );
 
     // Assert
-    assert.ok(node.onConflict !== null);
-    assert.deepEqual(node.onConflict.columns, ["email"]);
-    assert.deepEqual(node.onConflict.action, { update: ["name"] });
+    expect(node.onConflict !== null).toBeTruthy();
+    expect(node.onConflict.columns).toEqual(["email"]);
+    expect(node.onConflict.action).toEqual({ update: ["name"] });
   });
 
   it("sets the conflict clause with a single string column and an update action", () => {
@@ -646,9 +644,9 @@ describe("onConflict()", () => {
     );
 
     // Assert
-    assert.ok(node.onConflict !== null);
-    assert.deepEqual(node.onConflict.columns, ["email"]);
-    assert.deepEqual(node.onConflict.action, { update: ["name", "email"] });
+    expect(node.onConflict !== null).toBeTruthy();
+    expect(node.onConflict.columns).toEqual(["email"]);
+    expect(node.onConflict.action).toEqual({ update: ["name", "email"] });
   });
 
   it("preserves all other InsertNode fields", () => {
@@ -659,9 +657,9 @@ describe("onConflict()", () => {
     const after = onConflict("email", "nothing")(before);
 
     // Assert
-    assert.equal(after.tag, before.tag);
-    assert.deepEqual(after.rows, before.rows);
-    assert.deepEqual(after.returning, before.returning);
+    expect(after.tag).toBe(before.tag);
+    expect(after.rows).toEqual(before.rows);
+    expect(after.returning).toEqual(before.returning);
   });
 
   it("returns a frozen InsertNode", () => {
@@ -669,7 +667,7 @@ describe("onConflict()", () => {
     const node = onConflict("email", "nothing")(insert(UserModel, { email: "a@example.com" }));
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("the onConflict clause itself is frozen", () => {
@@ -677,7 +675,7 @@ describe("onConflict()", () => {
     const node = onConflict("email", "nothing")(insert(UserModel, { email: "a@example.com" }));
 
     // Assert
-    assert.ok(Object.isFrozen(node.onConflict));
+    expect(Object.isFrozen(node.onConflict)).toBeTruthy();
   });
 
   it("does not mutate the input node", () => {
@@ -688,7 +686,7 @@ describe("onConflict()", () => {
     onConflict("email", "nothing")(before);
 
     // Assert
-    assert.equal(before.onConflict, null);
+    expect(before.onConflict).toBe(null);
   });
 });
 
@@ -705,8 +703,8 @@ describe("where() on UpdateNode", () => {
     const node = where(condition)(update(UserModel, { name: "Alice" }));
 
     // Assert
-    assert.equal(node.conditions.length, 1);
-    assert.deepEqual(node.conditions[0], condition);
+    expect(node.conditions.length).toBe(1);
+    expect(node.conditions[0]).toEqual(condition);
   });
 
   it("accumulates conditions across multiple where() calls", () => {
@@ -718,9 +716,9 @@ describe("where() on UpdateNode", () => {
     const node = where(c2)(where(c1)(update(UserModel, { name: "Alice" })));
 
     // Assert
-    assert.equal(node.conditions.length, 2);
-    assert.deepEqual(node.conditions[0], c1);
-    assert.deepEqual(node.conditions[1], c2);
+    expect(node.conditions.length).toBe(2);
+    expect(node.conditions[0]).toEqual(c1);
+    expect(node.conditions[1]).toEqual(c2);
   });
 
   it("preserves all other UpdateNode fields", () => {
@@ -731,10 +729,10 @@ describe("where() on UpdateNode", () => {
     const after = where(eq("id", "u1"))(before);
 
     // Assert
-    assert.equal(after.tag, before.tag);
-    assert.deepEqual(after.values, before.values);
-    assert.equal(after.returning, before.returning);
-    assert.equal(after.softDeleteFilter, before.softDeleteFilter);
+    expect(after.tag).toBe(before.tag);
+    expect(after.values).toEqual(before.values);
+    expect(after.returning).toBe(before.returning);
+    expect(after.softDeleteFilter).toBe(before.softDeleteFilter);
   });
 
   it("returns a frozen UpdateNode", () => {
@@ -742,7 +740,7 @@ describe("where() on UpdateNode", () => {
     const node = where(eq("id", "u1"))(update(UserModel, { name: "Alice" }));
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("conditions array on returned node is frozen", () => {
@@ -750,7 +748,7 @@ describe("where() on UpdateNode", () => {
     const node = where(eq("id", "u1"))(update(UserModel, { name: "Alice" }));
 
     // Assert
-    assert.ok(Object.isFrozen(node.conditions));
+    expect(Object.isFrozen(node.conditions)).toBeTruthy();
   });
 
   it("does not mutate the input UpdateNode", () => {
@@ -761,7 +759,7 @@ describe("where() on UpdateNode", () => {
     where(eq("id", "u1"))(before);
 
     // Assert
-    assert.equal(before.conditions.length, 0);
+    expect(before.conditions.length).toBe(0);
   });
 });
 
@@ -778,8 +776,8 @@ describe("where() on DeleteNode", () => {
     const node = where(condition)(remove(UserModel));
 
     // Assert
-    assert.equal(node.conditions.length, 1);
-    assert.deepEqual(node.conditions[0], condition);
+    expect(node.conditions.length).toBe(1);
+    expect(node.conditions[0]).toEqual(condition);
   });
 
   it("accumulates conditions across multiple where() calls", () => {
@@ -791,9 +789,9 @@ describe("where() on DeleteNode", () => {
     const node = where(c2)(where(c1)(remove(UserModel)));
 
     // Assert
-    assert.equal(node.conditions.length, 2);
-    assert.deepEqual(node.conditions[0], c1);
-    assert.deepEqual(node.conditions[1], c2);
+    expect(node.conditions.length).toBe(2);
+    expect(node.conditions[0]).toEqual(c1);
+    expect(node.conditions[1]).toEqual(c2);
   });
 
   it("preserves all other DeleteNode fields", () => {
@@ -804,10 +802,10 @@ describe("where() on DeleteNode", () => {
     const after = where(eq("id", "u1"))(before);
 
     // Assert
-    assert.equal(after.tag, before.tag);
-    assert.equal(after.isSoftDelete, before.isSoftDelete);
-    assert.equal(after.softDeleteFilter, before.softDeleteFilter);
-    assert.equal(after.returning, before.returning);
+    expect(after.tag).toBe(before.tag);
+    expect(after.isSoftDelete).toBe(before.isSoftDelete);
+    expect(after.softDeleteFilter).toBe(before.softDeleteFilter);
+    expect(after.returning).toBe(before.returning);
   });
 
   it("returns a frozen DeleteNode", () => {
@@ -815,7 +813,7 @@ describe("where() on DeleteNode", () => {
     const node = where(eq("id", "u1"))(remove(UserModel));
 
     // Assert
-    assert.ok(Object.isFrozen(node));
+    expect(Object.isFrozen(node)).toBeTruthy();
   });
 
   it("conditions array on returned node is frozen", () => {
@@ -823,7 +821,7 @@ describe("where() on DeleteNode", () => {
     const node = where(eq("id", "u1"))(remove(UserModel));
 
     // Assert
-    assert.ok(Object.isFrozen(node.conditions));
+    expect(Object.isFrozen(node.conditions)).toBeTruthy();
   });
 
   it("does not mutate the input DeleteNode", () => {
@@ -834,7 +832,7 @@ describe("where() on DeleteNode", () => {
     where(eq("id", "u1"))(before);
 
     // Assert
-    assert.equal(before.conditions.length, 0);
+    expect(before.conditions.length).toBe(0);
   });
 
   it("also works with hardRemove() nodes", () => {
@@ -845,9 +843,9 @@ describe("where() on DeleteNode", () => {
     const node = where(condition)(hardRemove(UserModel));
 
     // Assert
-    assert.equal(node.conditions.length, 1);
-    assert.deepEqual(node.conditions[0], condition);
-    assert.equal(node.isSoftDelete, false);
+    expect(node.conditions.length).toBe(1);
+    expect(node.conditions[0]).toEqual(condition);
+    expect(node.isSoftDelete).toBe(false);
   });
 });
 
@@ -857,42 +855,46 @@ describe("where() on DeleteNode", () => {
 
 describe("all returned nodes are frozen", () => {
   it("insert() returns a frozen node", () => {
-    assert.ok(Object.isFrozen(insert(UserModel, { email: "a@example.com" })));
+    expect(Object.isFrozen(insert(UserModel, { email: "a@example.com" }))).toBeTruthy();
   });
 
   it("insertMany() returns a frozen node", () => {
-    assert.ok(Object.isFrozen(insertMany(UserModel, [{ email: "a@example.com" }])));
+    expect(Object.isFrozen(insertMany(UserModel, [{ email: "a@example.com" }]))).toBeTruthy();
   });
 
   it("update() returns a frozen node", () => {
-    assert.ok(Object.isFrozen(update(UserModel, { name: "Alice" })));
+    expect(Object.isFrozen(update(UserModel, { name: "Alice" }))).toBeTruthy();
   });
 
   it("remove() returns a frozen node", () => {
-    assert.ok(Object.isFrozen(remove(UserModel)));
+    expect(Object.isFrozen(remove(UserModel))).toBeTruthy();
   });
 
   it("hardRemove() returns a frozen node", () => {
-    assert.ok(Object.isFrozen(hardRemove(UserModel)));
+    expect(Object.isFrozen(hardRemove(UserModel))).toBeTruthy();
   });
 
   it("returning() returns a frozen node", () => {
-    assert.ok(Object.isFrozen(returning("id")(insert(UserModel, { email: "a@example.com" }))));
+    expect(
+      Object.isFrozen(returning("id")(insert(UserModel, { email: "a@example.com" }))),
+    ).toBeTruthy();
   });
 
   it("onConflict() returns a frozen node", () => {
-    assert.ok(
+    expect(
       Object.isFrozen(
         onConflict("email", "nothing")(insert(UserModel, { email: "a@example.com" })),
       ),
-    );
+    ).toBeTruthy();
   });
 
   it("where() on UpdateNode returns a frozen node", () => {
-    assert.ok(Object.isFrozen(where(eq("id", "u1"))(update(UserModel, { name: "Alice" }))));
+    expect(
+      Object.isFrozen(where(eq("id", "u1"))(update(UserModel, { name: "Alice" }))),
+    ).toBeTruthy();
   });
 
   it("where() on DeleteNode returns a frozen node", () => {
-    assert.ok(Object.isFrozen(where(eq("id", "u1"))(remove(UserModel))));
+    expect(Object.isFrozen(where(eq("id", "u1"))(remove(UserModel)))).toBeTruthy();
   });
 });

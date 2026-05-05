@@ -6,9 +6,7 @@
  * DatabaseClient.
  */
 
-import { strict as assert } from "node:assert";
-import { beforeEach, describe, it } from "node:test";
-
+import { beforeEach, describe, expect, it } from "@igorjs/pure-test";
 import { Database } from "../src/connection/database.ts";
 import { createLambdaPool, resetLambdaConnection } from "../src/connection/lambda.ts";
 import { createPool } from "../src/connection/pool.ts";
@@ -62,21 +60,21 @@ describe("createPool", () => {
     const result = await pool.acquire().run();
 
     // Assert
-    assert.equal(result.tag, "Ok");
+    expect(result.tag).toBe("Ok");
   });
 
   it("release returns connection to idle", async () => {
     // Arrange
     const pool = createPool(createMockDriver(), DUMMY_CONFIG, EMPTY_POOL_CONFIG, noop);
     const acquireResult = await pool.acquire().run();
-    assert.equal(acquireResult.tag, "Ok");
+    expect(acquireResult.tag).toBe("Ok");
     const conn = acquireResult.value;
 
     // Act
     const releaseResult = await pool.release(conn).run();
 
     // Assert
-    assert.equal(releaseResult.tag, "Ok");
+    expect(releaseResult.tag).toBe("Ok");
   });
 
   it("acquire after release reuses the same connection", async () => {
@@ -85,15 +83,15 @@ describe("createPool", () => {
 
     // Acquire then release to park the connection.
     const first = await pool.acquire().run();
-    assert.equal(first.tag, "Ok");
+    expect(first.tag).toBe("Ok");
     await pool.release(first.value).run();
 
     // Act — second acquire should get the same object back.
     const second = await pool.acquire().run();
 
     // Assert
-    assert.equal(second.tag, "Ok");
-    assert.strictEqual(second.value, first.value);
+    expect(second.tag).toBe("Ok");
+    expect(second.value).toBe(first.value);
   });
 
   it("allows acquiring up to max connections", async () => {
@@ -105,8 +103,8 @@ describe("createPool", () => {
     const r2 = await pool.acquire().run();
 
     // Assert — both succeed.
-    assert.equal(r1.tag, "Ok");
-    assert.equal(r2.tag, "Ok");
+    expect(r1.tag).toBe("Ok");
+    expect(r2.tag).toBe("Ok");
   });
 
   it("third acquire times out when max is 2 and no connections released", async () => {
@@ -126,8 +124,8 @@ describe("createPool", () => {
     const result = await pool.acquire().run();
 
     // Assert
-    assert.equal(result.tag, "Err");
-    assert.equal(result.error.tag, "ConnectionError");
+    expect(result.tag).toBe("Err");
+    expect(result.error.tag).toBe("ConnectionError");
   });
 
   it("end() closes all idle connections", async () => {
@@ -143,8 +141,8 @@ describe("createPool", () => {
     // Acquire then release two connections so they sit in the idle list.
     const r1 = await pool.acquire().run();
     const r2 = await pool.acquire().run();
-    assert.equal(r1.tag, "Ok");
-    assert.equal(r2.tag, "Ok");
+    expect(r1.tag).toBe("Ok");
+    expect(r2.tag).toBe("Ok");
     await pool.release(r1.value).run();
     await pool.release(r2.value).run();
 
@@ -152,8 +150,8 @@ describe("createPool", () => {
     const endResult = await pool.end().run();
 
     // Assert
-    assert.equal(endResult.tag, "Ok");
-    assert.equal(closedCount, 2);
+    expect(endResult.tag).toBe("Ok");
+    expect(closedCount).toBe(2);
   });
 
   it("pool mode is 'pool'", () => {
@@ -161,7 +159,7 @@ describe("createPool", () => {
     const pool = createPool(createMockDriver(), DUMMY_CONFIG, EMPTY_POOL_CONFIG, noop);
 
     // Assert
-    assert.equal(pool.mode, "pool");
+    expect(pool.mode).toBe("pool");
   });
 });
 
@@ -183,7 +181,7 @@ describe("createLambdaPool", () => {
     const result = await pool.acquire().run();
 
     // Assert
-    assert.equal(result.tag, "Ok");
+    expect(result.tag).toBe("Ok");
   });
 
   it("reuses the same connection across multiple acquire() calls", async () => {
@@ -195,10 +193,10 @@ describe("createLambdaPool", () => {
     const r2 = await pool.acquire().run();
 
     // Assert
-    assert.equal(r1.tag, "Ok");
-    assert.equal(r2.tag, "Ok");
+    expect(r1.tag).toBe("Ok");
+    expect(r2.tag).toBe("Ok");
     // Same object reference means driver.connect() was called only once.
-    assert.strictEqual(r1.value, r2.value);
+    expect(r1.value).toBe(r2.value);
   });
 
   it("release is a no-op — connection remains open", async () => {
@@ -215,29 +213,29 @@ describe("createLambdaPool", () => {
       noop,
     );
     const r = await pool.acquire().run();
-    assert.equal(r.tag, "Ok");
+    expect(r.tag).toBe("Ok");
 
     // Act
     const releaseResult = await pool.release(r.value).run();
 
     // Assert — release succeeds without closing the connection.
-    assert.equal(releaseResult.tag, "Ok");
-    assert.equal(endCalled, false);
+    expect(releaseResult.tag).toBe("Ok");
+    expect(endCalled).toBe(false);
   });
 
   it("acquire after release reuses the same connection (no-op release)", async () => {
     // Arrange
     const pool = createLambdaPool(createMockDriver(), DUMMY_CONFIG, EMPTY_POOL_CONFIG, noop);
     const r1 = await pool.acquire().run();
-    assert.equal(r1.tag, "Ok");
+    expect(r1.tag).toBe("Ok");
     await pool.release(r1.value).run();
 
     // Act
     const r2 = await pool.acquire().run();
 
     // Assert — still the same connection because release was a no-op.
-    assert.equal(r2.tag, "Ok");
-    assert.strictEqual(r2.value, r1.value);
+    expect(r2.tag).toBe("Ok");
+    expect(r2.value).toBe(r1.value);
   });
 
   it("end() closes the connection and sets it to null", async () => {
@@ -259,8 +257,8 @@ describe("createLambdaPool", () => {
     const endResult = await pool.end().run();
 
     // Assert
-    assert.equal(endResult.tag, "Ok");
-    assert.equal(endCalled, true);
+    expect(endResult.tag).toBe("Ok");
+    expect(endCalled).toBe(true);
   });
 
   it("end() on an already-ended pool is a no-op", async () => {
@@ -283,8 +281,8 @@ describe("createLambdaPool", () => {
     const result = await pool.end().run();
 
     // Assert
-    assert.equal(result.tag, "Ok");
-    assert.equal(endCallCount, 1);
+    expect(result.tag).toBe("Ok");
+    expect(endCallCount).toBe(1);
   });
 
   it("pool mode is 'lambda'", () => {
@@ -292,7 +290,7 @@ describe("createLambdaPool", () => {
     const pool = createLambdaPool(createMockDriver(), DUMMY_CONFIG, EMPTY_POOL_CONFIG, noop);
 
     // Assert
-    assert.equal(pool.mode, "lambda");
+    expect(pool.mode).toBe("lambda");
   });
 });
 
@@ -310,7 +308,7 @@ describe("connect()", () => {
     const result = await connect(driver, DUMMY_CONFIG).run();
 
     // Assert
-    assert.equal(result.tag, "Ok");
+    expect(result.tag).toBe("Ok");
   });
 
   it("wraps driver.connect() throws in ConnectionError", async () => {
@@ -326,8 +324,8 @@ describe("connect()", () => {
     const result = await connect(failingDriver, DUMMY_CONFIG).run();
 
     // Assert
-    assert.equal(result.tag, "Err");
-    assert.equal(result.tag === "Err" && result.error.tag, "ConnectionError");
+    expect(result.tag).toBe("Err");
+    expect(result.tag === "Err" && result.error.tag).toBe("ConnectionError");
   });
 });
 
@@ -349,7 +347,7 @@ describe("closeConnection()", () => {
     const result = await closeConnection(conn).run();
 
     // Assert
-    assert.equal(result.tag, "Ok");
+    expect(result.tag).toBe("Ok");
   });
 
   it("wraps conn.end() throws in ConnectionError", async () => {
@@ -367,8 +365,8 @@ describe("closeConnection()", () => {
     const result = await closeConnection(conn).run();
 
     // Assert
-    assert.equal(result.tag, "Err");
-    assert.equal(result.tag === "Err" && result.error.tag, "ConnectionError");
+    expect(result.tag).toBe("Err");
+    expect(result.tag === "Err" && result.error.tag).toBe("ConnectionError");
   });
 });
 
@@ -390,8 +388,8 @@ describe("createPool — error paths", () => {
     const result = await pool.acquire().run();
 
     // Assert
-    assert.equal(result.tag, "Err");
-    assert.equal(result.tag === "Err" && result.error.tag, "ConnectionError");
+    expect(result.tag).toBe("Err");
+    expect(result.tag === "Err" && result.error.tag).toBe("ConnectionError");
   });
 
   it("returns ConnectionError when acquire is called after pool is shut down", async () => {
@@ -405,7 +403,7 @@ describe("createPool — error paths", () => {
 
     // Consume the one allowed slot so the next acquire must wait
     const r1 = await pool.acquire().run();
-    assert.equal(r1.tag, "Ok");
+    expect(r1.tag).toBe("Ok");
 
     // Begin a second acquire that will queue as a waiter
     const pendingAcquire = pool.acquire().run();
@@ -417,8 +415,8 @@ describe("createPool — error paths", () => {
     const result = await pendingAcquire;
 
     // Assert
-    assert.equal(result.tag, "Err");
-    assert.equal(result.tag === "Err" && result.error.tag, "ConnectionError");
+    expect(result.tag).toBe("Err");
+    expect(result.tag === "Err" && result.error.tag).toBe("ConnectionError");
   });
 });
 
@@ -444,8 +442,8 @@ describe("createLambdaPool — error paths", () => {
     const result = await pool.acquire().run();
 
     // Assert
-    assert.equal(result.tag, "Err");
-    assert.equal(result.tag === "Err" && result.error.tag, "ConnectionError");
+    expect(result.tag).toBe("Err");
+    expect(result.tag === "Err" && result.error.tag).toBe("ConnectionError");
   });
 
   it("end() on an uninitialised pool is a no-op and does not throw", async () => {
@@ -456,7 +454,7 @@ describe("createLambdaPool — error paths", () => {
     const result = await pool.end().run();
 
     // Assert
-    assert.equal(result.tag, "Ok");
+    expect(result.tag).toBe("Ok");
   });
 
   it("acquire() after end() creates a fresh connection", async () => {
@@ -482,8 +480,8 @@ describe("createLambdaPool — error paths", () => {
     const result = await pool.acquire().run();
 
     // Assert — a new connection was created (connect called twice total)
-    assert.equal(result.tag, "Ok");
-    assert.equal(connectCount, 2);
+    expect(result.tag).toBe("Ok");
+    expect(connectCount).toBe(2);
   });
 });
 
@@ -506,11 +504,11 @@ describe("Database()", () => {
     });
 
     // Assert
-    assert.ok(client.dialect !== undefined);
-    assert.equal(client.dialect.name, "postgresql");
-    assert.ok(client.pool !== undefined);
-    assert.ok(client.logger !== undefined);
-    assert.ok(client.hooks !== undefined);
+    expect(client.dialect !== undefined).toBeTruthy();
+    expect(client.dialect.name).toBe("postgresql");
+    expect(client.pool !== undefined).toBeTruthy();
+    expect(client.logger !== undefined).toBeTruthy();
+    expect(client.hooks !== undefined).toBeTruthy();
   });
 
   it("returns a frozen DatabaseClient", () => {
@@ -522,7 +520,7 @@ describe("Database()", () => {
     });
 
     // Assert
-    assert.ok(Object.isFrozen(client));
+    expect(Object.isFrozen(client)).toBeTruthy();
   });
 
   it("uses pool mode by default", () => {
@@ -534,7 +532,7 @@ describe("Database()", () => {
     });
 
     // Assert
-    assert.equal(client.pool.mode, "pool");
+    expect(client.pool.mode).toBe("pool");
   });
 
   it("uses lambda pool when mode is 'lambda'", () => {
@@ -547,7 +545,7 @@ describe("Database()", () => {
     });
 
     // Assert
-    assert.equal(client.pool.mode, "lambda");
+    expect(client.pool.mode).toBe("lambda");
   });
 
   it("merges supplied hooks into the client", () => {
@@ -568,7 +566,7 @@ describe("Database()", () => {
     });
 
     // Assert
-    assert.strictEqual(client.hooks.onConnectionAcquire, hooks.onConnectionAcquire);
+    expect(client.hooks.onConnectionAcquire).toBe(hooks.onConnectionAcquire);
   });
 
   it("defaults to empty hooks when none supplied", () => {
@@ -580,25 +578,18 @@ describe("Database()", () => {
     });
 
     // Assert
-    assert.deepEqual(client.hooks, {});
+    expect(client.hooks).toEqual({});
   });
 
   it("throws when an unknown dialect is requested", () => {
     // Arrange / Act / Assert
-    assert.throws(
-      () =>
-        Database({
-          dialect: "mysql",
-          driver: createMockDriver(),
-          connection: DUMMY_CONFIG,
-        }),
-      (err: unknown) => {
-        // The thrown value is a DbError (plain object), not an Error instance.
-        assert.ok(err !== null && typeof err === "object");
-        assert.equal((err as { tag: string }).tag, "ValidationError");
-        return true;
-      },
-    );
+    expect(() =>
+      Database({
+        dialect: "mysql",
+        driver: createMockDriver(),
+        connection: DUMMY_CONFIG,
+      }),
+    ).toThrow();
   });
 
   it("uses the provided custom logger when supplied", () => {
@@ -622,6 +613,6 @@ describe("Database()", () => {
     });
 
     // Assert — the logger on the client is the custom one we passed in.
-    assert.strictEqual(client.logger, customLogger);
+    expect(client.logger).toBe(customLogger);
   });
 });

@@ -24,11 +24,14 @@ importers:
       '@biomejs/biome':
         specifier: 2.4.14
         version: 2.4.14
+      '@igorjs/pure-test':
+        specifier: 0.1.0
+        version: 0.1.0(typescript@6.0.2)
       '@types/better-sqlite3':
         specifier: 7.6.13
         version: 7.6.13
       '@types/node':
-        specifier: ^25.6.0
+        specifier: 25.6.0
         version: 25.6.0
       '@types/pg':
         specifier: 8.20.0
@@ -99,6 +102,16 @@ packages:
   '@igorjs/pure-fx@0.1.0':
     resolution: {integrity: sha512-54PazCULCLironXDDFBUcyX4FErFoWngxDhJCix0U+3fTT0eGmRNf6IPqKPo+JsDpV1zpv4UNW6GMK/LcQRC/A==}
     engines: {node: '>=22'}
+    peerDependencies:
+      typescript: '>=5.7.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  '@igorjs/pure-test@0.1.0':
+    resolution: {integrity: sha512-hLNppk0sBvFgI4+AWIb7R79g+aRk2UJe9eqMyodyfYCrVXWyU4n20jS+tP5+4bUmND8d6tomjgp3+VReWgFqRQ==}
+    engines: {node: '>=22'}
+    hasBin: true
     peerDependencies:
       typescript: '>=5.7.0'
     peerDependenciesMeta:
@@ -387,6 +400,10 @@ snapshots:
     optional: true
 
   '@igorjs/pure-fx@0.1.0(typescript@6.0.2)':
+    optionalDependencies:
+      typescript: 6.0.2
+
+  '@igorjs/pure-test@0.1.0(typescript@6.0.2)':
     optionalDependencies:
       typescript: 6.0.2
 
