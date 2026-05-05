@@ -64,7 +64,7 @@ const runGenerate = async (ctx: CommandContext, name?: string): Promise<number> 
   }
 
   if (ctx.config.models === undefined) {
-    printError('Config must define a "models" function for migrate:generate.');
+    printError(`Config must define a "models" function for migrate:generate.`);
     return 1;
   }
 
@@ -110,7 +110,7 @@ const runGenerate = async (ctx: CommandContext, name?: string): Promise<number> 
   // Write snapshot
   writeFileSync(
     join(dir, `${basename}.snapshot.json`),
-    JSON.stringify(currentSnapshot, null, 2) + "\n",
+    `${JSON.stringify(currentSnapshot, null, 2)}\n`,
   );
 
   printHeader("Generated migration");
