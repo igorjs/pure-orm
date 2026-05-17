@@ -99,7 +99,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: ["22", "23", "24", "25"]
+        node-version: ["22", "23", "24", "25", "26"]
     name: test / node-${{ matrix.node-version }}
     steps:
       - uses: actions/checkout@v6
