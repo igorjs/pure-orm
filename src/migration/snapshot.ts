@@ -88,15 +88,20 @@ const snapshotTable = (model: Model): TableSnapshot => {
       );
     }
 
-    // Foreign key from references config.
+    // Foreign key from references config. The reference names a *field*, so we
+    // resolve it to the referenced model's SQL column name for correct DDL.
     if (col.config.references !== undefined) {
       const ref = col.config.references();
       const referencedModel = ref[0] as Model;
+      const referencedField = ref[1] as string;
+      const referencedColumn =
+        referencedModel.$columns.find(c => c.name === referencedField)?.columnName ??
+        referencedField;
       foreignKeys.push(
         Object.freeze({
           column: col.columnName,
           referencedTable: referencedModel.$name,
-          referencedColumn: ref[1] as string,
+          referencedColumn,
           onDelete: col.config.onDelete ?? "no action",
           onUpdate: col.config.onUpdate ?? "no action",
         }),
