@@ -21,6 +21,11 @@ type FieldConfig = {
   readonly onDelete?: "cascade" | "restrict" | "set null" | "no action";
   readonly onUpdate?: "cascade" | "restrict" | "set null" | "no action";
   readonly columnName?: string;
+  /**
+   * Previous SQL column name, so the differ emits a RenameColumn instead of a
+   * data-destroying drop-plus-add (ADR-0004).
+   */
+  readonly renamedFrom?: string;
 };
 
 /**
@@ -61,6 +66,8 @@ type ModelOptions = {
   readonly timestamps?: boolean;
   readonly softDelete?: boolean;
   readonly audit?: boolean;
+  /** Previous table name, so the differ emits a RenameTable, not drop+create (ADR-0004). */
+  readonly renamedFrom?: string;
 };
 
 // ---- Model reference (embedded in AST to avoid circular refs) ----

@@ -93,6 +93,12 @@ const generateUp = (op: ChangeOperation, dialect: Dialect): string => {
     case "DropTable":
       return dropTableSql(op.table);
 
+    case "RenameTable":
+      return `ALTER TABLE ${q(op.from)} RENAME TO ${q(op.to)};`;
+
+    case "RenameColumn":
+      return `ALTER TABLE ${q(op.table)} RENAME COLUMN ${q(op.from)} TO ${q(op.to)};`;
+
     case "AddColumn":
       return `ALTER TABLE ${q(op.table)} ADD COLUMN ${columnDef(op.column, op.snapshot, dialect)};`;
 
@@ -120,6 +126,12 @@ const generateDown = (op: ChangeOperation, dialect: Dialect): string => {
 
     case "DropTable":
       return createTableSql(op.table, op.snapshot, dialect);
+
+    case "RenameTable":
+      return `ALTER TABLE ${q(op.to)} RENAME TO ${q(op.from)};`;
+
+    case "RenameColumn":
+      return `ALTER TABLE ${q(op.table)} RENAME COLUMN ${q(op.to)} TO ${q(op.from)};`;
 
     case "AddColumn":
       return `ALTER TABLE ${q(op.table)} DROP COLUMN ${q(op.column)};`;
