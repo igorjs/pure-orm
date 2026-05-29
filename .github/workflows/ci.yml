@@ -1,3 +1,20 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Templated by repo-config/modules/hardened-repo/main.tf (variable
+# manage_workflow_ci). Direct edits in the consuming repo are
+# overwritten on the next `terraform apply` against repo-config.
+#
+# Per-runtime integration matrix for npm-shaped JavaScript packages.
+# Shape matches the existing pure-fx pattern: a single `lint-and-test`
+# job (the required status check) that handles lint + type-check +
+# build + unit tests, then per-runtime-family integration jobs that
+# download the built `dist/` artifact and run smoke tests.
+#
+# Runtimes are opted into per-repo via `var.ci_runtimes`. The module
+# parses that flat list into per-family version arrays before passing
+# them to this template, so the template renders only the integration
+# jobs the repo actually needs.
+
 name: CI
 
 on:
@@ -10,16 +27,39 @@ permissions:
   contents: read
 
 jobs:
+  # ── Lint, type-check, build, unit tests, type tests ───────────────
+  # This is the canonical `lint-and-test` required status check. Other
+  # integration jobs depend on it via `needs: [lint-and-test]` so they
+  # download an artefact rather than rebuilding.
   lint-and-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2
+        with:
+          egress-policy: block
+          # Allowlist: GitHub API + git transport, npm registry,
+          # Node.js binaries (setup-node), and pkg-containers (used by
+          # actions/cache to fetch tar archives).
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            codeload.github.com:443
+            registry.npmjs.org:443
+            registry.yarnpkg.com:443
+            nodejs.org:443
+            raw.githubusercontent.com:443
+            ghcr.io:443
+            pkg-containers.githubusercontent.com:443
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - run: corepack enable
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: 24
+          node-version: '24'
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -39,140 +79,55 @@ jobs:
       - name: Type tests
         run: pnpm run test:types
 
-  # ── Integration tests (Node only, need native drivers) ─────────────────
-
-  integration-sqlite:
-    needs: lint-and-test
-    runs-on: ubuntu-latest
-    name: integration / sqlite
-    steps:
-      - uses: actions/checkout@v6
-      - run: corepack enable
-      - uses: actions/setup-node@v6
+      - name: Upload build artefact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: SQLite integration tests
-        run: node --experimental-strip-types --no-warnings tests/integration/sqlite.test.ts
+          name: dist
+          path: dist/
+          retention-days: 1
+          if-no-files-found: error
 
-  integration-pg:
-    needs: lint-and-test
-    runs-on: ubuntu-latest
-    name: integration / postgresql
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: pure_orm_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=5
-    steps:
-      - uses: actions/checkout@v6
-      - run: corepack enable
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: PostgreSQL integration tests
-        run: node --experimental-strip-types --no-warnings tests/integration/pg.test.ts
-        env:
-          PG_HOST: localhost
-          PG_PORT: 5432
-          PG_DATABASE: pure_orm_test
-          PG_USER: postgres
-          PG_PASSWORD: postgres
-
-  # ── Node: unit tests on 4 versions (parallel) ─────────────────────────
-
-  test-node:
-    needs: lint-and-test
+  # ── Node integration matrix ────────────────────────────────────────
+  integration-node:
+    needs: [lint-and-test]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        node-version: ["22", "23", "24", "25", "26"]
-    name: test / node-${{ matrix.node-version }}
+        node-version: ["22","24","26"]
+    name: "integration / node-${{ matrix.node-version }}"
     steps:
-      - uses: actions/checkout@v6
+      - uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
+            codeload.github.com:443
+            registry.npmjs.org:443
+            registry.yarnpkg.com:443
+            nodejs.org:443
+            raw.githubusercontent.com:443
+            ghcr.io:443
+            pkg-containers.githubusercontent.com:443
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - run: corepack enable
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Unit tests (762 tests)
-        run: node --experimental-strip-types --no-warnings scripts/test-runner.mjs --skip-integration
-      - run: pnpm run build
-      - name: Runtime smoke test
-        run: node tests/runtime-smoke.mjs
-
-  # ── Deno: unit tests on stable + canary (parallel) ────────────────────
-
-  test-deno:
-    needs: lint-and-test
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - deno-version: v2.x
-            name: deno-stable
-          - deno-version: canary
-            name: deno-canary
-    name: test / ${{ matrix.name }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: denoland/setup-deno@v2
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
-          deno-version: ${{ matrix.deno-version }}
-      - run: corepack enable
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Unit tests (762 tests)
-        run: deno run --allow-all scripts/test-runner.mjs --skip-integration
-      - run: pnpm run build
-      - name: Runtime smoke test
-        run: deno run --allow-all --node-modules-dir tests/runtime-smoke.mjs
+          name: dist
+          path: dist/
 
-  # ── Bun: unit tests on latest + canary (parallel) ─────────────────────
+      - name: Unit tests
+        run: pnpm test
 
-  test-bun:
-    needs: lint-and-test
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - bun-version: latest
-            name: bun-latest
-          - bun-version: canary
-            name: bun-canary
-    name: test / ${{ matrix.name }}
-    steps:
-      - uses: actions/checkout@v6
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: ${{ matrix.bun-version }}
-      - run: corepack enable
-      - uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Unit tests (762 tests)
-        run: bun scripts/test-runner.mjs --skip-integration
-      - run: pnpm run build
-      - name: Runtime smoke test
-        run: bun tests/runtime-smoke.mjs
+
+
+
