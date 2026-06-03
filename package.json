@@ -76,7 +76,7 @@
     "@types/better-sqlite3": "7.6.13",
     "@types/node": "25.6.0",
     "@types/pg": "8.20.0",
-    "@typescript/native-preview": "7.0.0-dev.20260406.1"
+    "@typescript/native-preview": "7.0.0-dev.20260602.1"
   },
   "peerDependencies": {
     "@igorjs/pure-fx": "^0.1.0",
