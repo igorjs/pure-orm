@@ -72,7 +72,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.14",
     "@igorjs/pure-fx": "0.1.0",
-    "@igorjs/pure-test": "0.3.0",
+    "@igorjs/pure-test": "0.4.2",
     "@types/better-sqlite3": "7.6.13",
     "@types/node": "25.6.0",
     "@types/pg": "8.20.0",
