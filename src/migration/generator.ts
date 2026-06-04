@@ -58,7 +58,7 @@ const columnDef = (name: string, col: ColumnSnapshot, dialect: Dialect): string 
   ) {
     // Map known defaults to SQL expressions.
     if (col.default === "now") {
-      parts.push(`DEFAULT ${dialect.name === "sqlite" ? "datetime('now')" : "NOW()"}`);
+      parts.push(`DEFAULT ${dialect.capabilities.currentTimestampSql}`);
     } else {
       parts.push(`DEFAULT ${col.default}`);
     }
@@ -99,12 +99,7 @@ const compileAlterColumn = (
     if (to.default === null) {
       lines.push(`${prefix} DROP DEFAULT;`);
     } else {
-      const defExpr =
-        to.default === "now"
-          ? dialect.name === "sqlite"
-            ? "datetime('now')"
-            : "NOW()"
-          : to.default;
+      const defExpr = to.default === "now" ? dialect.capabilities.currentTimestampSql : to.default;
       lines.push(`${prefix} SET DEFAULT ${defExpr};`);
     }
   }
