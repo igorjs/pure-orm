@@ -9,11 +9,35 @@
  */
 
 import type { Dialect } from "../dialect/dialect.ts";
-import type { ChangeOperation, ColumnSnapshot, TableSnapshot } from "./types.ts";
+import type {
+  ChangeOperation,
+  ColumnSnapshot,
+  ForeignKeySnapshot,
+  IndexSnapshot,
+  TableSnapshot,
+} from "./types.ts";
 
 // ---- Helpers ----
 
 const q = (id: string): string => `"${id.replace(/"/g, '""')}"`;
+
+/** A referential action only appears in DDL when it differs from the SQL default. */
+const referentialAction = (keyword: string, action: string): string =>
+  action === "no action" ? "" : ` ${keyword} ${action.toUpperCase()}`;
+
+/** Inline FOREIGN KEY clause for CREATE TABLE; supported by both PostgreSQL and SQLite. */
+const foreignKeyDef = (table: string, fk: ForeignKeySnapshot): string =>
+  `CONSTRAINT ${q(`fk_${table}_${fk.column}`)} FOREIGN KEY (${q(fk.column)}) ` +
+  `REFERENCES ${q(fk.referencedTable)} (${q(fk.referencedColumn)})` +
+  referentialAction("ON DELETE", fk.onDelete) +
+  referentialAction("ON UPDATE", fk.onUpdate);
+
+/** CREATE [UNIQUE] INDEX statement, shared by AddIndex and the DropIndex down path. */
+const createIndexSql = (table: string, index: IndexSnapshot): string => {
+  const unique = index.unique ? "UNIQUE " : "";
+  const cols = index.columns.map(q).join(", ");
+  return `CREATE ${unique}INDEX ${q(index.name)} ON ${q(table)} (${cols});`;
+};
 
 const columnDef = (name: string, col: ColumnSnapshot, dialect: Dialect): string => {
   const config = {
@@ -46,7 +70,9 @@ const createTableSql = (table: string, snapshot: TableSnapshot, dialect: Dialect
   const colDefs = Object.entries(snapshot.columns).map(([name, col]) =>
     columnDef(name, col, dialect),
   );
-  return `CREATE TABLE ${q(table)} (\n  ${colDefs.join(",\n  ")}\n);`;
+  const fkDefs = snapshot.foreignKeys.map(fk => foreignKeyDef(table, fk));
+  const body = [...colDefs, ...fkDefs].join(",\n  ");
+  return `CREATE TABLE ${q(table)} (\n  ${body}\n);`;
 };
 
 const dropTableSql = (table: string): string => `DROP TABLE ${q(table)};`;
@@ -108,14 +134,11 @@ const generateUp = (op: ChangeOperation, dialect: Dialect): string => {
     case "AlterColumn":
       return compileAlterColumn(op.table, op.column, op.from, op.to, dialect);
 
-    case "AddIndex": {
-      const unique = op.index.unique ? "UNIQUE " : "";
-      const cols = op.index.columns.map(q).join(", ");
-      return `CREATE ${unique}INDEX ${q(op.index.name)} ON ${q(op.table)} (${cols});`;
-    }
+    case "AddIndex":
+      return createIndexSql(op.table, op.index);
 
     case "DropIndex":
-      return `DROP INDEX ${q(op.indexName)};`;
+      return `DROP INDEX ${q(op.index.name)};`;
   }
 };
 
@@ -157,7 +180,7 @@ const generateDown = (op: ChangeOperation, dialect: Dialect): string => {
       return `DROP INDEX ${q(op.index.name)};`;
 
     case "DropIndex":
-      return `-- MANUAL REVIEW: Cannot auto-generate CREATE INDEX for dropped index "${op.indexName}"`;
+      return createIndexSql(op.table, op.index);
   }
 };
 
