@@ -59,7 +59,7 @@ const createTable: ChangeOperation = Object.freeze({
 const dropIndex: ChangeOperation = Object.freeze({
   tag: "DropIndex",
   table: "users",
-  indexName: "idx_old",
+  index: { name: "idx_old", columns: ["x"], unique: false },
 });
 
 // ---------------------------------------------------------------------------
