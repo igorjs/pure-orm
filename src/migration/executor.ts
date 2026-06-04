@@ -8,13 +8,12 @@
  * transaction or concurrent execution modes.
  */
 
-import { Task } from "@igorjs/pure-fx/async";
-import type { Result } from "@igorjs/pure-fx/core";
-import { Err, Ok } from "@igorjs/pure-fx/core";
 import { transaction } from "../connection/transaction.ts";
 import type { DatabaseClient } from "../connection/types.ts";
 import type { DbError } from "../errors/errors.ts";
 import { migrationError } from "../errors/errors.ts";
+import type { Result } from "../fx.ts";
+import { Err, Ok, Task } from "../fx.ts";
 import { startTimer } from "../logging/timing.ts";
 import { validateChecksums } from "./checksum.ts";
 import type { LockHandle } from "./locking.ts";
