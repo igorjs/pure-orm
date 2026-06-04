@@ -307,9 +307,21 @@ const compileDelete = (node: DeleteNode): CompiledQuery => {
 
 // ---- Dialect factory ----
 
+const postgresCapabilities = Object.freeze({
+  parameterStyle: "numbered" as const,
+  identifierQuote: '"' as const,
+  supportsReturning: true,
+  upsertStyle: "onConflict" as const,
+  supportsTransactionalDDL: true,
+  currentTimestampSql: "NOW()",
+  lockStrategy: "advisoryLock" as const,
+  supportsAddColumnIfNotExists: true,
+});
+
 const createPostgresDialect = (): Dialect =>
   Object.freeze({
     name: "postgresql",
+    capabilities: postgresCapabilities,
     compileSelect,
     compileInsert,
     compileUpdate,
