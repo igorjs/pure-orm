@@ -117,9 +117,11 @@ const executeConcurrent = (
   hooks: Partial<MigrationHooks> | null | undefined,
   hookCtx: MigrationHookContext,
 ): Task<MigrationResult, DbError> => {
-  // SQLite: fall back to transactional mode
-  if (db.dialect.name === "sqlite") {
-    db.logger.debug("SQLite does not support concurrent operations, using transaction mode");
+  // Dialects without server-side concurrent-DDL support (e.g. SQLite) fall
+  // back to transactional mode. Captured by the lock-strategy capability:
+  // advisory-lock dialects support concurrent DDL; lock-table dialects do not.
+  if (db.dialect.capabilities.lockStrategy === "lockTable") {
+    db.logger.debug("Dialect lacks concurrent DDL support, using transaction mode");
     return executeTransactional(db, file, batch, hooks, hookCtx);
   }
 
