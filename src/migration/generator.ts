@@ -8,7 +8,7 @@
  * is correct for the target database.
  */
 
-import type { Dialect } from "../dialect/dialect.ts";
+import type { Dialect } from "@/dialect/dialect";
 import type {
   ChangeOperation,
   ColumnSnapshot,

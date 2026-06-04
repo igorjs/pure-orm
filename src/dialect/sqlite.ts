@@ -17,7 +17,7 @@
  * inside each compile* call so concurrent compilations never interfere.
  */
 
-import type { FieldConfig } from "../model/types.ts";
+import type { FieldConfig } from "@/model/types";
 import type {
   CompiledQuery,
   ConditionNode,
@@ -25,7 +25,7 @@ import type {
   InsertNode,
   SelectNode,
   UpdateNode,
-} from "../query/types.ts";
+} from "@/query/types";
 import type { Dialect } from "./dialect.ts";
 import type { MutationCtx } from "./shared.ts";
 import {

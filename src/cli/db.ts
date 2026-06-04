@@ -8,8 +8,8 @@
  * for migration operations.
  */
 
-import { Database } from "../connection/database.ts";
-import type { ConnectionConfig, DatabaseClient, DatabaseDriver } from "../connection/types.ts";
+import { Database } from "@/connection/database";
+import type { ConnectionConfig, DatabaseClient, DatabaseDriver } from "@/connection/types";
 import type { PureOrmConfig } from "./types.ts";
 
 const loadPostgresDriver = async (): Promise<DatabaseDriver> => {
