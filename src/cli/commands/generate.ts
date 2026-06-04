@@ -4,15 +4,16 @@
  * migrate:generate - Generate a migration from model changes.
  */
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { resolveDialect } from "../../dialect/registry.ts";
 import { diffSnapshots } from "../../migration/differ.ts";
 import { generateMigration } from "../../migration/generator.ts";
+import { checkDestructive } from "../../migration/guard.ts";
 import { orderOperations } from "../../migration/ordering.ts";
 import { createSnapshot } from "../../migration/snapshot.ts";
 import type { SchemaSnapshot } from "../../migration/types.ts";
-import { printError, printHeader, printInfo, printSuccess } from "../output.ts";
+import { printError, printHeader, printInfo, printSuccess, printWarning } from "../output.ts";
 import type { CommandContext } from "../types.ts";
 
 const EMPTY_SNAPSHOT: SchemaSnapshot = Object.freeze({
@@ -24,7 +25,6 @@ const EMPTY_SNAPSHOT: SchemaSnapshot = Object.freeze({
 const findLatestSnapshot = (dir: string): SchemaSnapshot => {
   if (!existsSync(dir)) return EMPTY_SNAPSHOT;
 
-  const { readdirSync } = require("node:fs") as typeof import("node:fs");
   const files = readdirSync(dir)
     .filter((f: string) => f.endsWith(".snapshot.json"))
     .sort((a: string, b: string) => b.localeCompare(a));
@@ -47,7 +47,6 @@ const formatDate = (): string => {
 const getNextSequence = (dir: string): string => {
   if (!existsSync(dir)) return "001";
 
-  const { readdirSync } = require("node:fs") as typeof import("node:fs");
   const files = readdirSync(dir).filter((f: string) => /^\d{8}_\d{3}_/.test(f));
   const maxSeq = files.reduce((max: number, f: string) => {
     const match = /^\d{8}_(\d{3})_/.exec(f);
@@ -92,6 +91,24 @@ const runGenerate = async (ctx: CommandContext, name?: string): Promise<number> 
   if (ops.length === 0) {
     printInfo("No schema changes detected.");
     return 0;
+  }
+
+  // Destructive-change guard (ADR-0004): fail closed on drops unless opted in.
+  const guard = checkDestructive(ops, ctx.flags.allowDestructive);
+  if (!guard.ok) {
+    printError("Refusing to generate a migration with destructive operations:");
+    for (const desc of guard.blocked) {
+      printError(`    ${desc}`);
+    }
+    printInfo("A renamed table or column looks like a drop plus an add and would destroy data.");
+    printInfo("Re-run with --allow-destructive to confirm these drops are intended.");
+    return 1;
+  }
+  if (guard.warnings.length > 0) {
+    printWarning("Generating a migration with destructive operations:");
+    for (const desc of guard.warnings) {
+      printWarning(`    ${desc}`);
+    }
   }
 
   // Generate SQL
