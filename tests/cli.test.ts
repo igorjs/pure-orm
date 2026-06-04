@@ -6,7 +6,7 @@ import { describe, expect, it } from "@igorjs/pure-test";
 const runCli = (args: string): { stdout: string; exitCode: number } => {
   try {
     const stdout = execSync(
-      `node --experimental-strip-types --no-warnings dist/cli/index.js ${args}`,
+      `node --experimental-strip-types --no-warnings src/cli/index.ts ${args}`,
       { encoding: "utf-8", stdio: "pipe" },
     );
     return { stdout, exitCode: 0 };
