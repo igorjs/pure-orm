@@ -48,6 +48,7 @@ export type {
 // ---- Dialect types (implementations added in WU-4) ----
 export type { Dialect } from "./dialect/dialect.ts";
 // ---- Dialect implementations (WU-4) ----
+export { createMysqlDialect } from "./dialect/mysql.ts";
 export { createPostgresDialect } from "./dialect/postgresql.ts";
 export { registerDialect, resolveDialect } from "./dialect/registry.ts";
 export { createSqliteDialect } from "./dialect/sqlite.ts";
