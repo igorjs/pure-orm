@@ -434,7 +434,14 @@ describe("generateUp()", () => {
   });
 
   it("generates DROP INDEX", () => {
-    const sql = generateUp({ tag: "DropIndex", table: "users", indexName: "idx_old" }, pgDialect);
+    const sql = generateUp(
+      {
+        tag: "DropIndex",
+        table: "users",
+        index: { name: "idx_old", columns: ["x"], unique: false },
+      },
+      pgDialect,
+    );
 
     expect(sql).toBe('DROP INDEX "idx_old";');
   });
