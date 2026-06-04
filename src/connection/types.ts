@@ -8,10 +8,9 @@
  * users bring pg, postgres.js, @neondatabase/serverless, etc.
  */
 
-import type { Task } from "@igorjs/pure-fx/async";
-
 import type { Dialect } from "../dialect/dialect.ts";
 import type { DbError } from "../errors/errors.ts";
+import type { Task } from "../fx.ts";
 import type { Logger, QueryHooks } from "../logging/types.ts";
 
 // ---- Driver interface ----
