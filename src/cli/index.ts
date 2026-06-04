@@ -34,6 +34,7 @@ const USAGE = `
   Options:
     --dry-run          Show SQL without executing
     --force            Skip checksum validation
+    --allow-destructive  Permit DROP of tables/columns in migrate:generate
     --config, -c       Config file path (default: pure-orm.config.ts)
     --step <n>         Number of migrations to rollback (default: 1)
     --verbose, -v      Show stack traces on error
@@ -65,6 +66,7 @@ const buildFlags = (values: Record<string, unknown>): CliFlags => ({
   dryRun: (values["dry-run"] as boolean) ?? false,
   verbose: (values["verbose"] as boolean) ?? false,
   force: (values["force"] as boolean) ?? false,
+  allowDestructive: (values["allow-destructive"] as boolean) ?? false,
   configPath: (values["config"] as string) ?? null,
   step: values["step"] !== undefined ? Number.parseInt(values["step"] as string, 10) : null,
 });
@@ -74,6 +76,7 @@ const main = async (): Promise<void> => {
     options: {
       "dry-run": { type: "boolean", default: false },
       force: { type: "boolean", default: false },
+      "allow-destructive": { type: "boolean", default: false },
       config: { type: "string", short: "c" },
       step: { type: "string" },
       verbose: { type: "boolean", default: false, short: "v" },
