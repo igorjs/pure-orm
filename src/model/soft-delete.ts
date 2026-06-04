@@ -9,7 +9,7 @@
  * pattern in timestamps.ts.
  */
 
-import { Schema } from "../fx.ts";
+import { Schema } from "@/fx";
 import type { ColumnMetadata } from "./types.ts";
 
 const deletedAtColumn: ColumnMetadata = Object.freeze({

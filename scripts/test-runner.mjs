@@ -5,8 +5,8 @@
  * accumulates describe/it registrations during module evaluation,
  * then auto-runs after all imports complete.
  *
- * Works across runtimes:
- *   Node:  node --experimental-strip-types --no-warnings scripts/test-runner.mjs
+ * Works across runtimes (tsconfig @/* aliases are honoured on each):
+ *   Node:  node --import tsx scripts/test-runner.mjs
  *   Deno:  deno run --allow-all scripts/test-runner.mjs
  *   Bun:   bun scripts/test-runner.mjs
  *

@@ -5,9 +5,7 @@
  */
 
 import { resolve } from "node:path";
-import { discoverMigrations } from "../../migration/discovery.ts";
-import { executeBatch } from "../../migration/executor.ts";
-import { createDatabaseClient } from "../db.ts";
+import { createDatabaseClient } from "@/cli/db";
 import {
   printDivider,
   printError,
@@ -15,8 +13,10 @@ import {
   printInfo,
   printSql,
   printSuccess,
-} from "../output.ts";
-import type { CommandContext } from "../types.ts";
+} from "@/cli/output";
+import type { CommandContext } from "@/cli/types";
+import { discoverMigrations } from "@/migration/discovery";
+import { executeBatch } from "@/migration/executor";
 
 const runUp = async (ctx: CommandContext): Promise<number> => {
   const db = await createDatabaseClient(ctx.config);

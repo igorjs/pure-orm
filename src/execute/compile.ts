@@ -13,9 +13,9 @@
  * concrete SQL.
  */
 
-import { resolveDialect } from "../dialect/registry.ts";
-import { Match } from "../fx.ts";
-import type { CompiledQuery, QueryNode } from "../query/types.ts";
+import { resolveDialect } from "@/dialect/registry";
+import { Match } from "@/fx";
+import type { CompiledQuery, QueryNode } from "@/query/types";
 
 /**
  * Compile a QueryNode into a SQL string and parameter list.

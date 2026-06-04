@@ -21,7 +21,7 @@
  * source table (or a qualified "Table.field"), rightColumn from the target.
  */
 
-import type { Model } from "../model/define.ts";
+import type { Model } from "@/model/define";
 import type { JoinClause, JoinCondition, JoinType, SelectNode } from "./types.ts";
 
 // ---- on() condition factory ----
