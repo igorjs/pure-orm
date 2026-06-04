@@ -57,6 +57,7 @@ const snapshotColumn = (meta: ColumnMetadata): ColumnSnapshot =>
     unique: meta.config.unique ?? false,
     default: meta.config.default !== undefined ? String(meta.config.default) : null,
     index: meta.config.index ?? false,
+    ...(meta.config.renamedFrom !== undefined ? { renamedFrom: meta.config.renamedFrom } : {}),
   });
 
 const snapshotTable = (model: Model): TableSnapshot => {
@@ -107,6 +108,9 @@ const snapshotTable = (model: Model): TableSnapshot => {
     columns: Object.freeze(columns),
     indexes: Object.freeze(indexes),
     foreignKeys: Object.freeze(foreignKeys),
+    ...(model.$options.renamedFrom !== undefined
+      ? { renamedFrom: model.$options.renamedFrom }
+      : {}),
   });
 };
 
