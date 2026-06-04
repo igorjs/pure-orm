@@ -9,7 +9,7 @@
  */
 
 import type { Model } from "../model/define.ts";
-import type { ChangeOperation } from "./types.ts";
+import type { ChangeOperation, CreateTable, DropTable } from "./types.ts";
 
 // ---- Dependency graph ----
 
@@ -143,8 +143,8 @@ const orderOperations = (
   const sorted = topologicalSort(graph);
   const orderMap = new Map(sorted.map((name, idx) => [name, idx]));
 
-  const createOps: ChangeOperation[] = [];
-  const dropOps: ChangeOperation[] = [];
+  const createOps: CreateTable[] = [];
+  const dropOps: DropTable[] = [];
   const otherOps: ChangeOperation[] = [];
 
   for (const op of ops) {

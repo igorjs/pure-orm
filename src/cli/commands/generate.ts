@@ -7,12 +7,12 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { resolveDialect } from "../../dialect/registry.ts";
-import { diffSnapshots } from "../../migration/differ.ts";
+import { detectRenameCandidates, diffSnapshots } from "../../migration/differ.ts";
 import { generateMigration } from "../../migration/generator.ts";
 import { checkDestructive } from "../../migration/guard.ts";
 import { orderOperations } from "../../migration/ordering.ts";
 import { createSnapshot } from "../../migration/snapshot.ts";
-import type { SchemaSnapshot } from "../../migration/types.ts";
+import type { ChangeOperation, SchemaSnapshot } from "../../migration/types.ts";
 import { printError, printHeader, printInfo, printSuccess, printWarning } from "../output.ts";
 import type { CommandContext } from "../types.ts";
 
@@ -56,6 +56,64 @@ const getNextSequence = (dir: string): string => {
   return String(maxSeq + 1).padStart(3, "0");
 };
 
+/** Collects per-table heuristic rename candidates as "table.old → table.new" strings. */
+const collectRenameHints = (prev: SchemaSnapshot, curr: SchemaSnapshot): readonly string[] => {
+  const hints: string[] = [];
+  for (const [table, currTable] of Object.entries(curr.tables)) {
+    const prevTable = prev.tables[table];
+    if (prevTable === undefined) continue;
+    for (const { from, to } of detectRenameCandidates(prevTable.columns, currTable.columns)) {
+      hints.push(`${table}.${from} → ${table}.${to}`);
+    }
+  }
+  return hints;
+};
+
+/** Prints the fail-closed message for blocked destructive ops, with rename hints. */
+const reportGuardBlock = (
+  blocked: readonly string[],
+  prev: SchemaSnapshot,
+  curr: SchemaSnapshot,
+): void => {
+  printError("Refusing to generate a migration with destructive operations:");
+  for (const desc of blocked) {
+    printError(`    ${desc}`);
+  }
+  printInfo("A renamed table or column looks like a drop plus an add and would destroy data.");
+
+  const hints = collectRenameHints(prev, curr);
+  if (hints.length > 0) {
+    printInfo("Possible renames detected — add `renamedFrom` to preserve data:");
+    for (const hint of hints) {
+      printInfo(`    ${hint}`);
+    }
+  }
+  printInfo("Otherwise re-run with --allow-destructive to confirm these drops are intended.");
+};
+
+const summarizeOp = (op: ChangeOperation): string => {
+  switch (op.tag) {
+    case "CreateTable":
+      return `+ CREATE TABLE "${op.table}"`;
+    case "DropTable":
+      return `- DROP TABLE "${op.table}"`;
+    case "RenameTable":
+      return `~ RENAME TABLE "${op.from}" -> "${op.to}"`;
+    case "RenameColumn":
+      return `~ RENAME COLUMN "${op.table}"."${op.from}" -> "${op.to}"`;
+    case "AddColumn":
+      return `+ ADD COLUMN "${op.table}"."${op.column}"`;
+    case "DropColumn":
+      return `- DROP COLUMN "${op.table}"."${op.column}"`;
+    case "AlterColumn":
+      return `~ ALTER COLUMN "${op.table}"."${op.column}"`;
+    case "AddIndex":
+      return `+ CREATE INDEX "${op.index.name}"`;
+    case "DropIndex":
+      return `- DROP INDEX "${op.indexName}"`;
+  }
+};
+
 const runGenerate = async (ctx: CommandContext, name?: string): Promise<number> => {
   if (name === undefined || name.length === 0) {
     printError("Usage: pure-orm migrate:generate <name>");
@@ -96,12 +154,7 @@ const runGenerate = async (ctx: CommandContext, name?: string): Promise<number> 
   // Destructive-change guard (ADR-0004): fail closed on drops unless opted in.
   const guard = checkDestructive(ops, ctx.flags.allowDestructive);
   if (!guard.ok) {
-    printError("Refusing to generate a migration with destructive operations:");
-    for (const desc of guard.blocked) {
-      printError(`    ${desc}`);
-    }
-    printInfo("A renamed table or column looks like a drop plus an add and would destroy data.");
-    printInfo("Re-run with --allow-destructive to confirm these drops are intended.");
+    reportGuardBlock(guard.blocked, previousSnapshot, currentSnapshot);
     return 1;
   }
   if (guard.warnings.length > 0) {
@@ -137,29 +190,7 @@ const runGenerate = async (ctx: CommandContext, name?: string): Promise<number> 
 
   // Summary
   for (const op of ops) {
-    switch (op.tag) {
-      case "CreateTable":
-        printInfo(`+ CREATE TABLE "${op.table}"`);
-        break;
-      case "DropTable":
-        printInfo(`- DROP TABLE "${op.table}"`);
-        break;
-      case "AddColumn":
-        printInfo(`+ ADD COLUMN "${op.table}"."${op.column}"`);
-        break;
-      case "DropColumn":
-        printInfo(`- DROP COLUMN "${op.table}"."${op.column}"`);
-        break;
-      case "AlterColumn":
-        printInfo(`~ ALTER COLUMN "${op.table}"."${op.column}"`);
-        break;
-      case "AddIndex":
-        printInfo(`+ CREATE INDEX "${op.index.name}"`);
-        break;
-      case "DropIndex":
-        printInfo(`- DROP INDEX "${op.indexName}"`);
-        break;
-    }
+    printInfo(summarizeOp(op));
   }
 
   return 0;
