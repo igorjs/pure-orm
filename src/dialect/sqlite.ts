@@ -302,9 +302,21 @@ const compileDelete = (node: DeleteNode): CompiledQuery => {
 
 // ---- Dialect factory ----
 
+const sqliteCapabilities = Object.freeze({
+  parameterStyle: "question" as const,
+  identifierQuote: '"' as const,
+  supportsReturning: true,
+  upsertStyle: "onConflict" as const,
+  supportsTransactionalDDL: true,
+  currentTimestampSql: "datetime('now')",
+  lockStrategy: "lockTable" as const,
+  supportsAddColumnIfNotExists: false,
+});
+
 const createSqliteDialect = (): Dialect =>
   Object.freeze({
     name: "sqlite",
+    capabilities: sqliteCapabilities,
     compileSelect,
     compileInsert,
     compileUpdate,

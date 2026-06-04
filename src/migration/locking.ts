@@ -128,7 +128,9 @@ const createSqliteHandle = (db: DatabaseClient): LockHandle =>
  * Fails immediately if the lock is already held (no waiting).
  */
 const acquireLock = (db: DatabaseClient): Task<LockHandle, DbError> =>
-  db.dialect.name === "sqlite" ? acquireSqliteLock(db) : acquirePostgresLock(db);
+  db.dialect.capabilities.lockStrategy === "advisoryLock"
+    ? acquirePostgresLock(db)
+    : acquireSqliteLock(db);
 
 export type { LockHandle };
 export { acquireLock };
