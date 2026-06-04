@@ -19,6 +19,12 @@ type ColumnSnapshot = {
   readonly unique: boolean;
   readonly default: string | null;
   readonly index: boolean;
+  /**
+   * The previous SQL name this column was renamed from (ADR-0004). Present only
+   * while a rename is pending; it is a migration hint, not a schema attribute,
+   * so it is excluded from column equality.
+   */
+  readonly renamedFrom?: string;
 };
 
 // ---- Index snapshot ----
@@ -45,6 +51,8 @@ type TableSnapshot = {
   readonly columns: Readonly<Record<string, ColumnSnapshot>>;
   readonly indexes: readonly IndexSnapshot[];
   readonly foreignKeys: readonly ForeignKeySnapshot[];
+  /** The previous table name this table was renamed from (ADR-0004). */
+  readonly renamedFrom?: string;
 };
 
 // ---- Full schema snapshot ----
@@ -88,12 +96,21 @@ type AlterColumn = {
 };
 type AddIndex = { readonly tag: "AddIndex"; readonly table: string; readonly index: IndexSnapshot };
 type DropIndex = { readonly tag: "DropIndex"; readonly table: string; readonly indexName: string };
+type RenameTable = { readonly tag: "RenameTable"; readonly from: string; readonly to: string };
+type RenameColumn = {
+  readonly tag: "RenameColumn";
+  readonly table: string;
+  readonly from: string;
+  readonly to: string;
+};
 
 type ChangeOperation =
   | CreateTable
   | DropTable
+  | RenameTable
   | AddColumn
   | DropColumn
+  | RenameColumn
   | AlterColumn
   | AddIndex
   | DropIndex;
@@ -191,6 +208,8 @@ export type {
   MigrationRecord,
   MigrationResult,
   MigrationStatus,
+  RenameColumn,
+  RenameTable,
   SchemaSnapshot,
   TableSnapshot,
 };
