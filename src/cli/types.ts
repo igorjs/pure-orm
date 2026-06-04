@@ -27,6 +27,7 @@ type CliFlags = {
   readonly dryRun: boolean;
   readonly verbose: boolean;
   readonly force: boolean;
+  readonly allowDestructive: boolean;
   readonly configPath: string | null;
   readonly step: number | null;
 };

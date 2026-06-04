@@ -15,6 +15,10 @@ dist/
 coverage/
 *.lcov
 
+# Planning docs (local only)
+docs/plans/
+docs/adr/
+
 # Editor and OS
 .idea/
 .vscode/
