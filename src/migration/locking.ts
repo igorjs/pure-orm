@@ -10,10 +10,10 @@
  * lock so the same session releases it.
  */
 
-import { Task } from "@igorjs/pure-fx/async";
 import type { DatabaseClient, RawConnection } from "../connection/types.ts";
 import type { DbError } from "../errors/errors.ts";
 import { migrationError } from "../errors/errors.ts";
+import { Task } from "../fx.ts";
 
 // ---- Lock handle ----
 

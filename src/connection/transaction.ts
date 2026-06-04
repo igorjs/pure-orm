@@ -19,12 +19,10 @@
  * lifecycle.
  */
 
-import { Task } from "@igorjs/pure-fx/async";
-import type { Result } from "@igorjs/pure-fx/core";
-import { Err, Ok } from "@igorjs/pure-fx/core";
-
 import type { DbError } from "../errors/errors.ts";
 import { transactionError } from "../errors/errors.ts";
+import type { Result } from "../fx.ts";
+import { Err, Ok, Task } from "../fx.ts";
 import type { ConnectionPool, DatabaseClient, RawConnection } from "./types.ts";
 
 // ---- Isolation levels ----

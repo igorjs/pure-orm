@@ -13,10 +13,10 @@
  * missing-dialect case explicitly.
  */
 
-import type { Result } from "@igorjs/pure-fx/core";
-import { Err, Ok } from "@igorjs/pure-fx/core";
 import type { DbError } from "../errors/errors.ts";
 import { validationError } from "../errors/errors.ts";
+import type { Result } from "../fx.ts";
+import { Err, Ok } from "../fx.ts";
 import type { Dialect } from "./dialect.ts";
 import { createPostgresDialect } from "./postgresql.ts";
 import { createSqliteDialect } from "./sqlite.ts";
