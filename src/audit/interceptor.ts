@@ -17,8 +17,8 @@
  *   const requestDb = withAuditContext(db, { actorId: user.id, actorIp: req.ip });
  */
 
-import type { DatabaseClient } from "../connection/types.ts";
-import type { QueryHooks } from "../logging/types.ts";
+import type { DatabaseClient } from "@/connection/types";
+import type { QueryHooks } from "@/logging/types";
 import type { AuditContext, AuditOperation } from "./types.ts";
 
 // ---- Audit entry (partial, without id/createdAt which are DB-generated) ----

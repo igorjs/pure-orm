@@ -8,13 +8,13 @@
  * transaction or concurrent execution modes.
  */
 
-import { transaction } from "../connection/transaction.ts";
-import type { DatabaseClient } from "../connection/types.ts";
-import type { DbError } from "../errors/errors.ts";
-import { migrationError } from "../errors/errors.ts";
-import type { Result } from "../fx.ts";
-import { Err, Ok, Task } from "../fx.ts";
-import { startTimer } from "../logging/timing.ts";
+import { transaction } from "@/connection/transaction";
+import type { DatabaseClient } from "@/connection/types";
+import type { DbError } from "@/errors/errors";
+import { migrationError } from "@/errors/errors";
+import type { Result } from "@/fx";
+import { Err, Ok, Task } from "@/fx";
+import { startTimer } from "@/logging/timing";
 import { validateChecksums } from "./checksum.ts";
 import type { LockHandle } from "./locking.ts";
 import { acquireLock } from "./locking.ts";

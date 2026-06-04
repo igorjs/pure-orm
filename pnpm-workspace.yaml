@@ -3,3 +3,6 @@ packages:
 
 allowBuilds:
   better-sqlite3: true
+  # tsx depends on esbuild; the install-time native binary fetch must be allowed
+  # so dev/test scripts that use tsx as a Node loader work without prompts.
+  esbuild: true

@@ -11,7 +11,7 @@
  * individual dialect files.
  */
 
-import type { ColumnMetadata } from "../model/types.ts";
+import type { ColumnMetadata } from "@/model/types";
 import type {
   ConditionNode,
   DeleteNode,
@@ -22,7 +22,7 @@ import type {
   SelectColumn,
   SelectNode,
   UpdateNode,
-} from "../query/types.ts";
+} from "@/query/types";
 
 // ---- Identifier quoting ----
 

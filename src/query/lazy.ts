@@ -13,7 +13,7 @@
  *   const posts = await execute(db)(postsQuery).run();
  */
 
-import type { Model } from "../model/define.ts";
+import type { Model } from "@/model/define";
 import { from, where } from "./builders.ts";
 import { eq } from "./conditions.ts";
 import type { SelectNode } from "./types.ts";
