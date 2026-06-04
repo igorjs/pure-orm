@@ -23,9 +23,9 @@
  *   );
  */
 
-import { Schema } from "../fx.ts";
-import { Model } from "../model/define.ts";
-import { Field } from "../model/field.ts";
+import { Schema } from "@/fx";
+import { Model } from "@/model/define";
+import { Field } from "@/model/field";
 
 const AuditModel = Model("_pure_orm_audit", {
   fields: {

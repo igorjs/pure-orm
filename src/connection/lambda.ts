@@ -11,9 +11,9 @@
  * Health checking is deferred to Phase 2.
  */
 
-import type { DbError } from "../errors/errors.ts";
-import { Ok, Task } from "../fx.ts";
-import type { Logger } from "../logging/types.ts";
+import type { DbError } from "@/errors/errors";
+import { Ok, Task } from "@/fx";
+import type { Logger } from "@/logging/types";
 import { closeConnection, connect } from "./connection.ts";
 import type {
   ConnectionConfig,

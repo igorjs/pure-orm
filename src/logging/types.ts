@@ -8,7 +8,7 @@
  * coupling the ORM to a specific observability stack.
  */
 
-import type { DbError } from "../errors/errors.ts";
+import type { DbError } from "@/errors/errors";
 
 type LogLevel = "debug" | "info" | "warn" | "error" | "silent";
 

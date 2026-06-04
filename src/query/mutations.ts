@@ -17,7 +17,7 @@
  *   )
  */
 
-import type { Model } from "../model/define.ts";
+import type { Model } from "@/model/define";
 import { makeIsNotNull } from "./ast.ts";
 import type {
   DeleteNode,

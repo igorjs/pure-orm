@@ -13,10 +13,10 @@
  * missing-dialect case explicitly.
  */
 
-import type { DbError } from "../errors/errors.ts";
-import { validationError } from "../errors/errors.ts";
-import type { Result } from "../fx.ts";
-import { Err, Ok } from "../fx.ts";
+import type { DbError } from "@/errors/errors";
+import { validationError } from "@/errors/errors";
+import type { Result } from "@/fx";
+import { Err, Ok } from "@/fx";
 import type { Dialect } from "./dialect.ts";
 import { createMysqlDialect } from "./mysql.ts";
 import { createPostgresDialect } from "./postgresql.ts";

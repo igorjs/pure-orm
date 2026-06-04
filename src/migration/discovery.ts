@@ -13,9 +13,9 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { DbError } from "../errors/errors.ts";
-import { migrationError } from "../errors/errors.ts";
-import { Task } from "../fx.ts";
+import type { DbError } from "@/errors/errors";
+import { migrationError } from "@/errors/errors";
+import { Task } from "@/fx";
 import { computeChecksum } from "./checksum.ts";
 import { parseSqlMigration } from "./sql-parser.ts";
 import type { Migration, MigrationFile } from "./types.ts";

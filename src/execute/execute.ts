@@ -11,15 +11,15 @@
  * does not leak connections back into the pool.
  */
 
-import type { DatabaseClient } from "../connection/types.ts";
-import type { DbError } from "../errors/errors.ts";
-import { queryError } from "../errors/errors.ts";
-import type { ImmutableList, ImmutableRecord, Option } from "../fx.ts";
-import { Err, Match, None, Ok, Task } from "../fx.ts";
-import { dispatchHook } from "../logging/hooks.ts";
-import { startTimer } from "../logging/timing.ts";
-import type { ModelRef } from "../model/types.ts";
-import type { QueryNode, SelectNode } from "../query/types.ts";
+import type { DatabaseClient } from "@/connection/types";
+import type { DbError } from "@/errors/errors";
+import { queryError } from "@/errors/errors";
+import type { ImmutableList, ImmutableRecord, Option } from "@/fx";
+import { Err, Match, None, Ok, Task } from "@/fx";
+import { dispatchHook } from "@/logging/hooks";
+import { startTimer } from "@/logging/timing";
+import type { ModelRef } from "@/model/types";
+import type { QueryNode, SelectNode } from "@/query/types";
 import { mapRows } from "./result-mapper.ts";
 
 // ---- Helpers ----

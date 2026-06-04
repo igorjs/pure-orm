@@ -5,12 +5,12 @@
  */
 
 import { resolve } from "node:path";
-import { validateChecksums } from "../../migration/checksum.ts";
-import { discoverMigrations } from "../../migration/discovery.ts";
-import { ensureMigrationTable } from "../../migration/runner.ts";
-import { createDatabaseClient } from "../db.ts";
-import { printError, printHeader, printInfo, printSuccess } from "../output.ts";
-import type { CommandContext } from "../types.ts";
+import { createDatabaseClient } from "@/cli/db";
+import { printError, printHeader, printInfo, printSuccess } from "@/cli/output";
+import type { CommandContext } from "@/cli/types";
+import { validateChecksums } from "@/migration/checksum";
+import { discoverMigrations } from "@/migration/discovery";
+import { ensureMigrationTable } from "@/migration/runner";
 
 const runValidate = async (ctx: CommandContext): Promise<number> => {
   const db = await createDatabaseClient(ctx.config);

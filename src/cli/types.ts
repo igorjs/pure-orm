@@ -4,7 +4,7 @@
  * CLI configuration and command context types.
  */
 
-import type { Model } from "../model/define.ts";
+import type { Model } from "@/model/define";
 
 type PureOrmConfig = {
   readonly dialect: "postgresql" | "sqlite";

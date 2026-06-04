@@ -19,10 +19,10 @@
  * lifecycle.
  */
 
-import type { DbError } from "../errors/errors.ts";
-import { transactionError } from "../errors/errors.ts";
-import type { Result } from "../fx.ts";
-import { Err, Ok, Task } from "../fx.ts";
+import type { DbError } from "@/errors/errors";
+import { transactionError } from "@/errors/errors";
+import type { Result } from "@/fx";
+import { Err, Ok, Task } from "@/fx";
 import type { ConnectionPool, DatabaseClient, RawConnection } from "./types.ts";
 
 // ---- Isolation levels ----
