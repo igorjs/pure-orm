@@ -1,0 +1,54 @@
+{
+  "name": "@igorjs/pure-orm-libsql",
+  "version": "0.1.0",
+  "description": "libsql/Turso connector for @igorjs/pure-orm. Covers local SQLite, Turso cloud, and embedded replicas with one driver.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsgo",
+    "check": "tsgo --noEmit"
+  },
+  "dependencies": {
+    "@libsql/client": ">=0.14.0"
+  },
+  "peerDependencies": {
+    "@igorjs/pure-orm": "workspace:^"
+  },
+  "keywords": [
+    "pure-orm",
+    "pure-orm-connector",
+    "sqlite",
+    "libsql",
+    "turso",
+    "edge",
+    "cloudflare",
+    "embedded"
+  ],
+  "author": "igorjs <oss@mail.igorjs.io>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/igorjs/pure-orm.git",
+    "directory": "packages/connectors/libsql"
+  },
+  "bugs": {
+    "url": "https://github.com/igorjs/pure-orm/issues"
+  },
+  "homepage": "https://github.com/igorjs/pure-orm/tree/main/packages/connectors/libsql"
+}
