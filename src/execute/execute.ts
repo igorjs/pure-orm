@@ -11,14 +11,11 @@
  * does not leak connections back into the pool.
  */
 
-import { Task } from "@igorjs/pure-fx/async";
-import type { Option } from "@igorjs/pure-fx/core";
-import { Err, Match, None, Ok } from "@igorjs/pure-fx/core";
-import type { ImmutableList, ImmutableRecord } from "@igorjs/pure-fx/data";
-
 import type { DatabaseClient } from "../connection/types.ts";
 import type { DbError } from "../errors/errors.ts";
 import { queryError } from "../errors/errors.ts";
+import type { ImmutableList, ImmutableRecord, Option } from "../fx.ts";
+import { Err, Match, None, Ok, Task } from "../fx.ts";
 import { dispatchHook } from "../logging/hooks.ts";
 import { startTimer } from "../logging/timing.ts";
 import type { ModelRef } from "../model/types.ts";
