@@ -8,10 +8,10 @@
  * frozen DatabaseClient ready for use by the query execution layer.
  */
 
-import type { Dialect } from "../dialect/dialect.ts";
-import { resolveDialect } from "../dialect/registry.ts";
-import { Match } from "../fx.ts";
-import { createConsoleLogger, createNoopLogger } from "../logging/logger.ts";
+import type { Dialect } from "@/dialect/dialect";
+import { resolveDialect } from "@/dialect/registry";
+import { Match } from "@/fx";
+import { createConsoleLogger, createNoopLogger } from "@/logging/logger";
 import { createLambdaPool } from "./lambda.ts";
 import { createPool } from "./pool.ts";
 import type { DatabaseClient, DatabaseConfig } from "./types.ts";

@@ -5,12 +5,12 @@
  */
 
 import { resolve } from "node:path";
-import { discoverMigrations } from "../../migration/discovery.ts";
-import { ensureMigrationTable, getMigrationStatus } from "../../migration/runner.ts";
-import type { MigrationFile } from "../../migration/types.ts";
-import { createDatabaseClient } from "../db.ts";
-import { printError, printHeader, printInfo, printTable } from "../output.ts";
-import type { CommandContext } from "../types.ts";
+import { createDatabaseClient } from "@/cli/db";
+import { printError, printHeader, printInfo, printTable } from "@/cli/output";
+import type { CommandContext } from "@/cli/types";
+import { discoverMigrations } from "@/migration/discovery";
+import { ensureMigrationTable, getMigrationStatus } from "@/migration/runner";
+import type { MigrationFile } from "@/migration/types";
 
 const buildStatusRow = (
   name: string,

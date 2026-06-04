@@ -5,12 +5,7 @@
  */
 
 import { resolve } from "node:path";
-import { discoverMigrations } from "../../migration/discovery.ts";
-import type { RollbackTarget } from "../../migration/executor.ts";
-import { rollbackBatch } from "../../migration/executor.ts";
-import { ensureMigrationTable, getMigrationStatus } from "../../migration/runner.ts";
-import type { MigrationFile } from "../../migration/types.ts";
-import { createDatabaseClient } from "../db.ts";
+import { createDatabaseClient } from "@/cli/db";
 import {
   printDivider,
   printError,
@@ -18,8 +13,13 @@ import {
   printInfo,
   printSql,
   printSuccess,
-} from "../output.ts";
-import type { CommandContext } from "../types.ts";
+} from "@/cli/output";
+import type { CommandContext } from "@/cli/types";
+import { discoverMigrations } from "@/migration/discovery";
+import type { RollbackTarget } from "@/migration/executor";
+import { rollbackBatch } from "@/migration/executor";
+import { ensureMigrationTable, getMigrationStatus } from "@/migration/runner";
+import type { MigrationFile } from "@/migration/types";
 
 const buildRollbackTargets = (
   toRollback: readonly Record<string, unknown>[],

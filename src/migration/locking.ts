@@ -10,10 +10,10 @@
  * lock so the same session releases it.
  */
 
-import type { DatabaseClient, RawConnection } from "../connection/types.ts";
-import type { DbError } from "../errors/errors.ts";
-import { migrationError } from "../errors/errors.ts";
-import { Task } from "../fx.ts";
+import type { DatabaseClient, RawConnection } from "@/connection/types";
+import type { DbError } from "@/errors/errors";
+import { migrationError } from "@/errors/errors";
+import { Task } from "@/fx";
 
 // ---- Lock handle ----
 
