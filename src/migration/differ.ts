@@ -152,7 +152,7 @@ const diffIndexes = (table: string, from: TableSnapshot, to: TableSnapshot): Cha
 
   for (const idx of from.indexes) {
     if (!toNames.has(idx.name)) {
-      ops.push(Object.freeze({ tag: "DropIndex", table, indexName: idx.name }));
+      ops.push(Object.freeze({ tag: "DropIndex", table, index: idx }));
     }
   }
 
