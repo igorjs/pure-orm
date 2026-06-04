@@ -110,7 +110,7 @@ describe("compile(): throws for an unknown dialect", () => {
     const node = from(UserModel);
 
     // Act + Assert
-    expect(() => compile(node, "mysql")).toThrow();
+    expect(() => compile(node, "oracle")).toThrow();
   });
 });
 
