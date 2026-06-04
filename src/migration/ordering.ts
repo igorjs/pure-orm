@@ -8,7 +8,7 @@
  * dropped in reverse order. Uses Kahn's algorithm for topological sort.
  */
 
-import type { Model } from "../model/define.ts";
+import type { Model } from "@/model/define";
 import type { ChangeOperation, CreateTable, DropTable } from "./types.ts";
 
 // ---- Dependency graph ----

@@ -7,9 +7,9 @@
  * work in a purely functional pipeline without reaching for try/catch.
  */
 
-import type { DbError } from "../errors/errors.ts";
-import { connectionError } from "../errors/errors.ts";
-import { Task } from "../fx.ts";
+import type { DbError } from "@/errors/errors";
+import { connectionError } from "@/errors/errors";
+import { Task } from "@/fx";
 import type { ConnectionConfig, DatabaseDriver, RawConnection } from "./types.ts";
 
 /**

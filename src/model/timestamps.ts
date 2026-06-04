@@ -6,7 +6,7 @@
  * injection logic independently testable and composable.
  */
 
-import { Schema } from "../fx.ts";
+import { Schema } from "@/fx";
 import type { ColumnMetadata } from "./types.ts";
 
 // Reusable frozen metadata for the two standard timestamp columns.

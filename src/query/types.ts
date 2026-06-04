@@ -8,7 +8,7 @@
  * This separation keeps query building pure and enables inspection/debugging.
  */
 
-import type { ModelRef } from "../model/types.ts";
+import type { ModelRef } from "@/model/types";
 
 // ---- Condition nodes ----
 

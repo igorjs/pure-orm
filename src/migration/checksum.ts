@@ -9,9 +9,9 @@
  */
 
 import { createHash } from "node:crypto";
-import type { DatabaseClient } from "../connection/types.ts";
-import type { DbError } from "../errors/errors.ts";
-import type { Task } from "../fx.ts";
+import type { DatabaseClient } from "@/connection/types";
+import type { DbError } from "@/errors/errors";
+import type { Task } from "@/fx";
 import { execQuery } from "./runner.ts";
 import type { ChecksumMismatch, MigrationFile } from "./types.ts";
 

@@ -8,14 +8,8 @@
  * handle parameterisation, and quote identifiers correctly.
  */
 
-import type { FieldConfig } from "../model/types.ts";
-import type {
-  CompiledQuery,
-  DeleteNode,
-  InsertNode,
-  SelectNode,
-  UpdateNode,
-} from "../query/types.ts";
+import type { FieldConfig } from "@/model/types";
+import type { CompiledQuery, DeleteNode, InsertNode, SelectNode, UpdateNode } from "@/query/types";
 
 /**
  * Typed dialect capabilities (ADR-0002 Part A).

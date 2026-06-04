@@ -8,10 +8,10 @@
  * users bring pg, postgres.js, @neondatabase/serverless, etc.
  */
 
-import type { Dialect } from "../dialect/dialect.ts";
-import type { DbError } from "../errors/errors.ts";
-import type { Task } from "../fx.ts";
-import type { Logger, QueryHooks } from "../logging/types.ts";
+import type { Dialect } from "@/dialect/dialect";
+import type { DbError } from "@/errors/errors";
+import type { Task } from "@/fx";
+import type { Logger, QueryHooks } from "@/logging/types";
 
 // ---- Driver interface ----
 
