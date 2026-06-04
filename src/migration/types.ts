@@ -95,7 +95,11 @@ type AlterColumn = {
   readonly to: ColumnSnapshot;
 };
 type AddIndex = { readonly tag: "AddIndex"; readonly table: string; readonly index: IndexSnapshot };
-type DropIndex = { readonly tag: "DropIndex"; readonly table: string; readonly indexName: string };
+type DropIndex = {
+  readonly tag: "DropIndex";
+  readonly table: string;
+  readonly index: IndexSnapshot;
+};
 type RenameTable = { readonly tag: "RenameTable"; readonly from: string; readonly to: string };
 type RenameColumn = {
   readonly tag: "RenameColumn";
