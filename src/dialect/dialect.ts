@@ -17,8 +17,36 @@ import type {
   UpdateNode,
 } from "../query/types.ts";
 
+/**
+ * Typed dialect capabilities (ADR-0002 Part A).
+ *
+ * Every dialect declares what it can do via this descriptor; the compiler,
+ * differ, generator, and runner branch on declared capabilities — not on
+ * `dialect.name` — so adding a new dialect is additive and explicit instead
+ * of hunting through string conditionals.
+ */
+type DialectCapabilities = {
+  /** Parameter placeholder syntax: `$1, $2, …` (PG) vs `?, ?, …` (SQLite, MySQL). */
+  readonly parameterStyle: "numbered" | "question";
+  /** Identifier quote character: `"` (PG, SQLite, MSSQL) vs `` ` `` (MySQL). */
+  readonly identifierQuote: '"' | "`";
+  /** Whether the dialect supports `RETURNING` on INSERT/UPDATE/DELETE. */
+  readonly supportsReturning: boolean;
+  /** Upsert grammar: `ON CONFLICT` (PG, SQLite) vs `ON DUPLICATE KEY` (MySQL). */
+  readonly upsertStyle: "onConflict" | "onDuplicateKey";
+  /** Whether DDL participates in transactions (PG, SQLite yes; MySQL no). */
+  readonly supportsTransactionalDDL: boolean;
+  /** SQL expression returning the current timestamp at row insert/update. */
+  readonly currentTimestampSql: string;
+  /** Strategy the migration runner uses to take an exclusive migration lock. */
+  readonly lockStrategy: "advisoryLock" | "lockTable";
+  /** Whether `ALTER TABLE ADD COLUMN IF NOT EXISTS` is supported. */
+  readonly supportsAddColumnIfNotExists: boolean;
+};
+
 type Dialect = {
   readonly name: string;
+  readonly capabilities: DialectCapabilities;
   readonly compileSelect: (node: SelectNode) => CompiledQuery;
   readonly compileInsert: (node: InsertNode) => CompiledQuery;
   readonly compileUpdate: (node: UpdateNode) => CompiledQuery;
@@ -28,4 +56,4 @@ type Dialect = {
   readonly mapFieldType: (schemaType: string, config: Readonly<FieldConfig>) => string;
 };
 
-export type { Dialect };
+export type { Dialect, DialectCapabilities };
