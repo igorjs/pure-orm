@@ -13,8 +13,8 @@
  * immutability at the boundary between the database and application layers.
  */
 
-import type { ImmutableList, ImmutableRecord } from "../fx.ts";
-import { List, Record } from "../fx.ts";
+import type { ImmutableList, ImmutableRecord } from "@/fx";
+import { List, Record } from "@/fx";
 
 // ---- snake_case -> camelCase conversion ----
 

@@ -17,9 +17,9 @@
  * );
  */
 
-import { Schema } from "../fx.ts";
-import { Model } from "../model/define.ts";
-import { Field } from "../model/field.ts";
+import { Schema } from "@/fx";
+import { Model } from "@/model/define";
+import { Field } from "@/model/field";
 
 const MigrationModel = Model("_pure_orm_migrations", {
   fields: {

@@ -11,11 +11,11 @@
  * SQL strings directly. File I/O is the CLI's responsibility.
  */
 
-import type { DatabaseClient } from "../connection/types.ts";
-import type { DbError } from "../errors/errors.ts";
-import { queryError } from "../errors/errors.ts";
-import { Task } from "../fx.ts";
-import { startTimer } from "../logging/timing.ts";
+import type { DatabaseClient } from "@/connection/types";
+import type { DbError } from "@/errors/errors";
+import { queryError } from "@/errors/errors";
+import { Task } from "@/fx";
+import { startTimer } from "@/logging/timing";
 import type { MigrationStatus } from "./types.ts";
 
 // ---- DB Helpers (exported for use by other migration modules) ----

@@ -33,3 +33,6 @@ jobs:
 
       - name: Edge-runtime import scan
         run: node scripts/check-edge-safe.mjs
+
+      - name: Internal-import alias scan
+        run: node scripts/check-imports.mjs

@@ -11,8 +11,8 @@
  * field names, because the differ needs to detect column renames.
  */
 
-import type { Model } from "../model/define.ts";
-import type { ColumnMetadata } from "../model/types.ts";
+import type { Model } from "@/model/define";
+import type { ColumnMetadata } from "@/model/types";
 import type {
   ColumnSnapshot,
   ForeignKeySnapshot,

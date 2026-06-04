@@ -19,7 +19,7 @@
  *   )
  */
 
-import type { Model } from "../model/define.ts";
+import type { Model } from "@/model/define";
 import type {
   ConditionNode,
   DeleteNode,

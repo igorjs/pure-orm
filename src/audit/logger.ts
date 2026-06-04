@@ -16,10 +16,10 @@
  *   )
  */
 
-import type { Model } from "../model/define.ts";
-import { from, where } from "../query/builders.ts";
-import { eq } from "../query/conditions.ts";
-import type { SelectNode } from "../query/types.ts";
+import type { Model } from "@/model/define";
+import { from, where } from "@/query/builders";
+import { eq } from "@/query/conditions";
+import type { SelectNode } from "@/query/types";
 import { AuditModel } from "./table.ts";
 
 /**

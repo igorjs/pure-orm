@@ -6,15 +6,15 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { resolveDialect } from "../../dialect/registry.ts";
-import { detectRenameCandidates, diffSnapshots } from "../../migration/differ.ts";
-import { generateMigration } from "../../migration/generator.ts";
-import { checkDestructive } from "../../migration/guard.ts";
-import { orderOperations } from "../../migration/ordering.ts";
-import { createSnapshot } from "../../migration/snapshot.ts";
-import type { ChangeOperation, SchemaSnapshot } from "../../migration/types.ts";
-import { printError, printHeader, printInfo, printSuccess, printWarning } from "../output.ts";
-import type { CommandContext } from "../types.ts";
+import { printError, printHeader, printInfo, printSuccess, printWarning } from "@/cli/output";
+import type { CommandContext } from "@/cli/types";
+import { resolveDialect } from "@/dialect/registry";
+import { detectRenameCandidates, diffSnapshots } from "@/migration/differ";
+import { generateMigration } from "@/migration/generator";
+import { checkDestructive } from "@/migration/guard";
+import { orderOperations } from "@/migration/ordering";
+import { createSnapshot } from "@/migration/snapshot";
+import type { ChangeOperation, SchemaSnapshot } from "@/migration/types";
 
 const EMPTY_SNAPSHOT: SchemaSnapshot = Object.freeze({
   version: 1 as const,

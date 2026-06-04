@@ -31,12 +31,13 @@
   "scripts": {
     "check": "tsgo --noEmit",
     "check:edge": "node scripts/check-edge-safe.mjs",
+    "check:imports": "node scripts/check-imports.mjs",
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "format": "biome format --write",
     "build": "node scripts/build.mjs",
-    "test": "node --experimental-strip-types --no-warnings scripts/test-runner.mjs",
-    "test:integration": "node --experimental-strip-types --no-warnings scripts/test-runner.mjs --integration",
+    "test": "node --import tsx --no-warnings scripts/test-runner.mjs",
+    "test:integration": "node --import tsx --no-warnings scripts/test-runner.mjs --integration",
     "test:types": "tsgo -p tsconfig.test.json",
     "test:ci": "node scripts/test-ci.mjs",
     "release": "node scripts/release.mjs",
@@ -77,7 +78,9 @@
     "@types/better-sqlite3": "7.6.13",
     "@types/node": "25.9.1",
     "@types/pg": "8.20.0",
-    "@typescript/native-preview": "7.0.0-dev.20260406.1"
+    "@typescript/native-preview": "7.0.0-dev.20260406.1",
+    "tsc-alias": "^1.8.17",
+    "tsx": "^4.22.4"
   },
   "peerDependencies": {
     "@igorjs/pure-fx": "^0.1.0",
