@@ -110,7 +110,7 @@ const summarizeOp = (op: ChangeOperation): string => {
     case "AddIndex":
       return `+ CREATE INDEX "${op.index.name}"`;
     case "DropIndex":
-      return `- DROP INDEX "${op.indexName}"`;
+      return `- DROP INDEX "${op.index.name}"`;
   }
 };
 
