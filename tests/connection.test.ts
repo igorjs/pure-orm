@@ -585,7 +585,7 @@ describe("Database()", () => {
     // Arrange / Act / Assert
     expect(() =>
       Database({
-        dialect: "mysql",
+        dialect: "oracle",
         driver: createMockDriver(),
         connection: DUMMY_CONFIG,
       }),

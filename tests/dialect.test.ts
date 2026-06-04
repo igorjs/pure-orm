@@ -654,7 +654,7 @@ describe("resolveDialect()", () => {
 
   it("returns Err for an unknown dialect name", () => {
     // Act
-    const result = resolveDialect("mysql");
+    const result = resolveDialect("oracle");
 
     // Assert
     expect(result.tag).toBe("Err");
