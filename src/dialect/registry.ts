@@ -18,6 +18,7 @@ import { validationError } from "../errors/errors.ts";
 import type { Result } from "../fx.ts";
 import { Err, Ok } from "../fx.ts";
 import type { Dialect } from "./dialect.ts";
+import { createMysqlDialect } from "./mysql.ts";
 import { createPostgresDialect } from "./postgresql.ts";
 import { createSqliteDialect } from "./sqlite.ts";
 
@@ -26,6 +27,9 @@ import { createSqliteDialect } from "./sqlite.ts";
 const builtinFactories = new Map<string, () => Dialect>([
   ["postgresql", createPostgresDialect],
   ["sqlite", createSqliteDialect],
+  ["mysql", createMysqlDialect],
+  // MariaDB is wire-compatible with MySQL and shares the dialect.
+  ["mariadb", createMysqlDialect],
 ]);
 
 // ---- Registry ----
