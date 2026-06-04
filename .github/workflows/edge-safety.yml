@@ -1,0 +1,35 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Edge-runtime safety: fails on Node-only imports in code that ships to
+# Cloudflare Workers / Vercel Edge / Deno Deploy. Owned by this repo
+# (NOT templated from repo-config) because the watched-path set is
+# pure-orm-specific.
+
+name: Edge safety
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check-edge-safe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - run: corepack enable
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Edge-runtime import scan
+        run: node scripts/check-edge-safe.mjs
