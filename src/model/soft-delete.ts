@@ -9,7 +9,7 @@
  * pattern in timestamps.ts.
  */
 
-import { Schema } from "@igorjs/pure-fx/data";
+import { Schema } from "../fx.ts";
 import type { ColumnMetadata } from "./types.ts";
 
 const deletedAtColumn: ColumnMetadata = Object.freeze({

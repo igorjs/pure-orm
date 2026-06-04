@@ -8,9 +8,9 @@
  * frozen DatabaseClient ready for use by the query execution layer.
  */
 
-import { Match } from "@igorjs/pure-fx/core";
 import type { Dialect } from "../dialect/dialect.ts";
 import { resolveDialect } from "../dialect/registry.ts";
+import { Match } from "../fx.ts";
 import { createConsoleLogger, createNoopLogger } from "../logging/logger.ts";
 import { createLambdaPool } from "./lambda.ts";
 import { createPool } from "./pool.ts";
