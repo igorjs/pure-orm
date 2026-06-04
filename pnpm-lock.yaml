@@ -53,6 +53,15 @@ importers:
         specifier: 8.20.0
         version: 8.20.0
 
+  packages/connectors/pglite:
+    dependencies:
+      '@electric-sql/pglite':
+        specifier: '>=0.2.0'
+        version: 0.5.1
+      '@igorjs/pure-orm':
+        specifier: workspace:^
+        version: link:../../..
+
 packages:
 
   '@biomejs/biome@2.4.16':
@@ -111,6 +120,9 @@ packages:
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
+
+  '@electric-sql/pglite@0.5.1':
+    resolution: {integrity: sha512-h2Vc+qkQqsEL5kvyN5nBAxn3Vbyvka7QfDW7Io+CdcwU1+X8JbCAN2og+5dI11S3eJuDfroUCxzJaap6k+ezEw==}
 
   '@igorjs/pure-fx@0.1.0':
     resolution: {integrity: sha512-54PazCULCLironXDDFBUcyX4FErFoWngxDhJCix0U+3fTT0eGmRNf6IPqKPo+JsDpV1zpv4UNW6GMK/LcQRC/A==}
@@ -411,6 +423,8 @@ snapshots:
 
   '@biomejs/cli-win32-x64@2.4.16':
     optional: true
+
+  '@electric-sql/pglite@0.5.1': {}
 
   '@igorjs/pure-fx@0.1.0(typescript@6.0.2)':
     optionalDependencies:
