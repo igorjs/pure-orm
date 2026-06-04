@@ -38,15 +38,51 @@ const getCol = (cols: Readonly<Record<string, ColumnSnapshot>>, key: string): Co
 
 // ---- Table differ ----
 
+/**
+ * Resolves annotated column renames (ADR-0004): a `to` column whose renamedFrom
+ * names an existing `from` column yields a RenameColumn (plus an AlterColumn if
+ * its definition also changed), never a data-destroying drop-plus-add. Returns
+ * the emitted ops and the source/target names consumed, so the caller can skip
+ * them in the drop/add passes.
+ */
+const resolveColumnRenames = (
+  table: string,
+  fromCols: Readonly<Record<string, ColumnSnapshot>>,
+  toCols: Readonly<Record<string, ColumnSnapshot>>,
+): { ops: ChangeOperation[]; sources: Set<string>; targets: Set<string> } => {
+  const ops: ChangeOperation[] = [];
+  const sources = new Set<string>();
+  const targets = new Set<string>();
+  for (const [name, toCol] of Object.entries(toCols)) {
+    const src = toCol.renamedFrom;
+    if (src === undefined || !(src in fromCols) || src in toCols) continue;
+    ops.push(Object.freeze({ tag: "RenameColumn", table, from: src, to: name }));
+    sources.add(src);
+    targets.add(name);
+    const fromCol = getCol(fromCols, src);
+    if (!columnsEqual(fromCol, toCol)) {
+      ops.push(
+        Object.freeze({ tag: "AlterColumn", table, column: name, from: fromCol, to: toCol }),
+      );
+    }
+  }
+  return { ops, sources, targets };
+};
+
 const diffColumns = (
   table: string,
   fromCols: Readonly<Record<string, ColumnSnapshot>>,
   toCols: Readonly<Record<string, ColumnSnapshot>>,
 ): ChangeOperation[] => {
-  const ops: ChangeOperation[] = [];
+  const {
+    ops: renameOps,
+    sources: renamedSources,
+    targets: renamedTargets,
+  } = resolveColumnRenames(table, fromCols, toCols);
+  const ops: ChangeOperation[] = [...renameOps];
 
   for (const col of Object.keys(fromCols)) {
-    if (!(col in toCols)) {
+    if (!(col in toCols) && !renamedSources.has(col)) {
       ops.push(
         Object.freeze({ tag: "DropColumn", table, column: col, snapshot: getCol(fromCols, col) }),
       );
@@ -54,7 +90,7 @@ const diffColumns = (
   }
 
   for (const col of Object.keys(toCols)) {
-    if (!(col in fromCols)) {
+    if (!(col in fromCols) && !renamedTargets.has(col)) {
       ops.push(
         Object.freeze({ tag: "AddColumn", table, column: col, snapshot: getCol(toCols, col) }),
       );
@@ -70,6 +106,43 @@ const diffColumns = (
   }
 
   return ops;
+};
+
+/**
+ * Heuristic rename detection (ADR-0004). Pairs each unannotated added column
+ * with a dropped column of identical shape so the CLI can *suggest* a rename.
+ * This never auto-applies — silent guessing is exactly what the guard exists to
+ * prevent; the operator confirms by adding a `renamedFrom` annotation.
+ */
+const detectRenameCandidates = (
+  fromCols: Readonly<Record<string, ColumnSnapshot>>,
+  toCols: Readonly<Record<string, ColumnSnapshot>>,
+): readonly { readonly from: string; readonly to: string }[] => {
+  const annotatedTargets = new Set(
+    Object.entries(toCols)
+      .filter(([, c]) => c.renamedFrom !== undefined)
+      .map(([n]) => n),
+  );
+  const annotatedSources = new Set(
+    Object.values(toCols)
+      .map(c => c.renamedFrom)
+      .filter((s): s is string => s !== undefined),
+  );
+
+  const dropped = Object.keys(fromCols).filter(n => !(n in toCols) && !annotatedSources.has(n));
+  const added = Object.keys(toCols).filter(n => !(n in fromCols) && !annotatedTargets.has(n));
+
+  const candidates: { from: string; to: string }[] = [];
+  const usedDropped = new Set<string>();
+  for (const a of added) {
+    const aCol = getCol(toCols, a);
+    const match = dropped.find(d => !usedDropped.has(d) && columnsEqual(getCol(fromCols, d), aCol));
+    if (match !== undefined) {
+      usedDropped.add(match);
+      candidates.push({ from: match, to: a });
+    }
+  }
+  return Object.freeze(candidates);
 };
 
 const diffIndexes = (table: string, from: TableSnapshot, to: TableSnapshot): ChangeOperation[] => {
@@ -111,9 +184,23 @@ const diffTable = (
 const diffSnapshots = (from: SchemaSnapshot, to: SchemaSnapshot): readonly ChangeOperation[] => {
   const ops: ChangeOperation[] = [];
 
-  // Tables in `from` but not in `to` -> DropTable
+  // Annotated table renames (ADR-0004): a `to` table whose renamedFrom names an
+  // existing `from` table produces a RenameTable, never a drop-plus-create.
+  const renamedFromTables = new Set<string>();
+  const renamedToTables = new Set<string>();
+  for (const [name, toTable] of Object.entries(to.tables)) {
+    const src = toTable.renamedFrom;
+    if (src === undefined || !(src in from.tables) || src in to.tables) continue;
+    ops.push(Object.freeze({ tag: "RenameTable", from: src, to: name }));
+    renamedFromTables.add(src);
+    renamedToTables.add(name);
+    // Diff the renamed table's columns/indexes against its previous definition.
+    ops.push(...diffTable(name, getTable(from.tables, src), toTable));
+  }
+
+  // Tables in `from` but not in `to` -> DropTable (excluding rename sources)
   for (const table of Object.keys(from.tables)) {
-    if (!(table in to.tables)) {
+    if (!(table in to.tables) && !renamedFromTables.has(table)) {
       ops.push(Object.freeze({ tag: "DropTable", table, snapshot: getTable(from.tables, table) }));
     }
   }
@@ -126,9 +213,9 @@ const diffSnapshots = (from: SchemaSnapshot, to: SchemaSnapshot): readonly Chang
     }
   }
 
-  // Tables in `to` but not in `from` -> CreateTable
+  // Tables in `to` but not in `from` -> CreateTable (excluding rename targets)
   for (const table of Object.keys(to.tables)) {
-    if (!(table in from.tables)) {
+    if (!(table in from.tables) && !renamedToTables.has(table)) {
       ops.push(Object.freeze({ tag: "CreateTable", table, snapshot: getTable(to.tables, table) }));
     }
   }
@@ -136,4 +223,4 @@ const diffSnapshots = (from: SchemaSnapshot, to: SchemaSnapshot): readonly Chang
   return Object.freeze(ops);
 };
 
-export { columnsEqual, diffSnapshots, diffTable };
+export { columnsEqual, detectRenameCandidates, diffSnapshots, diffTable };
