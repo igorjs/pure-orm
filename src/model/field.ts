@@ -6,7 +6,7 @@
  * of which fields are optional in insert operations.
  */
 
-import type { SchemaType } from "@igorjs/pure-fx/data";
+import type { SchemaType } from "../fx.ts";
 import type { FieldConfig, FieldDef } from "./types.ts";
 
 // Overload: no config -> HasDefault is false (insert requires this field)

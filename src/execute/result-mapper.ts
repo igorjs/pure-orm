@@ -13,8 +13,8 @@
  * immutability at the boundary between the database and application layers.
  */
 
-import type { ImmutableList, ImmutableRecord } from "@igorjs/pure-fx/data";
-import { List, Record } from "@igorjs/pure-fx/data";
+import type { ImmutableList, ImmutableRecord } from "../fx.ts";
+import { List, Record } from "../fx.ts";
 
 // ---- snake_case -> camelCase conversion ----
 

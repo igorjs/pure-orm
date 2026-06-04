@@ -9,9 +9,9 @@
  */
 
 import { createHash } from "node:crypto";
-import type { Task } from "@igorjs/pure-fx/async";
 import type { DatabaseClient } from "../connection/types.ts";
 import type { DbError } from "../errors/errors.ts";
+import type { Task } from "../fx.ts";
 import { execQuery } from "./runner.ts";
 import type { ChecksumMismatch, MigrationFile } from "./types.ts";
 
