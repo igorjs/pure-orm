@@ -127,11 +127,11 @@ const ensureMigrationTable = (db: DatabaseClient): Task<void, DbError> => {
   "status" TEXT NOT NULL DEFAULT 'applied'
 );`;
 
-  if (db.dialect.name === "sqlite") {
+  if (!db.dialect.capabilities.supportsAddColumnIfNotExists) {
     return execRaw(db, sqliteDdl).flatMap(() => upgradeSqliteTable(db));
   }
 
-  // PostgreSQL: CREATE TABLE + ADD COLUMN IF NOT EXISTS for upgrades
+  // CREATE TABLE + ADD COLUMN IF NOT EXISTS for upgrades
   return execRaw(db, pgDdl)
     .flatMap(() =>
       execRaw(
@@ -155,8 +155,8 @@ const applyMigration = (db: DatabaseClient, migration: MigrationInput): Task<voi
 
   return execRaw(db, migration.upSql).flatMap(() => {
     const durationMs = Math.round(timer());
-    const placeholder = db.dialect.name === "sqlite" ? "?, ?, ?, ?, ?" : "$1, $2, $3, $4, $5";
-    const insertSql = `INSERT INTO "_pure_orm_migrations" ("name", "checksum", "execution_ms", "batch", "status") VALUES (${placeholder})`;
+    const placeholders = [1, 2, 3, 4, 5].map(i => db.dialect.param(i)).join(", ");
+    const insertSql = `INSERT INTO "_pure_orm_migrations" ("name", "checksum", "execution_ms", "batch", "status") VALUES (${placeholders})`;
     const status: MigrationStatus = "applied";
     return execQuery(db, insertSql, [
       migration.name,
@@ -177,8 +177,8 @@ const recordInProgress = (
   checksum: string,
   batch: number,
 ): Task<void, DbError> => {
-  const placeholder = db.dialect.name === "sqlite" ? "?, ?, ?, ?, ?" : "$1, $2, $3, $4, $5";
-  const sql = `INSERT INTO "_pure_orm_migrations" ("name", "checksum", "execution_ms", "batch", "status") VALUES (${placeholder})`;
+  const placeholders = [1, 2, 3, 4, 5].map(i => db.dialect.param(i)).join(", ");
+  const sql = `INSERT INTO "_pure_orm_migrations" ("name", "checksum", "execution_ms", "batch", "status") VALUES (${placeholders})`;
   const status: MigrationStatus = "in_progress";
   return execQuery(db, sql, [name, checksum, 0, batch, status]).map(() => undefined);
 };
@@ -192,8 +192,8 @@ const updateMigrationStatus = (
   status: MigrationStatus,
   executionMs: number,
 ): Task<void, DbError> => {
-  const isSqlite = db.dialect.name === "sqlite";
-  const sql = `UPDATE "_pure_orm_migrations" SET "status" = ${isSqlite ? "?" : "$1"}, "execution_ms" = ${isSqlite ? "?" : "$2"} WHERE "name" = ${isSqlite ? "?" : "$3"}`;
+  const p = db.dialect.param;
+  const sql = `UPDATE "_pure_orm_migrations" SET "status" = ${p(1)}, "execution_ms" = ${p(2)} WHERE "name" = ${p(3)}`;
   return execQuery(db, sql, [status, executionMs, name]).map(() => undefined);
 };
 
@@ -201,8 +201,7 @@ const updateMigrationStatus = (
  * Rolls back a single migration: runs the down SQL and removes the state record.
  */
 const rollbackMigration = (db: DatabaseClient, migration: RollbackInput): Task<void, DbError> => {
-  const placeholder = db.dialect.name === "sqlite" ? "?" : "$1";
-  const deleteSql = `DELETE FROM "_pure_orm_migrations" WHERE "name" = ${placeholder}`;
+  const deleteSql = `DELETE FROM "_pure_orm_migrations" WHERE "name" = ${db.dialect.param(1)}`;
 
   return execRaw(db, migration.downSql).flatMap(() =>
     execQuery(db, deleteSql, [migration.name]).map(() => undefined),
