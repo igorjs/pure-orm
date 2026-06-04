@@ -30,6 +30,7 @@
   },
   "scripts": {
     "check": "tsgo --noEmit",
+    "check:edge": "node scripts/check-edge-safe.mjs",
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "format": "biome format --write",
