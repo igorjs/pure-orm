@@ -40,6 +40,19 @@ importers:
         specifier: 7.0.0-dev.20260406.1
         version: 7.0.0-dev.20260406.1
 
+  packages/connectors/pg:
+    dependencies:
+      '@igorjs/pure-orm':
+        specifier: workspace:^
+        version: link:../../..
+      pg:
+        specifier: '>=8.0.0'
+        version: 8.20.0
+    devDependencies:
+      '@types/pg':
+        specifier: 8.20.0
+        version: 8.20.0
+
 packages:
 
   '@biomejs/biome@2.4.14':
