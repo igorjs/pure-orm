@@ -318,6 +318,10 @@ const sqliteCapabilities = Object.freeze({
   // Unused at runtime when supportsForeignKeyAlter is false, but the type
   // requires a value. CONSTRAINT matches PG's syntax for any future emit.
   dropForeignKeyKeyword: "CONSTRAINT" as const,
+  // Same story as FK: SQLite parses CHECK inline in CREATE TABLE but cannot
+  // ALTER TABLE ADD/DROP CONSTRAINT. Forces a table rebuild for changes.
+  supportsCheckConstraintAlter: false,
+  dropCheckConstraintKeyword: "CONSTRAINT" as const,
 });
 
 const createSqliteDialect = (): Dialect =>

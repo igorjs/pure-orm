@@ -40,6 +40,7 @@ const makeTable = (
     columns: Object.freeze(columns),
     indexes: Object.freeze([]),
     foreignKeys: Object.freeze([]),
+    checkConstraints: Object.freeze([]),
     ...overrides,
   });
 

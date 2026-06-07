@@ -54,6 +54,7 @@ const makeTable = (overrides: Partial<TableSnapshot> = {}): TableSnapshot =>
     columns: Object.freeze({ id: makeCol({ primaryKey: true }), author_id: makeCol() }),
     indexes: Object.freeze([]),
     foreignKeys: Object.freeze([]),
+    checkConstraints: Object.freeze([]),
     ...overrides,
   });
 

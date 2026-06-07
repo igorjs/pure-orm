@@ -11,6 +11,7 @@
 
 import type {
   ChangeOperation,
+  CheckConstraintSnapshot,
   ColumnSnapshot,
   ForeignKeySnapshot,
   SchemaSnapshot,
@@ -222,6 +223,44 @@ const diffForeignKeys = (table: string, from: TableSnapshot, to: TableSnapshot):
   return Object.freeze({ drops: Object.freeze(drops), adds: Object.freeze(adds) });
 };
 
+// ---- Check-constraint differ (ADR-0005) ----
+
+const checksEqual = (a: CheckConstraintSnapshot, b: CheckConstraintSnapshot): boolean =>
+  a.name === b.name && a.expression === b.expression;
+
+type CheckDiff = {
+  readonly drops: readonly { readonly table: string; readonly check: CheckConstraintSnapshot }[];
+  readonly adds: readonly { readonly table: string; readonly check: CheckConstraintSnapshot }[];
+};
+
+/**
+ * Diff CHECK constraints by `name`. Same pattern as FK — expression changes
+ * are modelled as drop + add so the wire form is uniform. The model author
+ * keeps the name stable across edits; if it changes, the differ treats it
+ * as a different constraint (intentionally — rename is uncommon and silent
+ * coalescing would be surprising).
+ */
+const diffCheckConstraints = (table: string, from: TableSnapshot, to: TableSnapshot): CheckDiff => {
+  const drops: { table: string; check: CheckConstraintSnapshot }[] = [];
+  const adds: { table: string; check: CheckConstraintSnapshot }[] = [];
+  const fromByName = new Map(from.checkConstraints.map(c => [c.name, c]));
+  const toByName = new Map(to.checkConstraints.map(c => [c.name, c]));
+
+  for (const [name, check] of fromByName) {
+    const next = toByName.get(name);
+    if (next === undefined || !checksEqual(check, next)) {
+      drops.push({ table, check });
+    }
+  }
+  for (const [name, check] of toByName) {
+    const prev = fromByName.get(name);
+    if (prev === undefined || !checksEqual(prev, check)) {
+      adds.push({ table, check });
+    }
+  }
+  return Object.freeze({ drops: Object.freeze(drops), adds: Object.freeze(adds) });
+};
+
 const diffTable = (
   table: string,
   from: TableSnapshot,
@@ -248,6 +287,8 @@ const diffSnapshots = (from: SchemaSnapshot, to: SchemaSnapshot): readonly Chang
   const ops: ChangeOperation[] = [];
   const fkDrops: { table: string; fk: ForeignKeySnapshot }[] = [];
   const fkAdds: { table: string; fk: ForeignKeySnapshot }[] = [];
+  const ckDrops: { table: string; check: CheckConstraintSnapshot }[] = [];
+  const ckAdds: { table: string; check: CheckConstraintSnapshot }[] = [];
 
   // Annotated table renames (ADR-0004): a `to` table whose renamedFrom names an
   // existing `from` table produces a RenameTable, never a drop-plus-create.
@@ -262,10 +303,13 @@ const diffSnapshots = (from: SchemaSnapshot, to: SchemaSnapshot): readonly Chang
     // Diff the renamed table's columns/indexes against its previous definition.
     const prevTable = getTable(from.tables, src);
     ops.push(...diffTable(name, prevTable, toTable));
-    // FKs follow the rename: ALTER ops target the new table name.
+    // FKs and CHECKs follow the rename: ALTER ops target the new table name.
     const fkDiff = diffForeignKeys(name, prevTable, toTable);
     fkDrops.push(...fkDiff.drops);
     fkAdds.push(...fkDiff.adds);
+    const ckDiff = diffCheckConstraints(name, prevTable, toTable);
+    ckDrops.push(...ckDiff.drops);
+    ckAdds.push(...ckDiff.adds);
   }
 
   // Tables in `from` but not in `to` -> DropTable (excluding rename sources)
@@ -284,6 +328,9 @@ const diffSnapshots = (from: SchemaSnapshot, to: SchemaSnapshot): readonly Chang
       const fkDiff = diffForeignKeys(table, fromTable, toTable);
       fkDrops.push(...fkDiff.drops);
       fkAdds.push(...fkDiff.adds);
+      const ckDiff = diffCheckConstraints(table, fromTable, toTable);
+      ckDrops.push(...ckDiff.drops);
+      ckAdds.push(...ckDiff.adds);
     }
   }
 
@@ -294,15 +341,29 @@ const diffSnapshots = (from: SchemaSnapshot, to: SchemaSnapshot): readonly Chang
     }
   }
 
-  // FK drops lead (so referenced columns can change), FK adds trail (so
-  // target tables exist). Both lists are stable in insertion order.
+  // FK and CHECK drops lead (so referenced columns / current row values can
+  // change), adds trail (so target tables exist and new constraints see the
+  // final shape). Both lists are stable in insertion order.
   return Object.freeze([
     ...fkDrops.map(d =>
       Object.freeze({ tag: "DropForeignKey", table: d.table, fk: d.fk } as const),
     ),
+    ...ckDrops.map(d =>
+      Object.freeze({ tag: "DropCheckConstraint", table: d.table, check: d.check } as const),
+    ),
     ...ops,
+    ...ckAdds.map(a =>
+      Object.freeze({ tag: "AddCheckConstraint", table: a.table, check: a.check } as const),
+    ),
     ...fkAdds.map(a => Object.freeze({ tag: "AddForeignKey", table: a.table, fk: a.fk } as const)),
   ]);
 };
 
-export { columnsEqual, detectRenameCandidates, diffForeignKeys, diffSnapshots, diffTable };
+export {
+  columnsEqual,
+  detectRenameCandidates,
+  diffCheckConstraints,
+  diffForeignKeys,
+  diffSnapshots,
+  diffTable,
+};
