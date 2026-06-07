@@ -48,6 +48,18 @@ type DialectCapabilities = {
    * PG/SQLite use `DROP CONSTRAINT <name>`; MySQL uses `DROP FOREIGN KEY <name>`.
    */
   readonly dropForeignKeyKeyword: "CONSTRAINT" | "FOREIGN KEY";
+  /**
+   * Whether `ALTER TABLE ADD/DROP CONSTRAINT … CHECK` works on an existing
+   * table. PG and MySQL 8.0.16+: true. SQLite: false — CHECKs are inline-only
+   * in CREATE TABLE; the generator throws on ALTER ops so the operator hand-
+   * writes a table-rebuild migration instead of getting silent invalid SQL.
+   */
+  readonly supportsCheckConstraintAlter: boolean;
+  /**
+   * Keyword the dialect uses to remove a CHECK constraint by name.
+   * PG/SQLite use `DROP CONSTRAINT <name>`; MySQL uses `DROP CHECK <name>`.
+   */
+  readonly dropCheckConstraintKeyword: "CONSTRAINT" | "CHECK";
 };
 
 type Dialect = {

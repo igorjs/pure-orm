@@ -45,12 +45,24 @@ type ForeignKeySnapshot = {
   readonly onUpdate: string;
 };
 
+// ---- Check constraint snapshot ----
+
+/**
+ * Table-level CHECK constraint (ADR-0005). The `name` is the differ identity
+ * key — definition changes are modelled as drop + add.
+ */
+type CheckConstraintSnapshot = {
+  readonly name: string;
+  readonly expression: string;
+};
+
 // ---- Table snapshot ----
 
 type TableSnapshot = {
   readonly columns: Readonly<Record<string, ColumnSnapshot>>;
   readonly indexes: readonly IndexSnapshot[];
   readonly foreignKeys: readonly ForeignKeySnapshot[];
+  readonly checkConstraints: readonly CheckConstraintSnapshot[];
   /** The previous table name this table was renamed from (ADR-0004). */
   readonly renamedFrom?: string;
 };
@@ -115,6 +127,20 @@ type DropForeignKey = {
   readonly table: string;
   readonly fk: ForeignKeySnapshot;
 };
+/**
+ * Add a CHECK constraint to an existing table (ADR-0005). Name is supplied by
+ * the model author and is stable across edits.
+ */
+type AddCheckConstraint = {
+  readonly tag: "AddCheckConstraint";
+  readonly table: string;
+  readonly check: CheckConstraintSnapshot;
+};
+type DropCheckConstraint = {
+  readonly tag: "DropCheckConstraint";
+  readonly table: string;
+  readonly check: CheckConstraintSnapshot;
+};
 type RenameTable = { readonly tag: "RenameTable"; readonly from: string; readonly to: string };
 type RenameColumn = {
   readonly tag: "RenameColumn";
@@ -134,7 +160,9 @@ type ChangeOperation =
   | AddIndex
   | DropIndex
   | AddForeignKey
-  | DropForeignKey;
+  | DropForeignKey
+  | AddCheckConstraint
+  | DropCheckConstraint;
 
 // ---- Migration record (state table) ----
 
@@ -209,14 +237,17 @@ type ExecutorOptions = {
 };
 
 export type {
+  AddCheckConstraint,
   AddColumn,
   AddForeignKey,
   AlterColumn,
   BatchResult,
   ChangeOperation,
+  CheckConstraintSnapshot,
   ChecksumMismatch,
   ColumnSnapshot,
   CreateTable,
+  DropCheckConstraint,
   DropColumn,
   DropForeignKey,
   DropIndex,

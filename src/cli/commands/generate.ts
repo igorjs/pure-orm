@@ -115,6 +115,10 @@ const summarizeOp = (op: ChangeOperation): string => {
       return `+ ADD FOREIGN KEY "${op.table}"."${op.fk.column}" -> "${op.fk.referencedTable}"."${op.fk.referencedColumn}"`;
     case "DropForeignKey":
       return `- DROP FOREIGN KEY "${op.table}"."${op.fk.column}"`;
+    case "AddCheckConstraint":
+      return `+ ADD CHECK "${op.table}"."${op.check.name}"`;
+    case "DropCheckConstraint":
+      return `- DROP CHECK "${op.table}"."${op.check.name}"`;
   }
 };
 

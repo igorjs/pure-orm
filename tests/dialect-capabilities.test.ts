@@ -25,6 +25,8 @@ const REQUIRED_KEYS: readonly (keyof DialectCapabilities)[] = [
   "supportsAddColumnIfNotExists",
   "supportsForeignKeyAlter",
   "dropForeignKeyKeyword",
+  "supportsCheckConstraintAlter",
+  "dropCheckConstraintKeyword",
 ];
 
 const dialects: readonly { readonly name: string; readonly d: Dialect }[] = Object.freeze([
@@ -81,6 +83,10 @@ describe("DialectCapabilities", () => {
       expect(c.supportsForeignKeyAlter).toBe(true);
       expect(c.dropForeignKeyKeyword).toBe("CONSTRAINT");
     });
+    it("supports CHECK ALTER with DROP CONSTRAINT", () => {
+      expect(c.supportsCheckConstraintAlter).toBe(true);
+      expect(c.dropCheckConstraintKeyword).toBe("CONSTRAINT");
+    });
   });
 
   describe("sqlite declares the expected values", () => {
@@ -110,6 +116,9 @@ describe("DialectCapabilities", () => {
     it("cannot ALTER TABLE for foreign keys", () => {
       expect(c.supportsForeignKeyAlter).toBe(false);
     });
+    it("cannot ALTER TABLE for CHECK constraints (inline only)", () => {
+      expect(c.supportsCheckConstraintAlter).toBe(false);
+    });
   });
 
   describe("mysql declares the expected values", () => {
@@ -126,6 +135,10 @@ describe("DialectCapabilities", () => {
     it("supports FK ALTER but uses DROP FOREIGN KEY (not DROP CONSTRAINT)", () => {
       expect(c.supportsForeignKeyAlter).toBe(true);
       expect(c.dropForeignKeyKeyword).toBe("FOREIGN KEY");
+    });
+    it("supports CHECK ALTER (8.0.16+) but uses DROP CHECK", () => {
+      expect(c.supportsCheckConstraintAlter).toBe(true);
+      expect(c.dropCheckConstraintKeyword).toBe("CHECK");
     });
   });
 });

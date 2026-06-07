@@ -62,12 +62,24 @@ type ColumnMetadata = {
 
 // ---- Model options ----
 
+/**
+ * Table-level CHECK constraint declaration (ADR-0005). The `name` is the
+ * stable identity key the differ uses to detect adds/drops/changes — keep it
+ * stable across edits or a rename will look like a drop + add.
+ */
+type CheckSpec = {
+  readonly name: string;
+  readonly expression: string;
+};
+
 type ModelOptions = {
   readonly timestamps?: boolean;
   readonly softDelete?: boolean;
   readonly audit?: boolean;
   /** Previous table name, so the differ emits a RenameTable, not drop+create (ADR-0004). */
   readonly renamedFrom?: string;
+  /** Table-level CHECK constraints (ADR-0005). */
+  readonly checks?: readonly CheckSpec[];
 };
 
 // ---- Model reference (embedded in AST to avoid circular refs) ----
@@ -82,4 +94,12 @@ type ModelRef = {
 
 type FieldsRecord = Readonly<Record<string, FieldDef>>;
 
-export type { ColumnMetadata, FieldConfig, FieldDef, FieldsRecord, ModelOptions, ModelRef };
+export type {
+  CheckSpec,
+  ColumnMetadata,
+  FieldConfig,
+  FieldDef,
+  FieldsRecord,
+  ModelOptions,
+  ModelRef,
+};
