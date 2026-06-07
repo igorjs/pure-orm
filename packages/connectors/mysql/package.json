@@ -25,7 +25,7 @@
     "check": "tsgo --noEmit"
   },
   "dependencies": {
-    "mysql2": ">=3.0.0"
+    "mysql2": ">=3.22.5"
   },
   "peerDependencies": {
     "@igorjs/pure-orm": "workspace:^"
