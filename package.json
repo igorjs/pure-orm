@@ -72,13 +72,13 @@
     "url": "https://github.com/sponsors/igorjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.14",
+    "@biomejs/biome": "2.4.16",
     "@igorjs/pure-fx": "0.1.0",
-    "@igorjs/pure-test": "0.3.0",
+    "@igorjs/pure-test": "0.4.2",
     "@types/better-sqlite3": "7.6.13",
-    "@types/node": "25.6.0",
+    "@types/node": "25.9.2",
     "@types/pg": "8.20.0",
-    "@typescript/native-preview": "7.0.0-dev.20260406.1",
+    "@typescript/native-preview": "7.0.0-dev.20260606.1",
     "tsc-alias": "^1.8.17",
     "tsx": "^4.22.4"
   },
