@@ -2,7 +2,7 @@
  * SQLite integration tests for @igorjs/pure-orm.
  *
  * Exercises every ORM feature against a real in-memory SQLite database
- * via better-sqlite3. Each test inserts its own data, queries it, verifies
+ * via @libsql/client. Each test inserts its own data, queries it, verifies
  * the result, and cleans up, so tests are independent.
  *
  * Uses node:test (describe, it, before, after) and node:assert/strict.
