@@ -329,6 +329,9 @@ const mysqlCapabilities = Object.freeze({
   currentTimestampSql: "NOW()",
   lockStrategy: "lockTable" as const,
   supportsAddColumnIfNotExists: false,
+  supportsForeignKeyAlter: true,
+  // MySQL uses `DROP FOREIGN KEY <name>`, not `DROP CONSTRAINT <name>`.
+  dropForeignKeyKeyword: "FOREIGN KEY" as const,
 });
 
 const createMysqlDialect = (): Dialect =>
