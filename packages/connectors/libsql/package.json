@@ -25,7 +25,7 @@
     "check": "tsgo --noEmit"
   },
   "dependencies": {
-    "@libsql/client": ">=0.14.0"
+    "@libsql/client": ">=0.17.4"
   },
   "peerDependencies": {
     "@igorjs/pure-orm": "workspace:^"
