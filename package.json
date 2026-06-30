@@ -79,8 +79,8 @@
     "@types/node": "25.6.0",
     "@types/pg": "8.20.0",
     "@typescript/native-preview": "7.0.0-dev.20260406.1",
-    "tsc-alias": "^1.8.17",
-    "tsx": "^4.22.4"
+    "tsc-alias": "1.8.17",
+    "tsx": "4.22.4"
   },
   "peerDependencies": {
     "@igorjs/pure-fx": "^0.1.0",
