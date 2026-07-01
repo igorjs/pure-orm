@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 import { afterEach, beforeEach, describe, expect, it } from "@igorjs/pure-test";
 import { dispatchHook } from "../src/logging/hooks.ts";
 import { createConsoleLogger, createNoopLogger } from "../src/logging/logger.ts";

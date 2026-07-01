@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * PostgreSQL DatabaseDriver adapter wrapping the 'pg' package.
  *

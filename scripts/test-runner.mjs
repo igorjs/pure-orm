@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Test runner for @igorjs/pure-test with TypeScript support.
  *
@@ -52,6 +54,26 @@ const files = await discover();
 
 // Import all test files concurrently so pure-test's auto-run fires
 // once after all modules finish loading (not between each import).
+//
+// Integration test files import native drivers (pg, mysql2, etc.) that are
+// not installed in every environment (e.g. CI without a database). When a
+// driver package is absent the import throws ERR_MODULE_NOT_FOUND; skip that
+// integration file with a warning rather than failing the whole run. A
+// missing module in a non-integration (unit) test is still a real error.
 await Promise.all(
-  files.map(file => import(pathToFileURL(resolve(file)).href)),
+  files.map(async (file) => {
+    try {
+      await import(pathToFileURL(resolve(file)).href);
+    } catch (err) {
+      const isIntegration = file.replace(/\\/g, "/").includes("/integration/");
+      if (isIntegration && err && err.code === "ERR_MODULE_NOT_FOUND") {
+        console.warn(
+          "[test-runner] skipping " + file + ": driver not installed (" +
+            String(err.message || "").split("\n")[0] + ")",
+        );
+        return;
+      }
+      throw err;
+    }
+  }),
 );

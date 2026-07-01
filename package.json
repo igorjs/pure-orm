@@ -37,6 +37,7 @@
     "format": "biome format --write",
     "build": "node scripts/build.mjs",
     "test": "node --import tsx --no-warnings scripts/test-runner.mjs",
+    "coverage": "c8 --config .c8rc.node.json node --import tsx --no-warnings scripts/test-runner.mjs",
     "test:integration": "node --import tsx --no-warnings scripts/test-runner.mjs --integration",
     "test:types": "tsgo -p tsconfig.test.json",
     "test:ci": "node scripts/test-ci.mjs",
@@ -79,6 +80,7 @@
     "@types/node": "25.6.0",
     "@types/pg": "8.20.0",
     "@typescript/native-preview": "7.0.0-dev.20260406.1",
+    "c8": "11.0.0",
     "tsc-alias": "1.8.17",
     "tsx": "4.22.4"
   },

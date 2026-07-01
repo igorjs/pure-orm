@@ -1,0 +1,6 @@
+{
+  "$comment": "Coverage under Node via tsx (TS source). Node 26 compatible.",
+  "include": ["src/**/*.ts"],
+  "exclude": ["**/*.d.ts", "src/env.d.ts"],
+  "reporter": ["text", "json-summary"]
+}
