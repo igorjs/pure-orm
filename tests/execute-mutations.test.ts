@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Tests for mutation execution in src/execute/execute.ts and
  * compile() for mutation nodes in src/execute/compile.ts.

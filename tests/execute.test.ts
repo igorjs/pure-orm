@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Tests for src/execute/execute.ts and src/execute/result-mapper.ts
  *

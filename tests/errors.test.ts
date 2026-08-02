@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 import { describe, expect, it } from "@igorjs/pure-test";
 import type { DbError } from "../src/errors/errors.ts";
 import {

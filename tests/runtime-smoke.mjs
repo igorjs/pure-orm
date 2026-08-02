@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * runtime-smoke.mjs - Smoke test for the built package.
  *

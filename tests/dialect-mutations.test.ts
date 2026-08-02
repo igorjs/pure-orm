@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Comprehensive tests for dialect mutation compilation (INSERT, UPDATE, DELETE)
  * across both PostgreSQL and SQLite dialects.

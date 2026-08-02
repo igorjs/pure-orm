@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Tests for soft delete features: withDeleted(), onlyDeleted(), restore(),
  * and deletedAt column injection.

@@ -1,3 +1,5 @@
+// Copyright 2026 igorjs. SPDX-License-Identifier: Apache-2.0
+
 /**
  * Tests for audit interceptor: createAuditHooks and withAuditContext.
  * Also tests migration runner types (runner logic needs a real DB).
