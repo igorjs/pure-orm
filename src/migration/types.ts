@@ -100,6 +100,21 @@ type DropIndex = {
   readonly table: string;
   readonly index: IndexSnapshot;
 };
+/**
+ * Add a foreign key to an existing table (ADR-0005). The constraint name is
+ * derived from `fk_${table}_${fk.column}`, matching the inline CREATE TABLE
+ * naming so DROP ops can target the same identifier without extra metadata.
+ */
+type AddForeignKey = {
+  readonly tag: "AddForeignKey";
+  readonly table: string;
+  readonly fk: ForeignKeySnapshot;
+};
+type DropForeignKey = {
+  readonly tag: "DropForeignKey";
+  readonly table: string;
+  readonly fk: ForeignKeySnapshot;
+};
 type RenameTable = { readonly tag: "RenameTable"; readonly from: string; readonly to: string };
 type RenameColumn = {
   readonly tag: "RenameColumn";
@@ -117,7 +132,9 @@ type ChangeOperation =
   | RenameColumn
   | AlterColumn
   | AddIndex
-  | DropIndex;
+  | DropIndex
+  | AddForeignKey
+  | DropForeignKey;
 
 // ---- Migration record (state table) ----
 
@@ -193,6 +210,7 @@ type ExecutorOptions = {
 
 export type {
   AddColumn,
+  AddForeignKey,
   AlterColumn,
   BatchResult,
   ChangeOperation,
@@ -200,6 +218,7 @@ export type {
   ColumnSnapshot,
   CreateTable,
   DropColumn,
+  DropForeignKey,
   DropIndex,
   DropTable,
   ExecutorOptions,

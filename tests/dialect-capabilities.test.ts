@@ -10,6 +10,7 @@
 
 import { describe, expect, it } from "@igorjs/pure-test";
 import type { Dialect, DialectCapabilities } from "../src/dialect/dialect.ts";
+import { createMysqlDialect } from "../src/dialect/mysql.ts";
 import { createPostgresDialect } from "../src/dialect/postgresql.ts";
 import { createSqliteDialect } from "../src/dialect/sqlite.ts";
 
@@ -22,11 +23,14 @@ const REQUIRED_KEYS: readonly (keyof DialectCapabilities)[] = [
   "currentTimestampSql",
   "lockStrategy",
   "supportsAddColumnIfNotExists",
+  "supportsForeignKeyAlter",
+  "dropForeignKeyKeyword",
 ];
 
 const dialects: readonly { readonly name: string; readonly d: Dialect }[] = Object.freeze([
   { name: "postgresql", d: createPostgresDialect() },
   { name: "sqlite", d: createSqliteDialect() },
+  { name: "mysql", d: createMysqlDialect() },
 ]);
 
 describe("DialectCapabilities", () => {
@@ -73,6 +77,10 @@ describe("DialectCapabilities", () => {
     it("supports ADD COLUMN IF NOT EXISTS", () => {
       expect(c.supportsAddColumnIfNotExists).toBe(true);
     });
+    it("supports FK ALTER with DROP CONSTRAINT", () => {
+      expect(c.supportsForeignKeyAlter).toBe(true);
+      expect(c.dropForeignKeyKeyword).toBe("CONSTRAINT");
+    });
   });
 
   describe("sqlite declares the expected values", () => {
@@ -98,6 +106,26 @@ describe("DialectCapabilities", () => {
     });
     it("does not support ADD COLUMN IF NOT EXISTS", () => {
       expect(c.supportsAddColumnIfNotExists).toBe(false);
+    });
+    it("cannot ALTER TABLE for foreign keys", () => {
+      expect(c.supportsForeignKeyAlter).toBe(false);
+    });
+  });
+
+  describe("mysql declares the expected values", () => {
+    const c = createMysqlDialect().capabilities;
+    it("uses question-mark parameters", () => {
+      expect(c.parameterStyle).toBe("question");
+    });
+    it("uses backtick identifiers", () => {
+      expect(c.identifierQuote).toBe("`");
+    });
+    it("uses ON DUPLICATE KEY upsert", () => {
+      expect(c.upsertStyle).toBe("onDuplicateKey");
+    });
+    it("supports FK ALTER but uses DROP FOREIGN KEY (not DROP CONSTRAINT)", () => {
+      expect(c.supportsForeignKeyAlter).toBe(true);
+      expect(c.dropForeignKeyKeyword).toBe("FOREIGN KEY");
     });
   });
 });

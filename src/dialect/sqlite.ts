@@ -311,6 +311,13 @@ const sqliteCapabilities = Object.freeze({
   currentTimestampSql: "datetime('now')",
   lockStrategy: "lockTable" as const,
   supportsAddColumnIfNotExists: false,
+  // SQLite cannot ALTER TABLE ADD/DROP CONSTRAINT for FKs — requires a table
+  // rebuild (CREATE temp, copy, drop, rename). The generator throws so the
+  // operator hand-writes the rebuild rather than getting silent bad SQL.
+  supportsForeignKeyAlter: false,
+  // Unused at runtime when supportsForeignKeyAlter is false, but the type
+  // requires a value. CONSTRAINT matches PG's syntax for any future emit.
+  dropForeignKeyKeyword: "CONSTRAINT" as const,
 });
 
 const createSqliteDialect = (): Dialect =>

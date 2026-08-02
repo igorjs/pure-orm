@@ -36,6 +36,18 @@ type DialectCapabilities = {
   readonly lockStrategy: "advisoryLock" | "lockTable";
   /** Whether `ALTER TABLE ADD COLUMN IF NOT EXISTS` is supported. */
   readonly supportsAddColumnIfNotExists: boolean;
+  /**
+   * Whether `ALTER TABLE ADD/DROP` for foreign-key constraints is supported on
+   * an existing table. PG and MySQL: true. SQLite: false (requires a table
+   * rebuild; the generator throws so the operator sees an explicit failure
+   * instead of silently producing invalid SQL).
+   */
+  readonly supportsForeignKeyAlter: boolean;
+  /**
+   * Keyword the dialect uses to remove a foreign-key constraint by name.
+   * PG/SQLite use `DROP CONSTRAINT <name>`; MySQL uses `DROP FOREIGN KEY <name>`.
+   */
+  readonly dropForeignKeyKeyword: "CONSTRAINT" | "FOREIGN KEY";
 };
 
 type Dialect = {
