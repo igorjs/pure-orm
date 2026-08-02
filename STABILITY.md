@@ -50,7 +50,7 @@ Levels:
 | Query execution (compile, execute, result mapping) | Beta | Per-query compile; performance work is Planned (ADR-0011). |
 | Dialect — PostgreSQL | Beta | Full feature parity target. |
 | Dialect — SQLite | Beta | Full feature parity target. |
-| Connections (pool, lambda, transaction) | Beta | TCP drivers (pg, better-sqlite3); edge drivers Planned (ADR-0003). |
+| Connections (pool, lambda, transaction) | Beta | TCP/HTTP drivers (pg, @libsql/client); edge drivers Planned (ADR-0003). |
 | Model & read-side relations (`include`, `lazy`) | Beta | Write-side/nested writes Planned (ADR-0008). |
 | Migrations (snapshot, differ, generator, runner, state) | Experimental | Hardening in progress (ADR-0004, ADR-0005); see CHANGELOG. |
 | CLI (`generate`/`up`/`down`/`status`/`validate`) | Experimental | Surface still changing alongside the migration engine. |

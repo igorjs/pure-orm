@@ -17,7 +17,7 @@ Database drivers are optional peer dependencies. Install only what you need:
 
 ```bash
 npm install pg                # PostgreSQL
-npm install better-sqlite3    # SQLite
+npm install @libsql/client    # SQLite (local file, in-memory, or Turso)
 ```
 
 ## Quick Start
@@ -273,7 +273,7 @@ pipe(auditLog(User), where(eq("rowId", userId)), orderBy("createdAt", "desc"), l
 - **Pure composition**: queries are data (immutable AST nodes), not strings
 - **Dialect-agnostic AST**: SQL is generated only at execution time
 - **Zero mutation**: every builder returns a new frozen object
-- **Bring your own driver**: works with pg, postgres.js, better-sqlite3, etc.
+- **Bring your own driver**: works with pg, postgres.js, @libsql/client, etc.
 - **Lambda-ready**: connection pooling designed for serverless
 - **Cross-runtime**: core query builder works on Node, Deno, and Bun
 

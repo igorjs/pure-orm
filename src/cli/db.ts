@@ -3,7 +3,7 @@
 /**
  * CLI database client factory.
  *
- * Dynamically imports the driver package (pg or better-sqlite3) based on
+ * Dynamically imports the driver package (pg or @libsql/client) based on
  * the dialect specified in the config. Returns a DatabaseClient ready
  * for migration operations.
  */
@@ -63,40 +63,57 @@ const loadPostgresDriver = async (): Promise<DatabaseDriver> => {
   };
 };
 
+const REMOTE_URL_PREFIXES = ["file:", "libsql:", "http:", "https:", "ws:", "wss:"] as const;
+
+const toLibsqlUrl = (target: string): string => {
+  if (target === ":memory:") return target;
+  for (const prefix of REMOTE_URL_PREFIXES) {
+    if (target.startsWith(prefix)) return target;
+  }
+  return `file:${target}`;
+};
+
 const loadSqliteDriver = async (): Promise<DatabaseDriver> => {
   let mod: Record<string, unknown>;
   try {
-    mod = await import("better-sqlite3");
+    mod = await import("@libsql/client");
   } catch {
-    throw new Error("Package 'better-sqlite3' is not installed. Run: pnpm add better-sqlite3");
+    throw new Error("Package '@libsql/client' is not installed. Run: pnpm add @libsql/client");
   }
 
-  const BetterSqlite = (mod["default"] ?? mod["Database"]) as new (
-    filename: string,
-  ) => Record<string, unknown>;
+  type LibsqlClient = {
+    readonly execute: (q: { readonly sql: string; readonly args: unknown[] }) => Promise<{
+      readonly rows: unknown[];
+      readonly rowsAffected?: number;
+    }>;
+    readonly close: () => void;
+  };
+  const createClient = mod["createClient"] as (opts: { url: string }) => LibsqlClient;
 
   return {
     connect: async (config: ConnectionConfig) => {
-      const filename = config.database;
-      const db = new BetterSqlite(filename);
-      const prepare = db["prepare"] as (s: string) => Record<string, (...p: unknown[]) => unknown>;
+      const client = createClient({ url: toLibsqlUrl(config.database) });
 
       return {
         query: async (sql: string, params: readonly unknown[]) => {
-          const stmt = prepare(sql);
-          const upper = sql.trim().toUpperCase();
-          if (upper.startsWith("SELECT") || upper.startsWith("PRAGMA")) {
-            const rows = (stmt["all"] as (...p: unknown[]) => unknown[])(...params);
-            return { rows, rowCount: rows.length };
+          const trimmed = sql.trim();
+          if (trimmed.length === 0) {
+            return { rows: [], rowCount: 0 };
           }
-          const info = (stmt["run"] as (...p: unknown[]) => Record<string, unknown>)(...params);
-          return { rows: [], rowCount: (info["changes"] as number) ?? 0 };
+          const result = await client.execute({
+            sql: trimmed,
+            args: [...params],
+          });
+          return {
+            rows: result.rows as readonly unknown[],
+            rowCount: Number(result.rowsAffected ?? result.rows.length),
+          };
         },
         release: async () => {
-          // SQLite connections are shared; release is a no-op
+          // libsql client owns its lifecycle; release is a no-op.
         },
         end: async () => {
-          (db["close"] as () => void)();
+          client.close();
         },
       };
     },

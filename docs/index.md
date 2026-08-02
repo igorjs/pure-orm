@@ -28,7 +28,7 @@ Functional-first, type-safe ORM built on [@igorjs/pure-fx](https://github.com/ig
 - **Pure composition**: queries are immutable AST nodes, not mutable builders
 - **Dialect-agnostic**: SQL is generated only at execution time by the dialect layer
 - **Zero mutation**: every builder returns a new frozen object
-- **Bring your own driver**: works with pg, postgres.js, better-sqlite3, etc.
+- **Bring your own driver**: works with pg, postgres.js, @libsql/client, etc.
 - **Tree-shakable**: subpath imports, no top-level side effects, `sideEffects: false`
 - **Lambda-ready**: connection pooling designed for serverless environments
 
