@@ -11,6 +11,7 @@
 import type { Dialect } from "@/dialect/dialect";
 import type {
   ChangeOperation,
+  CheckConstraintSnapshot,
   ColumnSnapshot,
   ForeignKeySnapshot,
   IndexSnapshot,
@@ -25,12 +26,92 @@ const q = (id: string): string => `"${id.replace(/"/g, '""')}"`;
 const referentialAction = (keyword: string, action: string): string =>
   action === "no action" ? "" : ` ${keyword} ${action.toUpperCase()}`;
 
+/**
+ * Stable constraint name shared by the CREATE TABLE inline form and the
+ * AddForeignKey/DropForeignKey ALTER ops. Keeping the derivation in one place
+ * means DROP can target what CREATE/ADD emitted without storing the name on
+ * the snapshot.
+ */
+const fkConstraintName = (table: string, fk: ForeignKeySnapshot): string =>
+  `fk_${table}_${fk.column}`;
+
 /** Inline FOREIGN KEY clause for CREATE TABLE; supported by both PostgreSQL and SQLite. */
 const foreignKeyDef = (table: string, fk: ForeignKeySnapshot): string =>
-  `CONSTRAINT ${q(`fk_${table}_${fk.column}`)} FOREIGN KEY (${q(fk.column)}) ` +
+  `CONSTRAINT ${q(fkConstraintName(table, fk))} FOREIGN KEY (${q(fk.column)}) ` +
   `REFERENCES ${q(fk.referencedTable)} (${q(fk.referencedColumn)})` +
   referentialAction("ON DELETE", fk.onDelete) +
   referentialAction("ON UPDATE", fk.onUpdate);
+
+/**
+ * Body of an ALTER TABLE ADD CONSTRAINT for a foreign key — the same form
+ * PostgreSQL and MySQL both accept (ADD CONSTRAINT … FOREIGN KEY …).
+ */
+const addForeignKeySql = (table: string, fk: ForeignKeySnapshot): string =>
+  `ALTER TABLE ${q(table)} ADD ${foreignKeyDef(table, fk)};`;
+
+/**
+ * Dialect-specific DROP form. PG/SQLite say `DROP CONSTRAINT <name>`; MySQL
+ * says `DROP FOREIGN KEY <name>`. The choice is encoded in the dialect's
+ * `dropForeignKeyKeyword` capability so the generator stays free of
+ * `dialect.name === "mysql"` checks.
+ */
+const dropForeignKeySql = (table: string, fk: ForeignKeySnapshot, dialect: Dialect): string => {
+  if (!dialect.capabilities.supportsForeignKeyAlter) {
+    throw new Error(
+      `Dialect "${dialect.name}" does not support ALTER TABLE for foreign keys. ` +
+        `Drop foreign key "${fkConstraintName(table, fk)}" via a table-rebuild migration.`,
+    );
+  }
+  const keyword = dialect.capabilities.dropForeignKeyKeyword;
+  return `ALTER TABLE ${q(table)} DROP ${keyword} ${q(fkConstraintName(table, fk))};`;
+};
+
+const ensureFkAlterSupported = (dialect: Dialect, table: string, fk: ForeignKeySnapshot): void => {
+  if (!dialect.capabilities.supportsForeignKeyAlter) {
+    throw new Error(
+      `Dialect "${dialect.name}" does not support ALTER TABLE for foreign keys. ` +
+        `Add foreign key "${fkConstraintName(table, fk)}" via a table-rebuild migration.`,
+    );
+  }
+};
+
+// ---- CHECK constraints (ADR-0005) ----
+
+/** Inline CONSTRAINT … CHECK (…) for CREATE TABLE and ALTER TABLE ADD. */
+const checkConstraintDef = (check: CheckConstraintSnapshot): string =>
+  `CONSTRAINT ${q(check.name)} CHECK (${check.expression})`;
+
+const addCheckConstraintSql = (table: string, check: CheckConstraintSnapshot): string =>
+  `ALTER TABLE ${q(table)} ADD ${checkConstraintDef(check)};`;
+
+/**
+ * Dialect-specific DROP. PG/SQLite use `DROP CONSTRAINT <name>`; MySQL uses
+ * `DROP CHECK <name>` — encoded in `dropCheckConstraintKeyword` so the
+ * generator stays free of `dialect.name === "mysql"` checks.
+ */
+const dropCheckConstraintSql = (
+  table: string,
+  check: CheckConstraintSnapshot,
+  dialect: Dialect,
+): string => {
+  if (!dialect.capabilities.supportsCheckConstraintAlter) {
+    throw new Error(
+      `Dialect "${dialect.name}" does not support ALTER TABLE for CHECK constraints. ` +
+        `Drop check "${check.name}" via a table-rebuild migration.`,
+    );
+  }
+  const keyword = dialect.capabilities.dropCheckConstraintKeyword;
+  return `ALTER TABLE ${q(table)} DROP ${keyword} ${q(check.name)};`;
+};
+
+const ensureCheckAlterSupported = (dialect: Dialect, check: CheckConstraintSnapshot): void => {
+  if (!dialect.capabilities.supportsCheckConstraintAlter) {
+    throw new Error(
+      `Dialect "${dialect.name}" does not support ALTER TABLE for CHECK constraints. ` +
+        `Add check "${check.name}" via a table-rebuild migration.`,
+    );
+  }
+};
 
 /** CREATE [UNIQUE] INDEX statement, shared by AddIndex and the DropIndex down path. */
 const createIndexSql = (table: string, index: IndexSnapshot): string => {
@@ -71,7 +152,10 @@ const createTableSql = (table: string, snapshot: TableSnapshot, dialect: Dialect
     columnDef(name, col, dialect),
   );
   const fkDefs = snapshot.foreignKeys.map(fk => foreignKeyDef(table, fk));
-  const body = [...colDefs, ...fkDefs].join(",\n  ");
+  // CHECK constraints work inline for all three dialects — even SQLite (which
+  // can't ALTER them later, but can carry them in CREATE TABLE).
+  const checkDefs = snapshot.checkConstraints.map(checkConstraintDef);
+  const body = [...colDefs, ...fkDefs, ...checkDefs].join(",\n  ");
   return `CREATE TABLE ${q(table)} (\n  ${body}\n);`;
 };
 
@@ -134,6 +218,20 @@ const generateUp = (op: ChangeOperation, dialect: Dialect): string => {
 
     case "DropIndex":
       return `DROP INDEX ${q(op.index.name)};`;
+
+    case "AddForeignKey":
+      ensureFkAlterSupported(dialect, op.table, op.fk);
+      return addForeignKeySql(op.table, op.fk);
+
+    case "DropForeignKey":
+      return dropForeignKeySql(op.table, op.fk, dialect);
+
+    case "AddCheckConstraint":
+      ensureCheckAlterSupported(dialect, op.check);
+      return addCheckConstraintSql(op.table, op.check);
+
+    case "DropCheckConstraint":
+      return dropCheckConstraintSql(op.table, op.check, dialect);
   }
 };
 
@@ -176,6 +274,20 @@ const generateDown = (op: ChangeOperation, dialect: Dialect): string => {
 
     case "DropIndex":
       return createIndexSql(op.table, op.index);
+
+    case "AddForeignKey":
+      return dropForeignKeySql(op.table, op.fk, dialect);
+
+    case "DropForeignKey":
+      ensureFkAlterSupported(dialect, op.table, op.fk);
+      return addForeignKeySql(op.table, op.fk);
+
+    case "AddCheckConstraint":
+      return dropCheckConstraintSql(op.table, op.check, dialect);
+
+    case "DropCheckConstraint":
+      ensureCheckAlterSupported(dialect, op.check);
+      return addCheckConstraintSql(op.table, op.check);
   }
 };
 

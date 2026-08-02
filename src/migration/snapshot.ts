@@ -14,6 +14,7 @@
 import type { Model } from "@/model/define";
 import type { ColumnMetadata } from "@/model/types";
 import type {
+  CheckConstraintSnapshot,
   ColumnSnapshot,
   ForeignKeySnapshot,
   IndexSnapshot,
@@ -109,10 +110,18 @@ const snapshotTable = (model: Model): TableSnapshot => {
     }
   }
 
+  // Table-level CHECK constraints (ADR-0005). The model author declares them
+  // via options.checks; the snapshot stores them verbatim and the differ
+  // tracks identity by `name`.
+  const checkConstraints: CheckConstraintSnapshot[] = (model.$options.checks ?? []).map(c =>
+    Object.freeze({ name: c.name, expression: c.expression }),
+  );
+
   return Object.freeze({
     columns: Object.freeze(columns),
     indexes: Object.freeze(indexes),
     foreignKeys: Object.freeze(foreignKeys),
+    checkConstraints: Object.freeze(checkConstraints),
     ...(model.$options.renamedFrom !== undefined
       ? { renamedFrom: model.$options.renamedFrom }
       : {}),

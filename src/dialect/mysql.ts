@@ -329,6 +329,15 @@ const mysqlCapabilities = Object.freeze({
   currentTimestampSql: "NOW()",
   lockStrategy: "lockTable" as const,
   supportsAddColumnIfNotExists: false,
+  supportsForeignKeyAlter: true,
+  // MySQL uses `DROP FOREIGN KEY <name>`, not `DROP CONSTRAINT <name>`.
+  dropForeignKeyKeyword: "FOREIGN KEY" as const,
+  // MySQL 8.0.16+ enforces CHECK constraints; older versions parse and ignore.
+  // The dialect declares modern behaviour; version-detection is a follow-up
+  // alongside the existing MySQL RETURNING capability lift.
+  supportsCheckConstraintAlter: true,
+  // MySQL says `DROP CHECK <name>`, not `DROP CONSTRAINT <name>`.
+  dropCheckConstraintKeyword: "CHECK" as const,
 });
 
 const createMysqlDialect = (): Dialect =>

@@ -32,6 +32,7 @@ const table: TableSnapshot = Object.freeze({
   columns: Object.freeze({ id: col }),
   indexes: Object.freeze([]),
   foreignKeys: Object.freeze([]),
+  checkConstraints: Object.freeze([]),
 });
 
 const dropTable: ChangeOperation = Object.freeze({

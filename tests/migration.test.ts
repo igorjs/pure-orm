@@ -56,6 +56,7 @@ const makeTable = (columns: Record<string, ColumnSnapshot>): TableSnapshot =>
     columns: Object.freeze(columns),
     indexes: Object.freeze([]),
     foreignKeys: Object.freeze([]),
+    checkConstraints: Object.freeze([]),
   });
 
 const emptySnapshot: SchemaSnapshot = Object.freeze({

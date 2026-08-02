@@ -316,6 +316,10 @@ const postgresCapabilities = Object.freeze({
   currentTimestampSql: "NOW()",
   lockStrategy: "advisoryLock" as const,
   supportsAddColumnIfNotExists: true,
+  supportsForeignKeyAlter: true,
+  dropForeignKeyKeyword: "CONSTRAINT" as const,
+  supportsCheckConstraintAlter: true,
+  dropCheckConstraintKeyword: "CONSTRAINT" as const,
 });
 
 const createPostgresDialect = (): Dialect =>
